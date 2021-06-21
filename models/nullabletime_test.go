@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -75,7 +76,6 @@ func TestNullableTimeMarshalJson(t *testing.T) {
 	}
 }
 
-// TODO: Fix this...
 func TestNullableTimeUnmarshalJson(t *testing.T) {
 	testString := "null"
 	ns := NullableTime{}
@@ -91,12 +91,12 @@ func TestNullableTimeUnmarshalJson(t *testing.T) {
 		t.Error("error occurred while parsing time string for test.", err)
 	}
 	testString = testTimeString
-	err = ns.UnmarshalJSON([]byte(testString))
+	err = ns.UnmarshalJSON([]byte("\"" + testString + "\""))
 	if err != nil {
 		t.Error("Failed to unmarshal", testString, err)
 	}
-	if ns.IsNull != false || ns.Value != testTime {
-		t.Error("Unmarshaling 1.2 should result in a nullable time with a value of 1.2 and is null being false", ns)
+	if ns.IsNull != false || !ns.Value.Equal(testTime) {
+		t.Error("Unmarshaling 1.2 should result in a nullable time with a value of 1.2 and is null being false", ns, testTime)
 	}
 	testString = "false"
 	err = ns.UnmarshalJSON([]byte(testString))
@@ -104,6 +104,24 @@ func TestNullableTimeUnmarshalJson(t *testing.T) {
 		t.Error("expected an error", err)
 	}
 	if ns.IsNull != true || ns.Value != emptyTime {
-		t.Error("Unmarshaling false should result in a nullable time with an empty value and is null being true", ns)
+		t.Error("unmarshaling false should result in a nullable time with an empty value and is null being true", ns)
+	}
+}
+
+func TestNullableTimeUnmarshalJsonPayload(t *testing.T) {
+	testString := `{"t": "` + testTimeString + `"}`
+	testReceiver := struct {
+		TestValue NullableTime `json:"t"`
+	}{}
+	err := json.Unmarshal([]byte(testString), &testReceiver)
+	if err != nil {
+		t.Error("failed to unmarshal test string", err, testString)
+	}
+	testTime, err := time.Parse(time.RFC3339, testTimeString)
+	if err != nil {
+		t.Error("failed to parse test time for test", err)
+	}
+	if testReceiver.TestValue.IsNull || !testReceiver.TestValue.Value.Equal(testTime) {
+		t.Error("testRecevier TestValue is not equal to testTime", testReceiver, testTime)
 	}
 }

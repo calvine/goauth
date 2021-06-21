@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -18,7 +17,7 @@ func (nt *NullableTime) MarshalJSON() ([]byte, error) {
 	if nt.IsNull {
 		return []byte("null"), nil
 	}
-	return json.Marshal(nt.Value)
+	return nt.Value.MarshalJSON()
 }
 
 func (nt *NullableTime) UnmarshalJSON(data []byte) error {
@@ -28,7 +27,7 @@ func (nt *NullableTime) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 	var value time.Time
-	err := json.Unmarshal(data, &value)
+	err := value.UnmarshalJSON(data)
 	nt.IsNull = err != nil
 	nt.Value = value
 	return err
