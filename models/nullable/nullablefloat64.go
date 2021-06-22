@@ -1,4 +1,4 @@
-package models
+package nullable
 
 import (
 	"encoding/json"
@@ -8,38 +8,38 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-type NullableFloat32 struct {
+type NullableFloat64 struct {
 	IsNull bool
-	Value  float32
+	Value  float64
 }
 
-func (nf *NullableFloat32) MarshalJSON() ([]byte, error) {
+func (nf *NullableFloat64) MarshalJSON() ([]byte, error) {
 	if nf.IsNull {
 		return []byte("null"), nil
 	}
 	return json.Marshal(nf.Value)
 }
 
-func (nf *NullableFloat32) UnmarshalJSON(data []byte) error {
+func (nf *NullableFloat64) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" {
 		nf.IsNull = true
 		nf.Value = 0
 		return nil
 	}
-	var value float32
+	var value float64
 	err := json.Unmarshal(data, &value)
 	nf.IsNull = err != nil
 	nf.Value = value
 	return err
 }
 
-func (nf *NullableFloat32) Scan(value interface{}) error {
+func (nf *NullableFloat64) Scan(value interface{}) error {
 	switch t := value.(type) {
 	case nil:
 		nf.IsNull = true
 		nf.Value = 0
 		return nil
-	case float32:
+	case float64:
 		nf.IsNull = false
 		nf.Value = t
 		return nil
@@ -48,22 +48,22 @@ func (nf *NullableFloat32) Scan(value interface{}) error {
 		nf.Value = 0
 		err := errors.WrongTypeError{
 			Actual:   fmt.Sprintf("%T", t),
-			Expected: "float32",
+			Expected: "float64",
 		}
 		return err
 	}
 }
 
-func (nf *NullableFloat32) MarshalBSON() ([]byte, error) {
+func (nf *NullableFloat64) MarshalBSON() ([]byte, error) {
 	if nf.IsNull {
 		return nil, nil
 	}
 	return bson.Marshal(nf.Value)
 }
 
-func (nf *NullableFloat32) UnmarshalBSON(data []byte) error {
+func (nf *NullableFloat64) UnmarshalBSON(data []byte) error {
 	// TODO: need to handle null value of data...
-	var value float32
+	var value float64
 	err := bson.Unmarshal(data, &value)
 	nf.IsNull = err != nil
 	nf.Value = value

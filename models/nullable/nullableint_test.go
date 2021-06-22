@@ -1,4 +1,4 @@
-package models
+package nullable
 
 import (
 	"errors"
@@ -8,38 +8,38 @@ import (
 	goautherrors "github.com/calvine/goauth/models/errors"
 )
 
-func TestNullableFloat32Scan(t *testing.T) {
-	ns := NullableFloat32{}
+func TestNullableIntScan(t *testing.T) {
+	ns := NullableInt{}
 	err := ns.Scan(nil)
 	if err != nil {
-		t.Error("Failed to scan nil into NullableFloat32", err, ns)
+		t.Error("Failed to scan nil into NullableInt", err, ns)
 	}
 	if ns.Value != 0 || ns.IsNull != true {
-		t.Error("Nullable float32 has wrong value after scanning nil", ns)
+		t.Error("Nullable int has wrong value after scanning nil", ns)
 	}
-	testValue := float32(1.2)
+	testValue := 2
 	err = ns.Scan(testValue)
 	if err != nil {
-		t.Error("Failed to scan nil into NullableFloat32", err, ns)
+		t.Error("Failed to scan nil into NullableInt", err, ns)
 	}
 	if ns.Value != testValue || ns.IsNull != false {
-		errMsg := fmt.Sprintf("Nullable float32 has wrong value after scanning %f", testValue)
+		errMsg := fmt.Sprintf("Nullable int has wrong value after scanning %v", testValue)
 		t.Error(errMsg, ns)
 	}
-	testNumber := 3
-	err = ns.Scan(testNumber)
+	testString := "abc"
+	err = ns.Scan(testString)
 	emptyErr := &goautherrors.WrongTypeError{}
 	if !errors.As(err, emptyErr) {
 		t.Error("Expected error to be of type WrongTypeError", err)
 	}
 	if ns.Value != 0 || ns.IsNull != true {
-		errMsg := fmt.Sprintf("Nullable float32 has wrong value after scanning %d", testNumber)
+		errMsg := fmt.Sprintf("Nullable int has wrong value after scanning %v", testString)
 		t.Error(errMsg, ns)
 	}
 }
 
-func TestNullableFloat32MarshalJson(t *testing.T) {
-	ns := NullableFloat32{
+func TestNullableIntMarshalJson(t *testing.T) {
+	ns := NullableInt{
 		Value:  0,
 		IsNull: true,
 	}
@@ -48,38 +48,38 @@ func TestNullableFloat32MarshalJson(t *testing.T) {
 		t.Error("Failed to marshal null to JSON.", err)
 	}
 	if string(data) != "null" {
-		t.Error("data from marshal was not null when underlaying nullable float32 was nil", data)
+		t.Error("data from marshal was not null when underlaying nullable int was nil", data)
 	}
-	ns = NullableFloat32{
-		Value:  1.2,
+	ns = NullableInt{
+		Value:  -2,
 		IsNull: false,
 	}
 	data, err = ns.MarshalJSON()
 	if err != nil {
 		t.Error("Failed to marshal null to JSON.", err)
 	}
-	if string(data) != "1.2" {
+	if string(data) != "-2" {
 		t.Error("data from marshal was not what was expected", data, ns)
 	}
 }
 
-func TestNullableFloat32UnmarshalJson(t *testing.T) {
+func TestNullableIntUnmarshalJson(t *testing.T) {
 	testString := "null"
-	ns := NullableFloat32{}
+	ns := NullableInt{}
 	err := ns.UnmarshalJSON([]byte(testString))
 	if err != nil {
 		t.Error("Failed to unmarshal null", err)
 	}
 	if ns.IsNull != true || ns.Value != 0 {
-		t.Error("Unmarshaling null should result in a nullable float32 with an empty value and is null being true", ns)
+		t.Error("Unmarshaling null should result in a nullable int with an empty value and is null being true", ns)
 	}
-	testString = "1.2"
+	testString = "5"
 	err = ns.UnmarshalJSON([]byte(testString))
 	if err != nil {
 		t.Error("Failed to unmarshal \"Test\"", err)
 	}
-	if ns.IsNull != false || ns.Value != 1.2 {
-		t.Error("Unmarshaling 1.2 should result in a nullable float32 with a value of 1.2 and is null being false", ns)
+	if ns.IsNull != false || ns.Value != 5 {
+		t.Error("Unmarshaling 1.2 should result in a nullable int with a value of 1.2 and is null being false", ns)
 	}
 	testString = "false"
 	err = ns.UnmarshalJSON([]byte(testString))
@@ -87,6 +87,6 @@ func TestNullableFloat32UnmarshalJson(t *testing.T) {
 		t.Error("expected an error", err)
 	}
 	if ns.IsNull != true || ns.Value != 0 {
-		t.Error("Unmarshaling false should result in a nullable float32 with an empty value and is null being true", ns)
+		t.Error("Unmarshaling false should result in a nullable int with an empty value and is null being true", ns)
 	}
 }
