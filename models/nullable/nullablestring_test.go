@@ -8,6 +8,19 @@ import (
 	goautherrors "github.com/calvine/goauth/models/errors"
 )
 
+func TestNullableStringSetUnset(t *testing.T) {
+	ns := NullableString{}
+	testValue := "Hello Test"
+	ns.Set(testValue)
+	if ns.IsNull != false || ns.Value != testValue {
+		t.Error("nullable struct in invalid state after Set call", ns)
+	}
+	ns.Unset()
+	if !ns.IsNull || ns.Value != defaultStringValue {
+		t.Error("nullable struct in invalid state after Unset call", ns)
+	}
+}
+
 func TestNullableStringScan(t *testing.T) {
 	ns := NullableString{}
 	err := ns.Scan(nil)

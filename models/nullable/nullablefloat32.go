@@ -8,9 +8,21 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+const defaultFloat32Value = float32(0)
+
 type NullableFloat32 struct {
 	IsNull bool
 	Value  float32
+}
+
+func (nf *NullableFloat32) Set(value float32) {
+	nf.IsNull = false
+	nf.Value = value
+}
+
+func (nf *NullableFloat32) Unset() {
+	nf.IsNull = true
+	nf.Value = defaultFloat32Value
 }
 
 func (nf *NullableFloat32) MarshalJSON() ([]byte, error) {

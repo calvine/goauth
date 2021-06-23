@@ -14,6 +14,22 @@ var emptyTime = time.Time{}
 
 const testTimeString = "2018-05-02T18:07:10-05:00"
 
+func TestNullableTimeSetUnset(t *testing.T) {
+	ns := NullableTime{}
+	testValue, err := time.Parse(time.RFC3339, testTimeString)
+	if err != nil {
+		t.Error("error occurred while parsing time string for test.", err)
+	}
+	ns.Set(testValue)
+	if ns.IsNull != false || ns.Value != testValue {
+		t.Error("nullable struct in invalid state after Set call", ns)
+	}
+	ns.Unset()
+	if !ns.IsNull || ns.Value != defaultTimeValue {
+		t.Error("nullable struct in invalid state after Unset call", ns)
+	}
+}
+
 func TestNullableTimeScan(t *testing.T) {
 	ns := NullableTime{}
 	err := ns.Scan(nil)

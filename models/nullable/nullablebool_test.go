@@ -8,6 +8,19 @@ import (
 	goautherrors "github.com/calvine/goauth/models/errors"
 )
 
+func TestNullableBoolSetUnset(t *testing.T) {
+	nb := NullableBool{}
+	testValue := true
+	nb.Set(testValue)
+	if nb.IsNull != false || !nb.Value {
+		t.Error("nullable struct in invalid state after Set call", nb)
+	}
+	nb.Unset()
+	if !nb.IsNull || nb.Value != defaultBoolValue {
+		t.Error("nullable struct in invalid state after Unset call", nb)
+	}
+}
+
 func TestNullableBoolScan(t *testing.T) {
 	ns := NullableBool{}
 	err := ns.Scan(nil)

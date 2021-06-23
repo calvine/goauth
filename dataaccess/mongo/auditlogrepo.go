@@ -1,6 +1,8 @@
 package mongo
 
 import (
+	"context"
+
 	"github.com/calvine/goauth/models/core"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -12,9 +14,17 @@ type auditLogRepo struct {
 }
 
 func NewAuditLogRepo(client *mongo.Client) *auditLogRepo {
-	return &auditLogRepo{client, "", ""}
+	return &auditLogRepo{client, DB_NAME, AUDITLOG_COLLECTION}
 }
 
 type AuditLogRepo interface {
-	LogMessage(message core.AuditLog) error
+	LogMessage(ctx context.Context, message core.AuditLog) error
+}
+
+func (ar *auditLogRepo) LogMessage(ctx context.Context, message core.AuditLog) error {
+	_, err := ar.mongoClient.Database(ar.dbName).Collection(ar.collection).InsertOne(ctx, message)
+	if err != nil {
+		return err
+	}
+	return nil
 }

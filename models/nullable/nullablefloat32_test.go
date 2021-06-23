@@ -8,6 +8,19 @@ import (
 	goautherrors "github.com/calvine/goauth/models/errors"
 )
 
+func TestNullableFloat32SetUnset(t *testing.T) {
+	nf := NullableFloat32{}
+	testValue := float32(1.23)
+	nf.Set(testValue)
+	if nf.IsNull != false || nf.Value != testValue {
+		t.Error("nullable struct in invalid state after Set call", nf)
+	}
+	nf.Unset()
+	if !nf.IsNull || nf.Value != defaultFloat32Value {
+		t.Error("nullable struct in invalid state after Unset call", nf)
+	}
+}
+
 func TestNullableFloat32Scan(t *testing.T) {
 	ns := NullableFloat32{}
 	err := ns.Scan(nil)

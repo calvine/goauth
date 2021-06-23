@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/calvine/goauth/models/core"
 	"go.mongodb.org/mongo-driver/bson"
@@ -15,8 +16,8 @@ var (
 
 type UserRepo interface {
 	GetUserById(ctx context.Context, id string) (core.User, error)
-	AddUser(ctx context.Context, user *core.User) error
-	UpdateUser(ctx context.Context, user *core.User) error
+	AddUser(ctx context.Context, user *core.User, createdById string) error
+	UpdateUser(ctx context.Context, user *core.User, modifiedById string) error
 }
 
 type userRepo struct {
@@ -26,7 +27,7 @@ type userRepo struct {
 }
 
 func NewUserRepo(client *mongo.Client) *userRepo {
-	return &userRepo{client, "", ""}
+	return &userRepo{client, DB_NAME, USER_COLLECTION}
 }
 
 func (ur userRepo) GetUserById(ctx context.Context, id string) (core.User, error) {
@@ -39,4 +40,25 @@ func (ur userRepo) GetUserById(ctx context.Context, id string) (core.User, error
 		return user, ErrUserNotFound
 	}
 	return user, nil
+}
+
+func (ur userRepo) AddUser(ctx context.Context, user *core.User, createdById string) error {
+	_, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).InsertOne(ctx, user, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ur userRepo) UpdateUser(ctx context.Context, user *core.User, modifiedById string) error {
+	user.ModifiedByID.Set(modifiedById)
+	user.ModifiedOnDate.Set(time.Now().UTC())
+	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(ctx, bson.M{}, user)
+	if result.ModifiedCount == 0 {
+		return ErrUserNotFound
+	}
+	if err != nil {
+		return nil
+	}
+	return nil
 }

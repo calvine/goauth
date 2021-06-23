@@ -8,9 +8,21 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+const defaultIntValue = int(0)
+
 type NullableInt struct {
 	IsNull bool
 	Value  int
+}
+
+func (ni *NullableInt) Set(value int) {
+	ni.IsNull = false
+	ni.Value = value
+}
+
+func (ni *NullableInt) Unset() {
+	ni.IsNull = true
+	ni.Value = defaultIntValue
 }
 
 func (ni *NullableInt) MarshalJSON() ([]byte, error) {

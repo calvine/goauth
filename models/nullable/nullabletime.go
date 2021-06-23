@@ -8,9 +8,21 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+var defaultTimeValue = time.Time{}
+
 type NullableTime struct {
 	IsNull bool
 	Value  time.Time
+}
+
+func (nt *NullableTime) Set(value time.Time) {
+	nt.IsNull = false
+	nt.Value = value
+}
+
+func (nt *NullableTime) Unset() {
+	nt.IsNull = true
+	nt.Value = defaultTimeValue
 }
 
 func (nt *NullableTime) MarshalJSON() ([]byte, error) {
