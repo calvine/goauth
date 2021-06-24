@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/calvine/goauth/models/errors"
+	"github.com/calvine/goauth/core/errors"
 	"go.mongodb.org/mongo-driver/bson"
 )
 

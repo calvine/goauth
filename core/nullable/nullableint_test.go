@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	goautherrors "github.com/calvine/goauth/models/errors"
+	goautherrors "github.com/calvine/goauth/core/errors"
 )
 
 func TestNullableIntSetUnset(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	goautherrors "github.com/calvine/goauth/models/errors"
+	goautherrors "github.com/calvine/goauth/core/errors"
 )
 
 var emptyTime = time.Time{}
