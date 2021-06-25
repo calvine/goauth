@@ -16,6 +16,16 @@ type NullableString struct {
 	Value    string
 }
 
+// GetPointerCopy
+func (ns *NullableString) GetPointerCopy() *string {
+	if ns.HasValue {
+		s := ns.Value
+		return &s
+	} else {
+		return nil
+	}
+}
+
 func (ns *NullableString) Set(value string) {
 	ns.HasValue = true
 	ns.Value = value

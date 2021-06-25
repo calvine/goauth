@@ -8,6 +8,23 @@ import (
 	goautherrors "github.com/calvine/goauth/core/errors"
 )
 
+func TestNullableFloat32GetPointerCopy(t *testing.T) {
+	nf := NullableFloat32{}
+	nf.Set(1.23)
+	nfCopy := nf.GetPointerCopy()
+	if *nfCopy != nf.Value {
+		t.Error("nfCopy value should be the same as nf Value", nf, nfCopy)
+	}
+	if &nf.Value == nfCopy {
+		t.Error("the address of nf.Value and nfCopy should be different", &nf.Value, &nfCopy)
+	}
+	nf.Unset()
+	nfCopy = nf.GetPointerCopy()
+	if nfCopy != nil {
+		t.Error("nfCopy should be nil because nf HasValue is false", nf, nfCopy)
+	}
+}
+
 func TestNullableFloat32SetUnset(t *testing.T) {
 	nf := NullableFloat32{}
 	testValue := float32(1.23)

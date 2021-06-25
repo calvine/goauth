@@ -19,7 +19,7 @@ var (
 
 	ProjUserOnly = bson.M{
 		"_id":                            1,
-		"password":                       1,
+		"passwordHash":                   1,
 		"salt":                           1,
 		"consecutiveFailedLoginAttempts": 1,
 		"lockedOutUntil":                 1,
@@ -50,7 +50,7 @@ func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, err
 	if err != nil {
 		return repoUser.ToCoreUser(), err
 	}
-	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, bson.M{"userId": oid}, &options).Decode(&repoUser)
+	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, bson.M{"_id": oid}, &options).Decode(&repoUser)
 	user := repoUser.ToCoreUser()
 	if err != nil {
 		return user, err
@@ -101,8 +101,17 @@ func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedBy
 			"$eq": repoUser.ObjectId,
 		},
 	}
+
 	update := bson.M{
-		"$set": bson.M{},
+		"$set": bson.M{
+			"passwordHash":                   repoUser.PasswordHash,
+			"salt":                           repoUser.Salt,
+			"consecutiveFailedLoginAttempts": repoUser.ConsecutiveFailedLoginAttempts,
+			"lockedOutUntil":                 repoUser.LockedOutUntil.GetPointerCopy(),
+			"lastLoginDate":                  repoUser.LastLoginDate.GetPointerCopy(),
+			"modifiedById":                   repoUser.AuditData.ModifiedByID.GetPointerCopy(),
+			"modifiedOnDate":                 repoUser.AuditData.ModifiedOnDate.GetPointerCopy(),
+		},
 	}
 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(ctx, filter, update)
 	if err != nil {

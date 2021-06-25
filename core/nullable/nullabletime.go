@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/calvine/goauth/core/errors"
+	coreErrors "github.com/calvine/goauth/core/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 )
@@ -14,6 +14,16 @@ var defaultTimeValue = time.Time{}
 type NullableTime struct {
 	HasValue bool
 	Value    time.Time
+}
+
+// GetPointerCopy
+func (nt *NullableTime) GetPointerCopy() *time.Time {
+	if nt.HasValue {
+		t := nt.Value
+		return &t
+	} else {
+		return nil
+	}
 }
 
 func (nt *NullableTime) Set(value time.Time) {
@@ -60,7 +70,7 @@ func (nt *NullableTime) Scan(value interface{}) error {
 	default:
 		nt.HasValue = false
 		nt.Value = time.Time{}
-		err := errors.WrongTypeError{
+		err := coreErrors.WrongTypeError{
 			Actual:   fmt.Sprintf("%T", t),
 			Expected: "time.Time",
 		}
@@ -83,5 +93,5 @@ func (nt *NullableTime) UnmarshalBSONValue(btype bsontype.Type, data []byte) err
 	err := bson.Unmarshal(data, &value)
 	nt.HasValue = err == nil
 	nt.Value = value
-	return err
+	return nil
 }

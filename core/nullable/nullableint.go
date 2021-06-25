@@ -16,6 +16,16 @@ type NullableInt struct {
 	Value    int
 }
 
+// GetPointerCopy
+func (ni *NullableInt) GetPointerCopy() *int {
+	if ni.HasValue {
+		i := ni.Value
+		return &i
+	} else {
+		return nil
+	}
+}
+
 func (ni *NullableInt) Set(value int) {
 	ni.HasValue = true
 	ni.Value = value

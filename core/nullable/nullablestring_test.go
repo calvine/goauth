@@ -8,6 +8,23 @@ import (
 	goautherrors "github.com/calvine/goauth/core/errors"
 )
 
+func TestNullableStringGetPointerCopy(t *testing.T) {
+	ns := NullableString{}
+	ns.Set("test string")
+	nsCopy := ns.GetPointerCopy()
+	if *nsCopy != ns.Value {
+		t.Error("nsCopy value should be the same as ns Value", ns, nsCopy)
+	}
+	if &ns.Value == nsCopy {
+		t.Error("the address of ns.Value and nsCopy should be different", &ns.Value, &nsCopy)
+	}
+	ns.Unset()
+	nsCopy = ns.GetPointerCopy()
+	if nsCopy != nil {
+		t.Error("nsCopy should be nil because ns HasValue is false", ns, nsCopy)
+	}
+}
+
 func TestNullableStringSetUnset(t *testing.T) {
 	ns := NullableString{}
 	testValue := "Hello Test"

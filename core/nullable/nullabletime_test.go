@@ -14,6 +14,27 @@ var emptyTime = time.Time{}
 
 const testTimeString = "2018-05-02T18:07:10-05:00"
 
+func TestNullableTimeGetPointerCopy(t *testing.T) {
+	testTime, err := time.Parse(time.RFC3339, testTimeString)
+	if err != nil {
+		t.Error("failed to parse testTimeString for test", err)
+	}
+	nt := NullableTime{}
+	nt.Set(testTime)
+	ntCopy := nt.GetPointerCopy()
+	if *ntCopy != nt.Value {
+		t.Error("ntCopy value should be the same as nt Value", nt, ntCopy)
+	}
+	if &nt.Value == ntCopy {
+		t.Error("the address of nt.Value and ntCopy should be different", &nt.Value, &ntCopy)
+	}
+	nt.Unset()
+	ntCopy = nt.GetPointerCopy()
+	if ntCopy != nil {
+		t.Error("ntCopy should be nil because nt HasValue is false", nt, ntCopy)
+	}
+}
+
 func TestNullableTimeSetUnset(t *testing.T) {
 	ns := NullableTime{}
 	testValue, err := time.Parse(time.RFC3339, testTimeString)

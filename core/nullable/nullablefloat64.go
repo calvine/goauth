@@ -16,6 +16,16 @@ type NullableFloat64 struct {
 	Value    float64
 }
 
+// GetPointerCopy
+func (nf *NullableFloat64) GetPointerCopy() *float64 {
+	if nf.HasValue {
+		f := nf.Value
+		return &f
+	} else {
+		return nil
+	}
+}
+
 func (nf *NullableFloat64) Set(value float64) {
 	nf.HasValue = true
 	nf.Value = value

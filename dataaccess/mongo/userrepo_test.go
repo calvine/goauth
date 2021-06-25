@@ -2,14 +2,10 @@ package mongo
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/calvine/goauth/core/models"
-	"github.com/calvine/goauth/core/utilities"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
@@ -25,44 +21,25 @@ var (
 	}
 )
 
-func TestMongoUserRepo(t *testing.T) {
-	// setup code for mongo user repo tests.
-	_, exists := os.LookupEnv(ENV_RUN_MONGO_TESTS)
-	if !exists {
-		connectionString := utilities.GetEnv(ENV_MONGO_TEST_CONNECTION_STRING, DEFAULT_TEST_MONGO_CONNECTION_STRING)
-		client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(connectionString))
-		defer client.Disconnect(context.TODO())
-		if err != nil {
-			t.Error("failed to connect to mongo server", err)
-		}
-		err = client.Ping(context.TODO(), nil)
-		if err != nil {
-			t.Error("failed to ping mongo server before test", err)
-		}
-		testUserRepo = NewUserRepoWithNames(client, "test_goauth", USER_COLLECTION)
+func testMongoUserRepo(t *testing.T, userRepo *userRepo) {
 
-		// functionality tests
-		t.Run("userRepo.AddUser", func(t *testing.T) {
-			testAddUser(t, testUserRepo)
-		})
-		t.Run("userRepo.UpdateUser", func(t *testing.T) {
-			testUpdateUser(t, testUserRepo)
-		})
-		t.Run("userRepo.GetUserById", func(t *testing.T) {
-			t.Fail()
-		})
-		t.Run("userRepo.GetUserByPrimaryContact", func(t *testing.T) {
-			t.Fail()
-		})
+	// functionality tests
+	t.Run("userRepo.AddUser", func(t *testing.T) {
+		_testAddUser(t, userRepo)
+	})
+	t.Run("userRepo.UpdateUser", func(t *testing.T) {
+		_testUpdateUser(t, userRepo)
+	})
+	t.Run("userRepo.GetUserById", func(t *testing.T) {
+		_testGetUserById(t, userRepo)
+	})
+	t.Run("userRepo.GetUserByPrimaryContact", func(t *testing.T) {
+		t.Fail()
+	})
 
-		// cleanup
-		client.Database(testUserRepo.dbName).Collection(testUserRepo.collectionName).Drop(context.TODO())
-	} else {
-		t.Skip(SKIP_MONGO_TESTS_MESSAGE)
-	}
 }
 
-func testAddUser(t *testing.T, userRepo *userRepo) {
+func _testAddUser(t *testing.T, userRepo *userRepo) {
 	createdById := "test1"
 
 	err := userRepo.AddUser(context.TODO(), &testUser1, createdById)
@@ -84,7 +61,7 @@ func testAddUser(t *testing.T, userRepo *userRepo) {
 	}
 }
 
-func testUpdateUser(t *testing.T, userRepo *userRepo) {
+func _testUpdateUser(t *testing.T, userRepo *userRepo) {
 	preUpdateDate := time.Now().UTC()
 	newPasswordHash := "another secure password hash"
 	newSalt := "change password = change salt"
@@ -106,5 +83,16 @@ func testUpdateUser(t *testing.T, userRepo *userRepo) {
 	}
 	if retreivedUser.Salt != newSalt {
 		t.Error("salt did not update.", retreivedUser.Salt, newSalt)
+	}
+}
+
+func _testGetUserById(t *testing.T, userRepo *userRepo) {
+	userId := testUser2.Id
+	retreivedUser, err := userRepo.GetUserById(context.TODO(), userId)
+	if err != nil {
+		t.Error("error getting user with id", userId, err)
+	}
+	if retreivedUser.PasswordHash != testUser2.PasswordHash || retreivedUser.Salt != testUser2.Salt {
+		t.Error("retreivedUser should have same data as user with id tested", retreivedUser, testUser2)
 	}
 }

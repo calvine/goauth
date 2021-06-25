@@ -8,6 +8,23 @@ import (
 	goautherrors "github.com/calvine/goauth/core/errors"
 )
 
+func TestNullableBoolGetPointerCopy(t *testing.T) {
+	nb := NullableBool{}
+	nb.Set(true)
+	nbCopy := nb.GetPointerCopy()
+	if *nbCopy != nb.Value {
+		t.Error("nbCopy value should be the same as nb Value", nb, nbCopy)
+	}
+	if &nb.Value == nbCopy {
+		t.Error("the address of nb.Value and nbCopy should be different", &nb.Value, &nbCopy)
+	}
+	nb.Unset()
+	nbCopy = nb.GetPointerCopy()
+	if nbCopy != nil {
+		t.Error("nbCopy should be nil because nb HasValue is false", nb, nbCopy)
+	}
+}
+
 func TestNullableBoolSetUnset(t *testing.T) {
 	nb := NullableBool{}
 	testValue := true

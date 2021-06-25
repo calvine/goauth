@@ -16,6 +16,16 @@ type NullableBool struct {
 	Value    bool
 }
 
+// GetPointerCopy
+func (nb *NullableBool) GetPointerCopy() *bool {
+	if nb.HasValue {
+		b := nb.Value
+		return &b
+	} else {
+		return nil
+	}
+}
+
 func (nb *NullableBool) Set(value bool) {
 	nb.HasValue = true
 	nb.Value = value
