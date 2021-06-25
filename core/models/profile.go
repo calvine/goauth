@@ -8,8 +8,8 @@ import (
 
 // Profile represents personal profile data for a given user.
 type Profile struct {
-	ID          string                  `bson:"id"`
-	UserID      string                  `bson:"userId"`
+	Id          string                  `bson:"-"`
+	UserId      string                  `bson:"-"`
 	FirstName   nullable.NullableString `bson:"firstName"`
 	MiddleName  nullable.NullableString `bson:"middleName"`
 	LastName    nullable.NullableString `bson:"lastName"`

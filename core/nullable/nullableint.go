@@ -6,27 +6,28 @@ import (
 
 	"github.com/calvine/goauth/core/errors"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsontype"
 )
 
 const defaultIntValue = int(0)
 
 type NullableInt struct {
-	IsNull bool
-	Value  int
+	HasValue bool
+	Value    int
 }
 
 func (ni *NullableInt) Set(value int) {
-	ni.IsNull = false
+	ni.HasValue = true
 	ni.Value = value
 }
 
 func (ni *NullableInt) Unset() {
-	ni.IsNull = true
+	ni.HasValue = false
 	ni.Value = defaultIntValue
 }
 
 func (ni *NullableInt) MarshalJSON() ([]byte, error) {
-	if ni.IsNull {
+	if !ni.HasValue {
 		return []byte("null"), nil
 	}
 	return json.Marshal(ni.Value)
@@ -34,13 +35,13 @@ func (ni *NullableInt) MarshalJSON() ([]byte, error) {
 
 func (ni *NullableInt) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" {
-		ni.IsNull = true
+		ni.HasValue = false
 		ni.Value = 0
 		return nil
 	}
 	var value int
 	err := json.Unmarshal(data, &value)
-	ni.IsNull = err != nil
+	ni.HasValue = err == nil
 	ni.Value = value
 	return err
 }
@@ -48,15 +49,15 @@ func (ni *NullableInt) UnmarshalJSON(data []byte) error {
 func (ni *NullableInt) Scan(value interface{}) error {
 	switch t := value.(type) {
 	case nil:
-		ni.IsNull = true
+		ni.HasValue = false
 		ni.Value = 0
 		return nil
 	case int:
-		ni.IsNull = false
+		ni.HasValue = true
 		ni.Value = t
 		return nil
 	default:
-		ni.IsNull = true
+		ni.HasValue = false
 		ni.Value = 0
 		err := errors.WrongTypeError{
 			Actual:   fmt.Sprintf("%T", t),
@@ -66,18 +67,20 @@ func (ni *NullableInt) Scan(value interface{}) error {
 	}
 }
 
-func (ni *NullableInt) MarshalBSON() ([]byte, error) {
-	if ni.IsNull {
-		return nil, nil
+func (ni *NullableInt) MarshalBSONValue() (bsontype.Type, []byte, error) {
+	if !ni.HasValue {
+		// make temp pointer with null value to marshal
+		var i *int
+		return bson.MarshalValue(i)
 	}
-	return bson.Marshal(ni.Value)
+	return bson.MarshalValue(ni.Value)
 }
 
-func (ni *NullableInt) UnmarshalBSON(data []byte) error {
+func (ni *NullableInt) UnmarshalBSONValue(btype bsontype.Type, data []byte) error {
 	// TODO: need to handle null value of data...
 	var value int
 	err := bson.Unmarshal(data, &value)
-	ni.IsNull = err != nil
+	ni.HasValue = err == nil
 	ni.Value = value
 	return err
 }

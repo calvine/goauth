@@ -6,16 +6,19 @@ import (
 	"time"
 
 	"github.com/calvine/goauth/core/models"
+	repoModels "github.com/calvine/goauth/dataaccess/mongo/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
-	ErrUserNotFound = errors.New("unable to find user with given id")
+	ErrUserNotFound          = errors.New("unable to find user with given id")
+	ErrFailedToParseObjectId = errors.New("failed to parse object id")
 
 	ProjUserOnly = bson.M{
-		"id":                             1,
+		"_id":                            1,
 		"password":                       1,
 		"salt":                           1,
 		"consecutiveFailedLoginAttempts": 1,
@@ -34,12 +37,21 @@ func NewUserRepo(client *mongo.Client) *userRepo {
 	return &userRepo{client, DB_NAME, USER_COLLECTION}
 }
 
+func NewUserRepoWithNames(client *mongo.Client, dbName, collectionName string) *userRepo {
+	return &userRepo{client, dbName, collectionName}
+}
+
 func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, error) {
-	var user models.User
+	var repoUser repoModels.RepoUser
 	options := options.FindOneOptions{
 		Projection: ProjUserOnly,
 	}
-	err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, bson.M{"userId": id}, &options).Decode(&user)
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return repoUser.ToCoreUser(), err
+	}
+	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, bson.M{"userId": oid}, &options).Decode(&repoUser)
+	user := repoUser.ToCoreUser()
 	if err != nil {
 		return user, err
 	}
@@ -50,16 +62,12 @@ func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, err
 }
 
 func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactPrincipalType, contactPrincipal string) (models.User, error) {
-	var user models.User
+	var repoUser repoModels.RepoUser
 	options := options.FindOneOptions{
 		Projection: ProjUserOnly,
 	}
-	result := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, bson.M{}, &options)
-	err := result.Err()
-	if err != nil {
-		return user, err
-	}
-	err = result.Decode(&user)
+	err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, bson.M{}, &options).Decode(&repoUser)
+	user := repoUser.ToCoreUser()
 	if err != nil {
 		return user, err
 	}
@@ -67,22 +75,41 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactPrincipal
 }
 
 func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdById string) error {
-	_, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).InsertOne(ctx, user, nil)
+	user.AuditData.CreatedById = createdById
+	user.AuditData.CreatedOnDate = time.Now().UTC()
+	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).InsertOne(ctx, user, nil)
 	if err != nil {
 		return err
 	}
+	oid, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return ErrFailedToParseObjectId
+	}
+	user.Id = oid.Hex()
 	return nil
 }
 
 func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedById string) error {
-	user.ModifiedByID.Set(modifiedById)
-	user.ModifiedOnDate.Set(time.Now().UTC())
-	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(ctx, bson.M{}, user)
+	user.AuditData.ModifiedByID.Set(modifiedById)
+	user.AuditData.ModifiedOnDate.Set(time.Now().UTC())
+	repoUser, err := repoModels.CoreUser(*user).ToRepoUser()
+	if err != nil {
+		return err
+	}
+	filter := bson.M{
+		"_id": bson.M{
+			"$eq": repoUser.ObjectId,
+		},
+	}
+	update := bson.M{
+		"$set": bson.M{},
+	}
+	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
 	if result.ModifiedCount == 0 {
 		return ErrUserNotFound
-	}
-	if err != nil {
-		return nil
 	}
 	return nil
 }

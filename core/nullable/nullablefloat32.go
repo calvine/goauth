@@ -6,27 +6,28 @@ import (
 
 	"github.com/calvine/goauth/core/errors"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsontype"
 )
 
 const defaultFloat32Value = float32(0)
 
 type NullableFloat32 struct {
-	IsNull bool
-	Value  float32
+	HasValue bool
+	Value    float32
 }
 
 func (nf *NullableFloat32) Set(value float32) {
-	nf.IsNull = false
+	nf.HasValue = true
 	nf.Value = value
 }
 
 func (nf *NullableFloat32) Unset() {
-	nf.IsNull = true
+	nf.HasValue = false
 	nf.Value = defaultFloat32Value
 }
 
 func (nf *NullableFloat32) MarshalJSON() ([]byte, error) {
-	if nf.IsNull {
+	if !nf.HasValue {
 		return []byte("null"), nil
 	}
 	return json.Marshal(nf.Value)
@@ -34,13 +35,13 @@ func (nf *NullableFloat32) MarshalJSON() ([]byte, error) {
 
 func (nf *NullableFloat32) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" {
-		nf.IsNull = true
+		nf.HasValue = false
 		nf.Value = 0
 		return nil
 	}
 	var value float32
 	err := json.Unmarshal(data, &value)
-	nf.IsNull = err != nil
+	nf.HasValue = err == nil
 	nf.Value = value
 	return err
 }
@@ -48,15 +49,15 @@ func (nf *NullableFloat32) UnmarshalJSON(data []byte) error {
 func (nf *NullableFloat32) Scan(value interface{}) error {
 	switch t := value.(type) {
 	case nil:
-		nf.IsNull = true
+		nf.HasValue = false
 		nf.Value = 0
 		return nil
 	case float32:
-		nf.IsNull = false
+		nf.HasValue = true
 		nf.Value = t
 		return nil
 	default:
-		nf.IsNull = true
+		nf.HasValue = false
 		nf.Value = 0
 		err := errors.WrongTypeError{
 			Actual:   fmt.Sprintf("%T", t),
@@ -66,18 +67,20 @@ func (nf *NullableFloat32) Scan(value interface{}) error {
 	}
 }
 
-func (nf *NullableFloat32) MarshalBSON() ([]byte, error) {
-	if nf.IsNull {
-		return nil, nil
+func (nf *NullableFloat32) MarshalBSONValue() (bsontype.Type, []byte, error) {
+	if !nf.HasValue {
+		// make temp pointer with null value to marshal
+		var f *float32
+		return bson.MarshalValue(f)
 	}
-	return bson.Marshal(nf.Value)
+	return bson.MarshalValue(nf.Value)
 }
 
-func (nf *NullableFloat32) UnmarshalBSON(data []byte) error {
+func (nf *NullableFloat32) UnmarshalBSONValue(btype bsontype.Type, data []byte) error {
 	// TODO: need to handle null value of data...
 	var value float32
 	err := bson.Unmarshal(data, &value)
-	nf.IsNull = err != nil
+	nf.HasValue = err == nil
 	nf.Value = value
 	return err
 }

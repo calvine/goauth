@@ -6,27 +6,28 @@ import (
 
 	"github.com/calvine/goauth/core/errors"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsontype"
 )
 
 var defaultTimeValue = time.Time{}
 
 type NullableTime struct {
-	IsNull bool
-	Value  time.Time
+	HasValue bool
+	Value    time.Time
 }
 
 func (nt *NullableTime) Set(value time.Time) {
-	nt.IsNull = false
+	nt.HasValue = true
 	nt.Value = value
 }
 
 func (nt *NullableTime) Unset() {
-	nt.IsNull = true
+	nt.HasValue = false
 	nt.Value = defaultTimeValue
 }
 
 func (nt *NullableTime) MarshalJSON() ([]byte, error) {
-	if nt.IsNull {
+	if !nt.HasValue {
 		return []byte("null"), nil
 	}
 	return nt.Value.MarshalJSON()
@@ -34,13 +35,13 @@ func (nt *NullableTime) MarshalJSON() ([]byte, error) {
 
 func (nt *NullableTime) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" {
-		nt.IsNull = true
+		nt.HasValue = false
 		nt.Value = time.Time{}
 		return nil
 	}
 	var value time.Time
 	err := value.UnmarshalJSON(data)
-	nt.IsNull = err != nil
+	nt.HasValue = err == nil
 	nt.Value = value
 	return err
 }
@@ -49,15 +50,15 @@ func (nt *NullableTime) Scan(value interface{}) error {
 	// TODO: How is time sent from the database? Do we need a type switch case? Does it vary by database?
 	switch t := value.(type) {
 	case nil:
-		nt.IsNull = true
+		nt.HasValue = false
 		nt.Value = time.Time{}
 		return nil
 	case time.Time:
-		nt.IsNull = false
+		nt.HasValue = true
 		nt.Value = t
 		return nil
 	default:
-		nt.IsNull = true
+		nt.HasValue = false
 		nt.Value = time.Time{}
 		err := errors.WrongTypeError{
 			Actual:   fmt.Sprintf("%T", t),
@@ -67,18 +68,20 @@ func (nt *NullableTime) Scan(value interface{}) error {
 	}
 }
 
-func (nt *NullableTime) MarshalBSON() ([]byte, error) {
-	if nt.IsNull {
-		return nil, nil
+func (nt *NullableTime) MarshalBSONValue() (bsontype.Type, []byte, error) {
+	if !nt.HasValue {
+		// make temp pointer with null value to marshal
+		var t *time.Time
+		return bson.MarshalValue(t)
 	}
-	return bson.Marshal(nt.Value)
+	return bson.MarshalValue(nt.Value)
 }
 
-func (nt *NullableTime) UnmarshalBSON(data []byte) error {
+func (nt *NullableTime) UnmarshalBSONValue(btype bsontype.Type, data []byte) error {
 	// TODO: need to handle null value of data...
 	var value time.Time
 	err := bson.Unmarshal(data, &value)
-	nt.IsNull = err != nil
+	nt.HasValue = err == nil
 	nt.Value = value
 	return err
 }

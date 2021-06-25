@@ -12,11 +12,11 @@ func TestNullableBoolSetUnset(t *testing.T) {
 	nb := NullableBool{}
 	testValue := true
 	nb.Set(testValue)
-	if nb.IsNull != false || !nb.Value {
+	if nb.HasValue != true || !nb.Value {
 		t.Error("nullable struct in invalid state after Set call", nb)
 	}
 	nb.Unset()
-	if !nb.IsNull || nb.Value != defaultBoolValue {
+	if nb.HasValue || nb.Value != defaultBoolValue {
 		t.Error("nullable struct in invalid state after Unset call", nb)
 	}
 }
@@ -27,7 +27,7 @@ func TestNullableBoolScan(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to scan nil into NullableBool", err, ns)
 	}
-	if ns.Value != false || ns.IsNull != true {
+	if ns.Value != false || ns.HasValue != false {
 		t.Error("Nullable Bool has wrong value after scanning nil", ns)
 	}
 	testValue := true
@@ -35,7 +35,7 @@ func TestNullableBoolScan(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to scan nil into NullableBool", err, ns)
 	}
-	if ns.Value != testValue || ns.IsNull != false {
+	if ns.Value != testValue || ns.HasValue != true {
 		errMsg := fmt.Sprintf("Nullable Bool has wrong value after scanning %v", testValue)
 		t.Error(errMsg, ns)
 	}
@@ -45,7 +45,7 @@ func TestNullableBoolScan(t *testing.T) {
 	if !errors.As(err, emptyErr) {
 		t.Error("Expected error to be of type WrongTypeError", err)
 	}
-	if ns.Value != false || ns.IsNull != true {
+	if ns.Value != false || ns.HasValue != false {
 		errMsg := fmt.Sprintf("Nullable Bool has wrong value after scanning %d", testNumber)
 		t.Error(errMsg, ns)
 	}
@@ -53,8 +53,8 @@ func TestNullableBoolScan(t *testing.T) {
 
 func TestNullableBoolMarshalJson(t *testing.T) {
 	ns := NullableBool{
-		Value:  false,
-		IsNull: true,
+		Value:    false,
+		HasValue: false,
 	}
 	data, err := ns.MarshalJSON()
 	if err != nil {
@@ -64,8 +64,8 @@ func TestNullableBoolMarshalJson(t *testing.T) {
 		t.Error("data from marshal was not null when underlaying nullable Bool was nil", data)
 	}
 	ns = NullableBool{
-		Value:  false,
-		IsNull: false,
+		Value:    false,
+		HasValue: true,
 	}
 	data, err = ns.MarshalJSON()
 	if err != nil {
@@ -83,7 +83,7 @@ func TestNullableBoolUnmarshalJson(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to unmarshal null", err)
 	}
-	if ns.IsNull != true || ns.Value != false {
+	if ns.HasValue != false || ns.Value != false {
 		t.Error("Unmarshaling null should result in a nullable Bool with an empty value and is null being true", ns)
 	}
 	testString = "true"
@@ -91,7 +91,7 @@ func TestNullableBoolUnmarshalJson(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to unmarshal \"Test\"", err)
 	}
-	if ns.IsNull != false || ns.Value != true {
+	if ns.HasValue != true || ns.Value != true {
 		t.Error("Unmarshaling 1.2 should result in a nullable Bool with a value of 1.2 and is null being false", ns)
 	}
 	testString = "11"
@@ -99,7 +99,7 @@ func TestNullableBoolUnmarshalJson(t *testing.T) {
 	if err == nil {
 		t.Error("expected an error", err)
 	}
-	if ns.IsNull != true || ns.Value != false {
+	if ns.HasValue != false || ns.Value != false {
 		t.Error("Unmarshaling false should result in a nullable Bool with an empty value and is null being true", ns)
 	}
 }

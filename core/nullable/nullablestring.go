@@ -6,27 +6,28 @@ import (
 
 	"github.com/calvine/goauth/core/errors"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsontype"
 )
 
 const defaultStringValue = ""
 
 type NullableString struct {
-	IsNull bool
-	Value  string
+	HasValue bool
+	Value    string
 }
 
 func (ns *NullableString) Set(value string) {
-	ns.IsNull = false
+	ns.HasValue = true
 	ns.Value = value
 }
 
 func (ns *NullableString) Unset() {
-	ns.IsNull = true
+	ns.HasValue = false
 	ns.Value = defaultStringValue
 }
 
 func (ns *NullableString) MarshalJSON() ([]byte, error) {
-	if ns.IsNull {
+	if !ns.HasValue {
 		return []byte("null"), nil
 	}
 	return json.Marshal(ns.Value)
@@ -35,13 +36,13 @@ func (ns *NullableString) MarshalJSON() ([]byte, error) {
 func (ns *NullableString) UnmarshalJSON(data []byte) error {
 	// TODO: Is there a need here to make sure data is a quoted string?
 	if string(data) == "null" {
-		ns.IsNull = true
+		ns.HasValue = false
 		ns.Value = ""
 		return nil
 	}
 	var value string
 	err := json.Unmarshal(data, &value)
-	ns.IsNull = err != nil
+	ns.HasValue = err == nil
 	ns.Value = value
 	return err
 }
@@ -49,15 +50,15 @@ func (ns *NullableString) UnmarshalJSON(data []byte) error {
 func (ns *NullableString) Scan(value interface{}) error {
 	switch t := value.(type) {
 	case nil:
-		ns.IsNull = true
+		ns.HasValue = false
 		ns.Value = ""
 		return nil
 	case string:
-		ns.IsNull = false
+		ns.HasValue = true
 		ns.Value = t
 		return nil
 	default:
-		ns.IsNull = true
+		ns.HasValue = false
 		ns.Value = ""
 		err := errors.WrongTypeError{
 			Actual:   fmt.Sprintf("%T", t),
@@ -67,19 +68,21 @@ func (ns *NullableString) Scan(value interface{}) error {
 	}
 }
 
-func (ns *NullableString) MarshalBSON() ([]byte, error) {
-	if ns.IsNull {
-		return nil, nil
+func (ns *NullableString) MarshalBSONValue() (bsontype.Type, []byte, error) {
+	if !ns.HasValue {
+		// make temp pointer with null value to marshal
+		var s *string
+		return bson.MarshalValue(s)
 	}
-	return bson.Marshal(ns.Value)
+	return bson.MarshalValue(ns.Value)
 }
 
-func (ns *NullableString) UnmarshalBSON(data []byte) error {
+func (ns *NullableString) UnmarshalBSONValue(btype bsontype.Type, data []byte) error {
 	// TODO: need to handle null value of data...
 	// TODO: Is there a need here to make sure data is a quoted string?
 	var value string
 	err := bson.Unmarshal(data, &value)
-	ns.IsNull = err != nil
+	ns.HasValue = err == nil
 	ns.Value = value
 	return err
 }

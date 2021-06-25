@@ -12,11 +12,11 @@ func TestNullableIntSetUnset(t *testing.T) {
 	ni := NullableInt{}
 	testValue := int(1)
 	ni.Set(testValue)
-	if ni.IsNull != false || ni.Value != testValue {
+	if ni.HasValue != true || ni.Value != testValue {
 		t.Error("nullable struct in invalid state after Set call", ni)
 	}
 	ni.Unset()
-	if !ni.IsNull || ni.Value != defaultIntValue {
+	if ni.HasValue || ni.Value != defaultIntValue {
 		t.Error("nullable struct in invalid state after Unset call", ni)
 	}
 }
@@ -27,7 +27,7 @@ func TestNullableIntScan(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to scan nil into NullableInt", err, ns)
 	}
-	if ns.Value != 0 || ns.IsNull != true {
+	if ns.Value != 0 || ns.HasValue != false {
 		t.Error("Nullable int has wrong value after scanning nil", ns)
 	}
 	testValue := 2
@@ -35,7 +35,7 @@ func TestNullableIntScan(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to scan nil into NullableInt", err, ns)
 	}
-	if ns.Value != testValue || ns.IsNull != false {
+	if ns.Value != testValue || ns.HasValue != true {
 		errMsg := fmt.Sprintf("Nullable int has wrong value after scanning %v", testValue)
 		t.Error(errMsg, ns)
 	}
@@ -45,7 +45,7 @@ func TestNullableIntScan(t *testing.T) {
 	if !errors.As(err, emptyErr) {
 		t.Error("Expected error to be of type WrongTypeError", err)
 	}
-	if ns.Value != 0 || ns.IsNull != true {
+	if ns.Value != 0 || ns.HasValue != false {
 		errMsg := fmt.Sprintf("Nullable int has wrong value after scanning %v", testString)
 		t.Error(errMsg, ns)
 	}
@@ -53,8 +53,8 @@ func TestNullableIntScan(t *testing.T) {
 
 func TestNullableIntMarshalJson(t *testing.T) {
 	ns := NullableInt{
-		Value:  0,
-		IsNull: true,
+		Value:    0,
+		HasValue: false,
 	}
 	data, err := ns.MarshalJSON()
 	if err != nil {
@@ -64,8 +64,8 @@ func TestNullableIntMarshalJson(t *testing.T) {
 		t.Error("data from marshal was not null when underlaying nullable int was nil", data)
 	}
 	ns = NullableInt{
-		Value:  -2,
-		IsNull: false,
+		Value:    -2,
+		HasValue: true,
 	}
 	data, err = ns.MarshalJSON()
 	if err != nil {
@@ -83,7 +83,7 @@ func TestNullableIntUnmarshalJson(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to unmarshal null", err)
 	}
-	if ns.IsNull != true || ns.Value != 0 {
+	if ns.HasValue != false || ns.Value != 0 {
 		t.Error("Unmarshaling null should result in a nullable int with an empty value and is null being true", ns)
 	}
 	testString = "5"
@@ -91,7 +91,7 @@ func TestNullableIntUnmarshalJson(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to unmarshal \"Test\"", err)
 	}
-	if ns.IsNull != false || ns.Value != 5 {
+	if ns.HasValue != true || ns.Value != 5 {
 		t.Error("Unmarshaling 1.2 should result in a nullable int with a value of 1.2 and is null being false", ns)
 	}
 	testString = "false"
@@ -99,7 +99,7 @@ func TestNullableIntUnmarshalJson(t *testing.T) {
 	if err == nil {
 		t.Error("expected an error", err)
 	}
-	if ns.IsNull != true || ns.Value != 0 {
+	if ns.HasValue != false || ns.Value != 0 {
 		t.Error("Unmarshaling false should result in a nullable int with an empty value and is null being true", ns)
 	}
 }

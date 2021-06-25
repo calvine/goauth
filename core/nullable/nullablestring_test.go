@@ -12,11 +12,11 @@ func TestNullableStringSetUnset(t *testing.T) {
 	ns := NullableString{}
 	testValue := "Hello Test"
 	ns.Set(testValue)
-	if ns.IsNull != false || ns.Value != testValue {
+	if ns.HasValue != true || ns.Value != testValue {
 		t.Error("nullable struct in invalid state after Set call", ns)
 	}
 	ns.Unset()
-	if !ns.IsNull || ns.Value != defaultStringValue {
+	if ns.HasValue || ns.Value != defaultStringValue {
 		t.Error("nullable struct in invalid state after Unset call", ns)
 	}
 }
@@ -27,7 +27,7 @@ func TestNullableStringScan(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to scan nil into NullableString", err, ns)
 	}
-	if ns.Value != "" || ns.IsNull != true {
+	if ns.Value != "" || ns.HasValue != false {
 		t.Error("Nullable string has wrong value after scanning nil", ns)
 	}
 	testString := "Test"
@@ -35,7 +35,7 @@ func TestNullableStringScan(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to scan nil into NullableString", err, ns)
 	}
-	if ns.Value != testString || ns.IsNull != false {
+	if ns.Value != testString || ns.HasValue != true {
 		errMsg := fmt.Sprintf("Nullable string has wrong value after scanning %s", testString)
 		t.Error(errMsg, ns)
 	}
@@ -45,7 +45,7 @@ func TestNullableStringScan(t *testing.T) {
 	if !errors.As(err, emptyErr) {
 		t.Error("Expected error to be of type WrongTypeError", err)
 	}
-	if ns.Value != "" || ns.IsNull != true {
+	if ns.Value != "" || ns.HasValue != false {
 		errMsg := fmt.Sprintf("Nullable string has wrong value after scanning %d", testNumber)
 		t.Error(errMsg, ns)
 	}
@@ -53,8 +53,8 @@ func TestNullableStringScan(t *testing.T) {
 
 func TestNullableStringMarshalJson(t *testing.T) {
 	ns := NullableString{
-		Value:  "",
-		IsNull: true,
+		Value:    "",
+		HasValue: false,
 	}
 	data, err := ns.MarshalJSON()
 	if err != nil {
@@ -64,8 +64,8 @@ func TestNullableStringMarshalJson(t *testing.T) {
 		t.Error("data from marshal was not null when underlaying nullable string was nil", data)
 	}
 	ns = NullableString{
-		Value:  "Test",
-		IsNull: false,
+		Value:    "Test",
+		HasValue: true,
 	}
 	data, err = ns.MarshalJSON()
 	if err != nil {
@@ -83,7 +83,7 @@ func TestNullableStringUnmarshalJson(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to unmarshal null", err)
 	}
-	if ns.IsNull != true || ns.Value != "" {
+	if ns.HasValue != false || ns.Value != "" {
 		t.Error("Unmarshaling null should result in a nullable string with an empty value and is null being true", ns)
 	}
 	testString = "\"Test\""
@@ -91,7 +91,7 @@ func TestNullableStringUnmarshalJson(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to unmarshal \"Test\"", err)
 	}
-	if ns.IsNull != false || ns.Value != "Test" {
+	if ns.HasValue != true || ns.Value != "Test" {
 		t.Error("Unmarshaling \"Test\" should result in a nullable string with a value of Test and is null being false", ns)
 	}
 	testString = "3"
@@ -99,7 +99,7 @@ func TestNullableStringUnmarshalJson(t *testing.T) {
 	if err == nil {
 		t.Error("expected a WrongTypeError", err)
 	}
-	if ns.IsNull != true || ns.Value != "" {
+	if ns.HasValue != false || ns.Value != "" {
 		t.Error("Unmarshaling 3 should result in a nullable string with an empty value and is null being true", ns)
 	}
 }

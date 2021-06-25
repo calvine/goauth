@@ -6,8 +6,8 @@ import (
 
 // Address is a physical address.
 type Address struct {
-	ID         string                  `bson:"id"`
-	UserID     string                  `bson:"userId"`
+	Id         string                  `bson:"-"`
+	UserID     string                  `bson:"-"`
 	Name       nullable.NullableString `bson:"name"`
 	Line1      string                  `bson:"line1"`
 	Line2      nullable.NullableString `bson:"line2"`

@@ -21,11 +21,11 @@ func TestNullableTimeSetUnset(t *testing.T) {
 		t.Error("error occurred while parsing time string for test.", err)
 	}
 	ns.Set(testValue)
-	if ns.IsNull != false || ns.Value != testValue {
+	if ns.HasValue != true || ns.Value != testValue {
 		t.Error("nullable struct in invalid state after Set call", ns)
 	}
 	ns.Unset()
-	if !ns.IsNull || ns.Value != defaultTimeValue {
+	if ns.HasValue || ns.Value != defaultTimeValue {
 		t.Error("nullable struct in invalid state after Unset call", ns)
 	}
 }
@@ -36,7 +36,7 @@ func TestNullableTimeScan(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to scan nil into NullableTime", err, ns)
 	}
-	if ns.Value != emptyTime || ns.IsNull != true {
+	if ns.Value != emptyTime || ns.HasValue != false {
 		t.Error("Nullable time has wrong value after scanning nil", ns)
 	}
 	testValue, err := time.Parse(time.RFC3339, testTimeString)
@@ -47,7 +47,7 @@ func TestNullableTimeScan(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to scan nil into NullableTime", err, ns)
 	}
-	if ns.Value != testValue || ns.IsNull != false {
+	if ns.Value != testValue || ns.HasValue != true {
 		errMsg := fmt.Sprintf("Nullable time has wrong value after scanning %v", testValue)
 		t.Error(errMsg, ns)
 	}
@@ -57,7 +57,7 @@ func TestNullableTimeScan(t *testing.T) {
 	if !errors.As(err, emptyErr) {
 		t.Error("Expected error to be of type WrongTypeError", err)
 	}
-	if ns.Value != emptyTime || ns.IsNull != true {
+	if ns.Value != emptyTime || ns.HasValue != false {
 		errMsg := fmt.Sprintf("Nullable time has wrong value after scanning %v", testString)
 		t.Error(errMsg, ns)
 	}
@@ -65,8 +65,8 @@ func TestNullableTimeScan(t *testing.T) {
 
 func TestNullableTimeMarshalJson(t *testing.T) {
 	ns := NullableTime{
-		Value:  emptyTime,
-		IsNull: true,
+		Value:    emptyTime,
+		HasValue: false,
 	}
 	data, err := ns.MarshalJSON()
 	if err != nil {
@@ -80,8 +80,8 @@ func TestNullableTimeMarshalJson(t *testing.T) {
 		t.Error("error occurred while parsing time string for test.", err)
 	}
 	ns = NullableTime{
-		Value:  testValue,
-		IsNull: false,
+		Value:    testValue,
+		HasValue: true,
 	}
 	data, err = ns.MarshalJSON()
 	if err != nil {
@@ -99,7 +99,7 @@ func TestNullableTimeUnmarshalJson(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to unmarshal null", err)
 	}
-	if ns.IsNull != true || ns.Value != emptyTime {
+	if ns.HasValue != false || ns.Value != emptyTime {
 		t.Error("Unmarshaling null should result in a nullable time with an empty value and is null being true", ns)
 	}
 	testTime, err := time.Parse(time.RFC3339, testTimeString)
@@ -111,7 +111,7 @@ func TestNullableTimeUnmarshalJson(t *testing.T) {
 	if err != nil {
 		t.Error("Failed to unmarshal", testString, err)
 	}
-	if ns.IsNull != false || !ns.Value.Equal(testTime) {
+	if ns.HasValue != true || !ns.Value.Equal(testTime) {
 		t.Error("Unmarshaling 1.2 should result in a nullable time with a value of 1.2 and is null being false", ns, testTime)
 	}
 	testString = "false"
@@ -119,7 +119,7 @@ func TestNullableTimeUnmarshalJson(t *testing.T) {
 	if err == nil {
 		t.Error("expected an error", err)
 	}
-	if ns.IsNull != true || ns.Value != emptyTime {
+	if ns.HasValue != false || ns.Value != emptyTime {
 		t.Error("unmarshaling false should result in a nullable time with an empty value and is null being true", ns)
 	}
 }
@@ -137,7 +137,7 @@ func TestNullableTimeUnmarshalJsonPayload(t *testing.T) {
 	if err != nil {
 		t.Error("failed to parse test time for test", err)
 	}
-	if testReceiver.TestValue.IsNull || !testReceiver.TestValue.Value.Equal(testTime) {
+	if !testReceiver.TestValue.HasValue || !testReceiver.TestValue.Value.Equal(testTime) {
 		t.Error("testRecevier TestValue is not equal to testTime", testReceiver, testTime)
 	}
 }

@@ -6,27 +6,28 @@ import (
 
 	"github.com/calvine/goauth/core/errors"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsontype"
 )
 
 const defaultBoolValue = false
 
 type NullableBool struct {
-	IsNull bool
-	Value  bool
+	HasValue bool
+	Value    bool
 }
 
 func (nb *NullableBool) Set(value bool) {
-	nb.IsNull = false
+	nb.HasValue = true
 	nb.Value = value
 }
 
 func (nb *NullableBool) Unset() {
-	nb.IsNull = true
+	nb.HasValue = false
 	nb.Value = defaultBoolValue
 }
 
 func (nb *NullableBool) MarshalJSON() ([]byte, error) {
-	if nb.IsNull {
+	if !nb.HasValue {
 		return []byte("null"), nil
 	}
 	return json.Marshal(nb.Value)
@@ -34,13 +35,13 @@ func (nb *NullableBool) MarshalJSON() ([]byte, error) {
 
 func (nb *NullableBool) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" {
-		nb.IsNull = true
+		nb.HasValue = false
 		nb.Value = false
 		return nil
 	}
 	var value bool
 	err := json.Unmarshal(data, &value)
-	nb.IsNull = err != nil
+	nb.HasValue = err == nil
 	nb.Value = value
 	return err
 }
@@ -48,15 +49,15 @@ func (nb *NullableBool) UnmarshalJSON(data []byte) error {
 func (nb *NullableBool) Scan(value interface{}) error {
 	switch t := value.(type) {
 	case nil:
-		nb.IsNull = true
+		nb.HasValue = false
 		nb.Value = false
 		return nil
 	case bool:
-		nb.IsNull = false
+		nb.HasValue = true
 		nb.Value = t
 		return nil
 	default:
-		nb.IsNull = true
+		nb.HasValue = false
 		nb.Value = false
 		err := errors.WrongTypeError{
 			Actual:   fmt.Sprintf("%T", t),
@@ -66,18 +67,20 @@ func (nb *NullableBool) Scan(value interface{}) error {
 	}
 }
 
-func (nb *NullableBool) MarshalBSON() ([]byte, error) {
-	if nb.IsNull {
-		return nil, nil
+func (nb *NullableBool) MarshalBSONValue() (bsontype.Type, []byte, error) {
+	if !nb.HasValue {
+		// make temp pointer with null value to marshal
+		var b *bool
+		return bson.MarshalValue(b)
 	}
-	return bson.Marshal(nb.Value)
+	return bson.MarshalValue(nb.Value)
 }
 
-func (nb *NullableBool) UnmarshalBSON(data []byte) error {
+func (nb *NullableBool) UnmarshalBSONValue(btype bsontype.Type, data []byte) error {
 	// TODO: need to handle null value of data...
 	var value bool
 	err := bson.Unmarshal(data, &value)
-	nb.IsNull = err != nil
+	nb.HasValue = err == nil
 	nb.Value = value
 	return err
 }
