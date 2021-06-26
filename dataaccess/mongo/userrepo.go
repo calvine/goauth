@@ -14,6 +14,8 @@ import (
 )
 
 var (
+	emptyUser = models.User{}
+
 	ErrUserNotFound          = errors.New("unable to find user with given id")
 	ErrFailedToParseObjectId = errors.New("failed to parse object id")
 
@@ -27,6 +29,7 @@ var (
 	}
 )
 
+// userRepo is the repository struct for the user side of mongo db access. since other models related to users are embedded it makes sense (at least right now) to use a single struct for the related repository interfaces.
 type userRepo struct {
 	mongoClient    *mongo.Client
 	dbName         string
@@ -55,18 +58,24 @@ func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, err
 	if err != nil {
 		return user, err
 	}
-	if (user == models.User{}) {
+	if user == emptyUser {
 		return user, ErrUserNotFound
 	}
 	return user, nil
 }
 
-func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactPrincipalType, contactPrincipal string) (models.User, error) {
+func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, error) {
 	var repoUser repoModels.RepoUser
 	options := options.FindOneOptions{
 		Projection: ProjUserOnly,
 	}
-	err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, bson.M{}, &options).Decode(&repoUser)
+	filter := bson.M{
+		"$and": bson.A{
+			bson.M{"contacts.type": contactType},
+			bson.M{"contact.principal": contactPrincipal},
+		},
+	}
+	err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&repoUser)
 	user := repoUser.ToCoreUser()
 	if err != nil {
 		return user, err

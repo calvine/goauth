@@ -6,7 +6,7 @@ import (
 
 // Contact is a model that represents a contact method for a user like phone or email.
 type Contact struct {
-	Id               string                  `bson:"-"`
+	Id               string                  `bson:"id"`
 	UserId           string                  `bson:"-"`
 	Name             nullable.NullableString `bson:"name"`
 	Principal        string                  `bson:"principal"`
