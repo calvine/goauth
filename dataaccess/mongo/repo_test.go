@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/calvine/goauth/core"
+	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/utilities"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -13,6 +15,17 @@ import (
 
 var (
 	testUserRepo *userRepo
+
+	initialTestUser = models.User{
+		PasswordHash: "passwordhash2",
+		Salt:         "salt2",
+	}
+
+	initialTestContact = models.Contact{
+		IsPrimary: true,
+		Principal: "InitialTestUser@email.com",
+		Type:      core.CONTACT_TYPE_EMAIL,
+	}
 )
 
 const (
@@ -27,8 +40,8 @@ var (
 )
 
 func TestMongoRepos(t *testing.T) {
-
 	_, exists := os.LookupEnv(ENV_RUN_MONGO_TESTS)
+	// TODO: remove ! so this chek works properly
 	if !exists {
 		// setup code for mongo user repo tests.
 		connectionString := utilities.GetEnv(ENV_MONGO_TEST_CONNECTION_STRING, DEFAULT_TEST_MONGO_CONNECTION_STRING)
@@ -42,7 +55,9 @@ func TestMongoRepos(t *testing.T) {
 			t.Error("failed to ping mongo server before test", err)
 		}
 		testUserRepo = NewUserRepoWithNames(client, "test_goauth", USER_COLLECTION)
+		setupTestData(t, testUserRepo)
 
+		// functionality tests
 		t.Run("userRepo", func(t *testing.T) {
 			testMongoUserRepo(t, testUserRepo)
 		})
@@ -51,5 +66,20 @@ func TestMongoRepos(t *testing.T) {
 		client.Database(testUserRepo.dbName).Collection(testUserRepo.collectionName).Drop(context.TODO())
 	} else {
 		t.Skip(SKIP_MONGO_TESTS_MESSAGE)
+	}
+}
+
+func setupTestData(t *testing.T, userRepo *userRepo) {
+	createdById := "test setup"
+	// add a test user
+	err := userRepo.AddUser(context.TODO(), &initialTestUser, createdById)
+	if err != nil {
+		t.Error("setup failed to add user to database", err)
+	}
+	initialTestContact.UserId = initialTestUser.Id
+	// add a test contact for the test user.
+	err = userRepo.AddContact(context.TODO(), &initialTestContact, createdById)
+	if err != nil {
+		t.Error("setup failed to add contact to database", err)
 	}
 }

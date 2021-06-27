@@ -70,9 +70,10 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, con
 		Projection: ProjUserOnly,
 	}
 	filter := bson.M{
-		"$and": bson.A{
-			bson.M{"contacts.type": contactType},
-			bson.M{"contact.principal": contactPrincipal},
+		"contacts.$elemMatch": bson.D{
+			{"isPrimary", true},
+			{"type", contactType},
+			{"principal", contactPrincipal},
 		},
 	}
 	err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&repoUser)

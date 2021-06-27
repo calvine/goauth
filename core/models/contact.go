@@ -14,5 +14,5 @@ type Contact struct {
 	IsPrimary        bool                    `bson:"isPrimary"`
 	ConfirmationCode nullable.NullableString `bson:"confirmCode"`
 	ConfirmedDate    nullable.NullableTime   `bson:"confirmedDate"`
-	auditable
+	AuditData        auditable               `bson:",inline"`
 }

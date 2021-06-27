@@ -14,11 +14,6 @@ var (
 		PasswordHash: "passwordhash1",
 		Salt:         "salt1",
 	}
-	testUser2 = models.User{
-		Id:           "uniqueId2",
-		PasswordHash: "passwordhash2",
-		Salt:         "salt2",
-	}
 )
 
 func testMongoUserRepo(t *testing.T, userRepo *userRepo) {
@@ -49,16 +44,6 @@ func _testAddUser(t *testing.T, userRepo *userRepo) {
 	if testUser1.AuditData.CreatedById != createdById {
 		t.Error("failed to set the users CreatedByID to the right value", testUser1.AuditData.CreatedById, createdById)
 	}
-
-	createdById = "test2"
-
-	err = userRepo.AddUser(context.TODO(), &testUser2, createdById)
-	if err != nil {
-		t.Error("failed to add user to database", err)
-	}
-	if testUser2.AuditData.CreatedById != createdById {
-		t.Error("failed to set the users CreatedByID to the right value", testUser2.AuditData.CreatedById, createdById)
-	}
 }
 
 func _testUpdateUser(t *testing.T, userRepo *userRepo) {
@@ -87,12 +72,12 @@ func _testUpdateUser(t *testing.T, userRepo *userRepo) {
 }
 
 func _testGetUserById(t *testing.T, userRepo *userRepo) {
-	userId := testUser2.Id
+	userId := initialTestUser.Id
 	retreivedUser, err := userRepo.GetUserById(context.TODO(), userId)
 	if err != nil {
 		t.Error("error getting user with id", userId, err)
 	}
-	if retreivedUser.PasswordHash != testUser2.PasswordHash || retreivedUser.Salt != testUser2.Salt {
-		t.Error("retreivedUser should have same data as user with id tested", retreivedUser, testUser2)
+	if retreivedUser.PasswordHash != initialTestUser.PasswordHash || retreivedUser.Salt != initialTestUser.Salt {
+		t.Error("retreivedUser should have same data as user with id tested", retreivedUser, initialTestUser)
 	}
 }
