@@ -59,7 +59,9 @@ func (ur *userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string
 // TODO: finish implementing
 
 func (ur *userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]models.Contact, error) {
-	var contacts []models.Contact
+	var receiver struct {
+		Contacts []models.Contact `bson:"contacts"`
+	}
 	options := options.FindOneOptions{
 		Projection: bson.D{
 			{Key: "contacts", Value: 1},
@@ -67,15 +69,15 @@ func (ur *userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]m
 	}
 	oid, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
-		return contacts, ErrFailedToParseObjectId
+		return nil, ErrFailedToParseObjectId
 	}
 	filter := bson.M{"_id": oid}
-	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&contacts)
+	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
 
 	if err != nil {
-		return contacts, err
+		return nil, err
 	}
-	return contacts, nil
+	return receiver.Contacts, nil
 }
 
 func (ur *userRepo) GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, error) {
