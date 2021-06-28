@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/models"
 )
 
@@ -17,7 +18,6 @@ var (
 )
 
 func testMongoUserRepo(t *testing.T, userRepo *userRepo) {
-
 	// functionality tests
 	t.Run("userRepo.AddUser", func(t *testing.T) {
 		_testAddUser(t, userRepo)
@@ -29,7 +29,7 @@ func testMongoUserRepo(t *testing.T, userRepo *userRepo) {
 		_testGetUserById(t, userRepo)
 	})
 	t.Run("userRepo.GetUserByPrimaryContact", func(t *testing.T) {
-		t.Fail()
+		_testGetUserByPrimaryContact(t, userRepo)
 	})
 
 }
@@ -79,5 +79,16 @@ func _testGetUserById(t *testing.T, userRepo *userRepo) {
 	}
 	if retreivedUser.PasswordHash != initialTestUser.PasswordHash || retreivedUser.Salt != initialTestUser.Salt {
 		t.Error("retreivedUser should have same data as user with id tested", retreivedUser, initialTestUser)
+	}
+}
+
+func _testGetUserByPrimaryContact(t *testing.T, userRepo *userRepo) {
+	contactType, principal := core.CONTACT_TYPE_EMAIL, "InitialTestUser@email.com"
+	retreivedUser, err := userRepo.GetUserByPrimaryContact(context.TODO(), contactType, principal)
+	if err != nil {
+		t.Error("failed to retreive user via primary contact info", contactType, principal, err)
+	}
+	if retreivedUser.Id != initialTestUser.Id {
+		t.Error("expected retreivedUser and initialTestUser Id to match", retreivedUser.Id, initialTestUser.Id)
 	}
 }

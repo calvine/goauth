@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/calvine/goauth/core/models"
@@ -15,24 +14,26 @@ var (
 	emptyContact = models.Contact{}
 
 	ProjContactOnly = bson.M{
-		"id":            1,
-		"name":          1,
-		"principal":     1,
-		"type":          1,
-		"isPrimary":     1,
-		"confirmCode":   1,
-		"confirmedDate": 1,
+		"id":               1,
+		"name":             1,
+		"principal":        1,
+		"type":             1,
+		"isPrimary":        1,
+		"confirmationCode": 1,
+		"confirmedDate":    1,
 	}
 )
 
 func (ur *userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string) (models.Contact, error) {
 	var contact models.Contact
 	options := options.FindOneOptions{
-		Projection: ProjContactOnly,
+		Projection: bson.D{
+			{Key: "contacts.$", Value: 1},
+		},
 	}
 	oid, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
-		return contact, err
+		return contact, ErrFailedToParseObjectId
 	}
 	filter := bson.M{
 		"$and": bson.A{
@@ -56,11 +57,13 @@ func (ur *userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string
 func (ur *userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]models.Contact, error) {
 	var contacts []models.Contact
 	options := options.FindOneOptions{
-		Projection: ProjContactOnly,
+		Projection: bson.D{
+			{Key: "contacts", Value: 1},
+		},
 	}
 	oid, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
-		return contacts, err
+		return contacts, ErrFailedToParseObjectId
 	}
 	filter := bson.M{"_id": oid}
 	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&contacts)
@@ -74,9 +77,26 @@ func (ur *userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]m
 	return contacts, nil
 }
 
-// func (ur *userRepo) GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, error) {
-
-// }
+func (ur *userRepo) GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, error) {
+	var receiver struct {
+		id      primitive.ObjectID `bson:"_id"`
+		contact models.Contact     `bson:"contacts"`
+	}
+	options := options.FindOneOptions{
+		Projection: bson.D{
+			{Key: " _id", Value: 1},
+			{Key: "contacts.$", Value: 1},
+		},
+	}
+	filter := bson.M{
+		"contacts.confirmationCode": confirmationCode,
+	}
+	err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
+	if err != nil {
+		return emptyContact, err
+	}
+	return receiver.contact, nil
+}
 
 func (ur *userRepo) AddContact(ctx context.Context, contact *models.Contact, createdById string) error {
 	contact.AuditData.CreatedById = createdById
@@ -84,12 +104,11 @@ func (ur *userRepo) AddContact(ctx context.Context, contact *models.Contact, cre
 	contact.Id = "new id / uuid?"
 	oid, err := primitive.ObjectIDFromHex(contact.UserId)
 	if err != nil {
-		// TODO: specific error here?
-		return err
+		return ErrFailedToParseObjectId
 	}
 	update := bson.M{
-		"$push": bson.D{
-			{"contacts", contact},
+		"$push": bson.M{
+			"contacts": contact,
 		},
 	}
 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateByID(ctx, oid, update) //(ctx, contact, nil)
@@ -97,8 +116,7 @@ func (ur *userRepo) AddContact(ctx context.Context, contact *models.Contact, cre
 		return err
 	}
 	if result.ModifiedCount != 1 {
-		// TODO: add specfic error here.
-		return errors.New("no document updated")
+		return ErrUserNotFound
 	}
 	return nil
 }

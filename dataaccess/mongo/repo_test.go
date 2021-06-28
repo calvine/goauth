@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/models"
+	"github.com/calvine/goauth/core/nullable"
 	"github.com/calvine/goauth/core/utilities"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -17,14 +19,16 @@ var (
 	testUserRepo *userRepo
 
 	initialTestUser = models.User{
-		PasswordHash: "passwordhash2",
-		Salt:         "salt2",
+		PasswordHash:  "passwordhash2",
+		Salt:          "salt2",
+		LastLoginDate: nullable.NullableTime{HasValue: true, Value: time.Now().UTC()},
 	}
 
 	initialTestContact = models.Contact{
-		IsPrimary: true,
-		Principal: "InitialTestUser@email.com",
-		Type:      core.CONTACT_TYPE_EMAIL,
+		ConfirmationCode: nullable.NullableString{HasValue: true, Value: "abc123"},
+		IsPrimary:        true,
+		Principal:        "InitialTestUser@email.com",
+		Type:             core.CONTACT_TYPE_EMAIL,
 	}
 )
 

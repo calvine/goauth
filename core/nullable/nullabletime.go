@@ -6,6 +6,7 @@ import (
 
 	coreErrors "github.com/calvine/goauth/core/errors"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 )
 
@@ -90,7 +91,9 @@ func (nt *NullableTime) MarshalBSONValue() (bsontype.Type, []byte, error) {
 func (nt *NullableTime) UnmarshalBSONValue(btype bsontype.Type, data []byte) error {
 	// TODO: need to handle null value of data...
 	var value time.Time
-	err := bson.Unmarshal(data, &value)
+	// TODO: figure out a way to prevent depencency on primitive package?
+	dc := bsoncodec.DecodeContext{}
+	err := bson.UnmarshalWithContext(dc, data, &value)
 	nt.HasValue = err == nil
 	nt.Value = value
 	return nil

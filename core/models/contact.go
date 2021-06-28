@@ -12,7 +12,7 @@ type Contact struct {
 	Principal        string                  `bson:"principal"`
 	Type             string                  `bson:"type"`
 	IsPrimary        bool                    `bson:"isPrimary"`
-	ConfirmationCode nullable.NullableString `bson:"confirmCode"`
+	ConfirmationCode nullable.NullableString `bson:"confirmationCode"`
 	ConfirmedDate    nullable.NullableTime   `bson:"confirmedDate"`
 	AuditData        auditable               `bson:",inline"`
 }

@@ -25,7 +25,7 @@ var (
 		"salt":                           1,
 		"consecutiveFailedLoginAttempts": 1,
 		"lockedOutUntil":                 1,
-		"LastLoginDate":                  1,
+		"lastLoginDate":                  1,
 	}
 )
 
@@ -70,10 +70,14 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, con
 		Projection: ProjUserOnly,
 	}
 	filter := bson.M{
-		"contacts.$elemMatch": bson.D{
-			{"isPrimary", true},
-			{"type", contactType},
-			{"principal", contactPrincipal},
+		"contacts": bson.D{
+			{
+				Key: "$elemMatch", Value: bson.D{
+					{Key: "isPrimary", Value: true},
+					{Key: "type", Value: contactType},
+					{Key: "principal", Value: contactPrincipal},
+				},
+			},
 		},
 	}
 	err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&repoUser)
