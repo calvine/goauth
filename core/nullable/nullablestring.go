@@ -88,11 +88,21 @@ func (ns *NullableString) MarshalBSONValue() (bsontype.Type, []byte, error) {
 }
 
 func (ns *NullableString) UnmarshalBSONValue(btype bsontype.Type, data []byte) error {
-	// TODO: need to handle null value of data...
 	// TODO: Is there a need here to make sure data is a quoted string?
-	var value string
-	err := bson.Unmarshal(data, &value)
-	ns.HasValue = err == nil
-	ns.Value = value
-	return err
+	switch btype {
+	case bsontype.Null:
+		ns.Unset()
+		return nil
+	case bsontype.String:
+		var value string
+		err := bson.Unmarshal(data, &value)
+		if err != nil {
+			return err
+		}
+		ns.HasValue = true
+		ns.Value = value
+		return nil
+	default:
+		return errors.WrongTypeError{Expected: bsontype.Array.String(), Actual: btype.String()}
+	}
 }

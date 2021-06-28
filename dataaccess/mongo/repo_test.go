@@ -59,6 +59,9 @@ func TestMongoRepos(t *testing.T) {
 			t.Error("failed to ping mongo server before test", err)
 		}
 		testUserRepo = NewUserRepoWithNames(client, "test_goauth", USER_COLLECTION)
+		// cleanup previous test data if it exists
+		cleanupTestDatabase(testUserRepo)
+		// set up initial data for testing
 		setupTestData(t, testUserRepo)
 
 		// functionality tests
@@ -66,11 +69,16 @@ func TestMongoRepos(t *testing.T) {
 			testMongoUserRepo(t, testUserRepo)
 		})
 
-		// cleanup
-		client.Database(testUserRepo.dbName).Collection(testUserRepo.collectionName).Drop(context.TODO())
+		t.Run("contactRepo", func(t *testing.T) {
+			testMongoContactRepo(t, testUserRepo)
+		})
 	} else {
 		t.Skip(SKIP_MONGO_TESTS_MESSAGE)
 	}
+}
+
+func cleanupTestDatabase(userRepo *userRepo) error {
+	return userRepo.mongoClient.Database(testUserRepo.dbName).Collection(testUserRepo.collectionName).Drop(context.TODO())
 }
 
 func setupTestData(t *testing.T, userRepo *userRepo) {

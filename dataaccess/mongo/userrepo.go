@@ -53,7 +53,8 @@ func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, err
 	if err != nil {
 		return repoUser.ToCoreUser(), err
 	}
-	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, bson.M{"_id": oid}, &options).Decode(&repoUser)
+	filter := bson.M{"_id": oid}
+	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&repoUser)
 	user := repoUser.ToCoreUser()
 	if err != nil {
 		return user, err

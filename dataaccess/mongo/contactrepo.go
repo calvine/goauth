@@ -25,15 +25,17 @@ var (
 )
 
 func (ur *userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string) (models.Contact, error) {
-	var contact models.Contact
-	options := options.FindOneOptions{
-		Projection: bson.D{
-			{Key: "contacts.$", Value: 1},
-		},
+	var receiver struct {
+		Contacts []models.Contact `bson:"contacts"`
 	}
+	options := options.FindOneOptions{}
+	options.SetProjection(bson.D{
+		{Key: "_id", Value: 0},
+		{Key: "contacts.$", Value: 1},
+	})
 	oid, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
-		return contact, ErrFailedToParseObjectId
+		return emptyContact, ErrFailedToParseObjectId
 	}
 	filter := bson.M{
 		"$and": bson.A{
@@ -41,14 +43,16 @@ func (ur *userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string
 			bson.M{"contacts.isPrimary": true},
 		},
 	}
-	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&contact)
-	contact.UserId = userId
+	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
 	if err != nil {
-		return contact, err
+		return emptyContact, err
 	}
-	if contact == emptyContact {
-		return contact, ErrUserNotFound
+	if len(receiver.Contacts) == 0 {
+		return emptyContact, ErrUserNotFound
 	}
+	// TODO: need to make sure business logic exists to ensure that there is only 1 primary contact...
+	contact := receiver.Contacts[0]
+	contact.UserId = userId
 	return contact, nil
 }
 
@@ -71,9 +75,6 @@ func (ur *userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]m
 	if err != nil {
 		return contacts, err
 	}
-	// if contacts == emptyContact {
-	// 	return contacts, ErrUserNotFound
-	// }
 	return contacts, nil
 }
 

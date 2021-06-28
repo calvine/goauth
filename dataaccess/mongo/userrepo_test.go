@@ -11,7 +11,6 @@ import (
 
 var (
 	testUser1 = models.User{
-		Id:           "uniqueId1",
 		PasswordHash: "passwordhash1",
 		Salt:         "salt1",
 	}
