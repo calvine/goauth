@@ -17,6 +17,21 @@ var (
 		Type:          core.CONTACT_TYPE_EMAIL,
 		ConfirmedDate: nullable.NullableTime{HasValue: true, Value: time.Now().UTC()},
 	}
+
+	newContact2 = models.Contact{
+		Principal:        "frank@app.space",
+		IsPrimary:        false,
+		Type:             core.CONTACT_TYPE_EMAIL,
+		ConfirmationCode: nullable.NullableString{HasValue: true, Value: "test confirmation code"},
+		ConfirmedDate:    nullable.NullableTime{},
+	}
+
+	newContact3 = models.Contact{
+		Principal:     "555-555-5555",
+		IsPrimary:     false,
+		Type:          core.CONTACT_TYPE_MOBILE,
+		ConfirmedDate: nullable.NullableTime{HasValue: true, Value: time.Now().UTC()},
+	}
 )
 
 func testMongoContactRepo(t *testing.T, userRepo *userRepo) {
@@ -43,6 +58,18 @@ func _testAddContact(t *testing.T, userRepo *userRepo) {
 	if err != nil {
 		t.Error("failed to add contact to user", err)
 	}
+
+	newContact2.UserId = testUser1.Id
+	err = userRepo.AddContact(context.TODO(), &newContact2, testUser1.Id)
+	if err != nil {
+		t.Error("failed to add contact to user", err)
+	}
+
+	newContact3.UserId = testUser1.Id
+	err = userRepo.AddContact(context.TODO(), &newContact3, testUser1.Id)
+	if err != nil {
+		t.Error("failed to add contact to user", err)
+	}
 }
 
 func _testGetPrimaryContactByUserId(t *testing.T, userRepo *userRepo) {
@@ -64,11 +91,30 @@ func _testGetPrimaryContactByUserId(t *testing.T, userRepo *userRepo) {
 }
 
 func _testGetContactsByUserId(t *testing.T, userRepo *userRepo) {
-	t.Error("not implemented")
+	userId := testUser1.Id
+	contacts, err := userRepo.GetContactsByUserId(context.TODO(), userId)
+	if err != nil {
+		t.Error("failed to get contacts by user id", userId, err)
+	}
+	if len(contacts) != 3 {
+		t.Error("wrong number of contacts returned", 3, len(contacts))
+	}
 }
 
 func _testGetContactByConfirmationCode(t *testing.T, userRepo *userRepo) {
-	t.Error("not implemented")
+	confirmationCode := newContact2.ConfirmationCode.Value
+	expectedPrincipal := newContact2.Principal
+	expectedIsPrimary := newContact2.IsPrimary
+	contact, err := userRepo.GetContactByConfirmationCode(context.TODO(), confirmationCode)
+	if err != nil {
+		t.Error("failed to get contact by confirmation code", err)
+	}
+	if contact.Principal != expectedPrincipal {
+		t.Error("unexpected value of Principal", expectedPrincipal, contact.Principal)
+	}
+	if contact.IsPrimary != expectedIsPrimary {
+		t.Error("unexpected value of IsPrimary", expectedIsPrimary, contact.IsPrimary)
+	}
 }
 
 func _testUpdateContact(t *testing.T, userRepo *userRepo) {

@@ -20,7 +20,6 @@ func (ru RepoUser) ToCoreUser() models.User {
 }
 
 func (cu CoreUser) ToRepoUser() (RepoUser, error) {
-
 	oid, err := primitive.ObjectIDFromHex(cu.Id)
 	if err != nil {
 		return RepoUser{}, err

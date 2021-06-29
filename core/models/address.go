@@ -4,6 +4,7 @@ import (
 	"github.com/calvine/goauth/core/nullable"
 )
 
+// TODO: Add validator for pre insert / update
 // Address is a physical address.
 type Address struct {
 	Id         string                  `bson:"-"`

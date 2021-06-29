@@ -4,6 +4,7 @@ import (
 	"github.com/calvine/goauth/core/nullable"
 )
 
+// TODO: Add validator for pre insert / update
 // User represents a user in the system.
 type User struct {
 	Id                             string                `bson:"-"`

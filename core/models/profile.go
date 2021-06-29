@@ -6,6 +6,7 @@ import (
 	"github.com/calvine/goauth/core/nullable"
 )
 
+// TODO: Add validator for pre insert / update
 // Profile represents personal profile data for a given user.
 type Profile struct {
 	Id          string                  `bson:"-"`
