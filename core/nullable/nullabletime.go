@@ -97,18 +97,16 @@ func (nt *NullableTime) UnmarshalBSONValue(btype bsontype.Type, data []byte) err
 		// According to mongodb dates are stored a unix timestamps with millisecond resolution per:
 		// https://docs.mongodb.com/manual/reference/bson-types/#date
 		int64Value := binary.LittleEndian.Uint64(data)
-		nt.HasValue = true
 		// Go time.Time has nano second resolution.
 		// Mongo returns the data with millisecons resolution
 		// time.Unix takes seconds so we have to clip off the milliseconds for it to work properly.
-		// TODO: need to get those milliseconds into the second parameter of the time.Unix function
 		unixSeconds := int64Value / uint64(1000)
 		// Get the number of milliseconds from the data from mongo
 		milliSeconds := int64Value % 1000
 		// convert the millisecond component to nano seconds.
 		nanoSeconds := milliSeconds * uint64(time.Millisecond)
 		timeValue := time.Unix(int64(unixSeconds), int64(nanoSeconds)).UTC()
-		nt.Value = timeValue
+		nt.Set(timeValue)
 		return nil
 	default:
 		return coreErrors.WrongTypeError{Expected: bsontype.DateTime.String(), Actual: btype.String()}

@@ -99,8 +99,7 @@ func (ns *NullableString) UnmarshalBSONValue(btype bsontype.Type, data []byte) e
 		if err != nil {
 			return err
 		}
-		ns.HasValue = true
-		ns.Value = value
+		ns.Set(value)
 		return nil
 	default:
 		return errors.WrongTypeError{Expected: bsontype.Array.String(), Actual: btype.String()}

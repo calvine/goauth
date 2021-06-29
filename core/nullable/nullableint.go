@@ -87,10 +87,19 @@ func (ni *NullableInt) MarshalBSONValue() (bsontype.Type, []byte, error) {
 }
 
 func (ni *NullableInt) UnmarshalBSONValue(btype bsontype.Type, data []byte) error {
-	// TODO: need to handle null value of data...
-	var value int
-	err := bson.Unmarshal(data, &value)
-	ni.HasValue = err == nil
-	ni.Value = value
-	return err
+	switch btype {
+	case bsontype.Null:
+		ni.Unset()
+		return nil
+	case bsontype.Int32:
+		var value int
+		err := bson.Unmarshal(data, &value)
+		if err != nil {
+			return err
+		}
+		ni.Set(value)
+		return nil
+	default:
+		return errors.WrongTypeError{Expected: bsontype.Int32.String(), Actual: btype.String()}
+	}
 }
