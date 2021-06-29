@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/calvine/goauth/core/models"
@@ -51,6 +52,10 @@ func (ur *userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string
 	if len(receiver.Contacts) == 0 {
 		return emptyContact, ErrUserNotFound
 	}
+	if len(receiver.Contacts) == 0 {
+		// TODO: implement specific error
+		return emptyContact, errors.New("no contacts fount")
+	}
 	// TODO: need to make sure business logic exists to ensure that there is only 1 primary contact...
 	contact := receiver.Contacts[0].ToCoreContact()
 	contact.UserId = userId
@@ -65,6 +70,7 @@ func (ur *userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]m
 	}
 	options := options.FindOneOptions{
 		Projection: bson.D{
+			{Key: "_id", Value: 0},
 			{Key: "contacts", Value: 1},
 		},
 	}
@@ -85,10 +91,11 @@ func (ur *userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]m
 	return contacts, nil
 }
 
+// TODO: Figure out why decoding confirmation code is failing...
 func (ur *userRepo) GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, error) {
 	var receiver struct {
-		id      primitive.ObjectID     `bson:"_id"`
-		contact repoModels.RepoContact `bson:"contacts"`
+		UserId  primitive.ObjectID       `bson:"_id"`
+		Contact []repoModels.RepoContact `bson:"contacts"`
 	}
 	options := options.FindOneOptions{
 		Projection: bson.D{
@@ -103,7 +110,12 @@ func (ur *userRepo) GetContactByConfirmationCode(ctx context.Context, confirmati
 	if err != nil {
 		return emptyContact, err
 	}
-	return receiver.contact.ToCoreContact(), nil
+	if len(receiver.Contact) == 0 {
+		// TODO: implement specific error
+		return emptyContact, errors.New("no contacts fount")
+	}
+	receiver.Contact[0].UserId = receiver.UserId.Hex()
+	return receiver.Contact[0].ToCoreContact(), nil
 }
 
 func (ur *userRepo) AddContact(ctx context.Context, contact *models.Contact, createdById string) error {
