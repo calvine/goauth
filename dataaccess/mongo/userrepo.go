@@ -124,6 +124,8 @@ func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedBy
 			"consecutiveFailedLoginAttempts": repoUser.ConsecutiveFailedLoginAttempts,
 			"lockedOutUntil":                 repoUser.LockedOutUntil.GetPointerCopy(),
 			"lastLoginDate":                  repoUser.LastLoginDate.GetPointerCopy(),
+			"passwordResetToken":             repoUser.CoreUser.PasswordResetToken,
+			"passwordTokenExpiration":        repoUser.CoreUser.PasswordTokenExpiration,
 			"modifiedById":                   repoUser.AuditData.ModifiedByID.GetPointerCopy(),
 			"modifiedOnDate":                 repoUser.AuditData.ModifiedOnDate.GetPointerCopy(),
 		},
