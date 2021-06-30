@@ -14,13 +14,13 @@ type RepoUser struct {
 
 func (ru RepoUser) ToCoreUser() models.User {
 	oidString := ru.ObjectId.Hex()
-	ru.CoreUser.Id = oidString
+	ru.CoreUser.ID = oidString
 
 	return models.User(ru.CoreUser)
 }
 
 func (cu CoreUser) ToRepoUser() (RepoUser, error) {
-	oid, err := primitive.ObjectIDFromHex(cu.Id)
+	oid, err := primitive.ObjectIDFromHex(cu.ID)
 	if err != nil {
 		return RepoUser{}, err
 	}

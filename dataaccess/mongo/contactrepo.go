@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/calvine/goauth/core/models"
+	"github.com/calvine/goauth/core/nullable"
 	repoModels "github.com/calvine/goauth/dataaccess/mongo/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -58,7 +59,7 @@ func (ur *userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string
 	}
 	// TODO: need to make sure business logic exists to ensure that there is only 1 primary contact...
 	contact := receiver.Contacts[0].ToCoreContact()
-	contact.UserId = userId
+	contact.UserID = userId
 	return contact, nil
 }
 
@@ -85,7 +86,7 @@ func (ur *userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]m
 	}
 	contacts := make([]models.Contact, len(receiver.Contacts))
 	for index, contact := range receiver.Contacts {
-		contact.UserId = userId
+		contact.UserID = userId
 		contacts[index] = contact.ToCoreContact()
 	}
 	return contacts, nil
@@ -114,15 +115,15 @@ func (ur *userRepo) GetContactByConfirmationCode(ctx context.Context, confirmati
 		// TODO: implement specific error
 		return emptyContact, errors.New("no contacts fount")
 	}
-	receiver.Contact[0].UserId = receiver.UserId.Hex()
+	receiver.Contact[0].UserID = receiver.UserId.Hex()
 	return receiver.Contact[0].ToCoreContact(), nil
 }
 
 func (ur *userRepo) AddContact(ctx context.Context, contact *models.Contact, createdById string) error {
-	contact.AuditData.CreatedById = createdById
+	contact.AuditData.CreatedByID = createdById
 	contact.AuditData.CreatedOnDate = time.Now().UTC()
-	contact.Id = primitive.NewObjectID().Hex()
-	oid, err := primitive.ObjectIDFromHex(contact.UserId)
+	contact.ID = primitive.NewObjectID().Hex()
+	oid, err := primitive.ObjectIDFromHex(contact.UserID)
 	if err != nil {
 		return ErrFailedToParseObjectId
 	}
@@ -140,7 +141,7 @@ func (ur *userRepo) AddContact(ctx context.Context, contact *models.Contact, cre
 				{Key: "isPrimary", Value: repoContact.CoreContact.IsPrimary},
 				{Key: "confirmationCode", Value: repoContact.CoreContact.ConfirmationCode.GetPointerCopy()},
 				{Key: "confirmedDate", Value: repoContact.CoreContact.ConfirmedDate.GetPointerCopy()},
-				{Key: "createdById", Value: repoContact.CoreContact.AuditData.CreatedById},
+				{Key: "createdById", Value: repoContact.CoreContact.AuditData.CreatedByID},
 				{Key: "createdOnDate", Value: repoContact.CoreContact.AuditData.CreatedOnDate},
 				{Key: "modifiedById", Value: nil},
 				{Key: "modifiedOnDate", Value: nil},
@@ -157,26 +158,55 @@ func (ur *userRepo) AddContact(ctx context.Context, contact *models.Contact, cre
 	return nil
 }
 
-// func (ur *userRepo) UpdateContact(ctx context.Context, contact *models.Contact, modifiedById string) error {
-// TODO: Use array filters?
-//  contact.AuditData.ModifiedById = modifiedById
-// 	contact.AuditData.ModifiedOnDate = time.Now().UTC()
-// 	contact.Id = "new id / uuid?"
-// 	oid, err := primitive.ObjectIDFromHex(contact.UserId)
-// 	if err != nil {
-// 		// TODO: specific error here?
-// 		return err
-// 	}
-// 	arrayFilters := options.ArrayFilters{
-// 		Filters: bson.A{},
-// 	}
-// 	options := options.UpdateOptions{
-// 		ArrayFilters: &arrayFilters,
-// 		Upsert:       false,
-// 	}
-// 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateByID(ctx, oid, nil, &options) //(ctx, contact, nil)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
+func (ur *userRepo) UpdateContact(ctx context.Context, contact *models.Contact, modifiedById string) error {
+	// TODO: Use array filters?
+	contact.AuditData.ModifiedByID = nullable.NullableString{}
+	contact.AuditData.ModifiedByID.Set(modifiedById)
+	contact.AuditData.ModifiedOnDate = nullable.NullableTime{}
+	contact.AuditData.ModifiedOnDate.Set(time.Now().UTC())
+	contactID, err := primitive.ObjectIDFromHex(contact.ID)
+	if err != nil {
+		// TODO: specific error here?
+		return err
+	}
+	// arrayFilters := options.ArrayFilters{
+	// 	Filters: bson.A{
+	// 		bson.D{
+	// 			{Key: "contacts.id", Value: contactID},
+	// 		},
+	// 	},
+	// }
+	// options := options.UpdateOptions{
+	// ArrayFilters: &arrayFilters,
+	// }
+	oid, err := primitive.ObjectIDFromHex(contact.UserID)
+	if err != nil {
+		// TODO: specific error here?
+		return err
+	}
+	filter := bson.D{
+		{Key: "_id", Value: oid},
+		{Key: "contacts.id", Value: contactID},
+	}
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "contacts.$.name", Value: contact.Name.GetPointerCopy()},
+			{Key: "contacts.$.principal", Value: contact.Principal},
+			{Key: "contacts.$.type", Value: contact.Type},
+			{Key: "contacts.$.isPrimary", Value: contact.IsPrimary},
+			{Key: "contacts.$.confirmationCode", Value: contact.ConfirmationCode.GetPointerCopy()},
+			{Key: "contacts.$.confirmedDate", Value: contact.ConfirmedDate.GetPointerCopy()},
+			{Key: "contacts.$.modifiedById", Value: contact.AuditData.ModifiedByID.GetPointerCopy()},
+			{Key: "contacts.$.modifiedOnDate", Value: contact.AuditData.ModifiedOnDate.GetPointerCopy()},
+		}},
+	}
+	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(ctx, filter, update, nil) //(ctx, contact, nil)
+	if err != nil {
+		return err
+	}
+	if result.ModifiedCount == 0 {
+		// TODO: specific error here?
+		return errors.New("no contact found for user id and contact id")
+	}
+	return nil
+}

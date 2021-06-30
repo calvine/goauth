@@ -40,8 +40,8 @@ func _testAddUser(t *testing.T, userRepo *userRepo) {
 	if err != nil {
 		t.Error("failed to add user to database", err)
 	}
-	if testUser1.AuditData.CreatedById != createdById {
-		t.Error("failed to set the users CreatedByID to the right value", testUser1.AuditData.CreatedById, createdById)
+	if testUser1.AuditData.CreatedByID != createdById {
+		t.Error("failed to set the users CreatedByID to the right value", testUser1.AuditData.CreatedByID, createdById)
 	}
 }
 
@@ -51,14 +51,14 @@ func _testUpdateUser(t *testing.T, userRepo *userRepo) {
 	newSalt := "change password = change salt"
 	testUser1.PasswordHash = newPasswordHash
 	testUser1.Salt = newSalt
-	err := userRepo.UpdateUser(context.TODO(), &testUser1, testUser1.Id)
+	err := userRepo.UpdateUser(context.TODO(), &testUser1, testUser1.ID)
 	if err != nil {
 		t.Error("failed to update user", err)
 	}
 	if !testUser1.AuditData.ModifiedOnDate.Value.After(preUpdateDate) {
 		t.Error("ModifiedOnDate should be after the preUpdate for test", preUpdateDate, testUser1.AuditData.ModifiedOnDate)
 	}
-	retreivedUser, err := userRepo.GetUserById(context.TODO(), testUser1.Id)
+	retreivedUser, err := userRepo.GetUserById(context.TODO(), testUser1.ID)
 	if err != nil {
 		t.Error("failed to retreive updated user to check that fields were updated.", err)
 	}
@@ -71,7 +71,7 @@ func _testUpdateUser(t *testing.T, userRepo *userRepo) {
 }
 
 func _testGetUserById(t *testing.T, userRepo *userRepo) {
-	userId := initialTestUser.Id
+	userId := initialTestUser.ID
 	retreivedUser, err := userRepo.GetUserById(context.TODO(), userId)
 	if err != nil {
 		t.Error("error getting user with id", userId, err)
@@ -87,7 +87,7 @@ func _testGetUserByPrimaryContact(t *testing.T, userRepo *userRepo) {
 	if err != nil {
 		t.Error("failed to retreive user via primary contact info", contactType, principal, err)
 	}
-	if retreivedUser.Id != initialTestUser.Id {
-		t.Error("expected retreivedUser and initialTestUser Id to match", retreivedUser.Id, initialTestUser.Id)
+	if retreivedUser.ID != initialTestUser.ID {
+		t.Error("expected retreivedUser and initialTestUser Id to match", retreivedUser.ID, initialTestUser.ID)
 	}
 }

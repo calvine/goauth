@@ -90,7 +90,7 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, con
 }
 
 func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdById string) error {
-	user.AuditData.CreatedById = createdById
+	user.AuditData.CreatedByID = createdById
 	user.AuditData.CreatedOnDate = time.Now().UTC()
 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).InsertOne(ctx, user, nil)
 	if err != nil {
@@ -100,7 +100,7 @@ func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdById s
 	if !ok {
 		return ErrFailedToParseObjectId
 	}
-	user.Id = oid.Hex()
+	user.ID = oid.Hex()
 	return nil
 }
 

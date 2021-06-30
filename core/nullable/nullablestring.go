@@ -9,7 +9,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 )
 
-const defaultStringValue = ""
+const (
+	stringLengthByteLength = 4
+	defaultStringValue     = ""
+)
 
 type NullableString struct {
 	HasValue bool
@@ -95,10 +98,17 @@ func (ns *NullableString) UnmarshalBSONValue(btype bsontype.Type, data []byte) e
 		return nil
 	case bsontype.String:
 		var value string
-		err := bson.Unmarshal(data, &value)
-		if err != nil {
-			return err
-		}
+		// got some weird errors using bson.Unmarshal here, so coded a solution per the bson spec
+		// https://bsonspec.org/spec.html
+
+		// stringLength := binary.LittleEndian.Uint32(data[:stringLengthByteLength])
+		// fmt.Println(stringLength)
+
+		// start of string data begins after the uint32 string length value.
+		startString := stringLengthByteLength
+		// we want to clip off the null terminator.
+		endString := len(data) - 1
+		value = string(data[startString:endString])
 		ns.Set(value)
 		return nil
 	default:

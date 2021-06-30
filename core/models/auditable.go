@@ -7,7 +7,7 @@ import (
 )
 
 type auditable struct {
-	CreatedById    string                  `bson:"createdById"`
+	CreatedByID    string                  `bson:"createdById"`
 	CreatedOnDate  time.Time               `bson:"createdOnDate"`
 	ModifiedByID   nullable.NullableString `bson:"modifiedById"`
 	ModifiedOnDate nullable.NullableTime   `bson:"modifiedOnDate"`

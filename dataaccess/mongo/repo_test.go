@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -44,9 +45,8 @@ var (
 )
 
 func TestMongoRepos(t *testing.T) {
-	_, exists := os.LookupEnv(ENV_RUN_MONGO_TESTS)
-	// TODO: remove ! so this chek works properly
-	if !exists {
+	value, exists := os.LookupEnv(ENV_RUN_MONGO_TESTS)
+	if exists && strings.ToUpper(value) == "TRUE" {
 		// setup code for mongo user repo tests.
 		connectionString := utilities.GetEnv(ENV_MONGO_TEST_CONNECTION_STRING, DEFAULT_TEST_MONGO_CONNECTION_STRING)
 		client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(connectionString))
@@ -88,7 +88,7 @@ func setupTestData(t *testing.T, userRepo *userRepo) {
 	if err != nil {
 		t.Error("setup failed to add user to database", err)
 	}
-	initialTestContact.UserId = initialTestUser.Id
+	initialTestContact.UserID = initialTestUser.ID
 	// add a test contact for the test user.
 	err = userRepo.AddContact(context.TODO(), &initialTestContact, createdById)
 	if err != nil {

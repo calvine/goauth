@@ -7,7 +7,7 @@ import (
 // TODO: Add validator for pre insert / update
 // User represents a user in the system.
 type User struct {
-	Id                             string                `bson:"-"`
+	ID                             string                `bson:"-"`
 	PasswordHash                   string                `bson:"passwordHash"`
 	Salt                           string                `bson:"salt"`
 	ConsecutiveFailedLoginAttempts int                   `bson:"consecutiveFailedLoginAttempts"`

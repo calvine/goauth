@@ -7,8 +7,8 @@ import (
 // TODO: Add validator for pre insert / update
 // Contact is a model that represents a contact method for a user like phone or email.
 type Contact struct {
-	Id               string                  `bson:"-"`
-	UserId           string                  `bson:"-"`
+	ID               string                  `bson:"-"`
+	UserID           string                  `bson:"-"`
 	Name             nullable.NullableString `bson:"name"`
 	Principal        string                  `bson:"principal"`
 	Type             string                  `bson:"type"`

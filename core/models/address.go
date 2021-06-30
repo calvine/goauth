@@ -7,7 +7,7 @@ import (
 // TODO: Add validator for pre insert / update
 // Address is a physical address.
 type Address struct {
-	Id         string                  `bson:"-"`
+	ID         string                  `bson:"-"`
 	UserID     string                  `bson:"-"`
 	Name       nullable.NullableString `bson:"name"`
 	Line1      string                  `bson:"line1"`

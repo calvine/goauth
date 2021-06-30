@@ -14,13 +14,13 @@ type RepoContact struct {
 
 func (rc RepoContact) ToCoreContact() models.Contact {
 	oidString := rc.ObjectId.Hex()
-	rc.CoreContact.Id = oidString
+	rc.CoreContact.ID = oidString
 
 	return models.Contact(rc.CoreContact)
 }
 
 func (cc CoreContact) ToRepoContact() (RepoContact, error) {
-	oid, err := primitive.ObjectIDFromHex(cc.Id)
+	oid, err := primitive.ObjectIDFromHex(cc.ID)
 	if err != nil {
 		return RepoContact{}, err
 	}
