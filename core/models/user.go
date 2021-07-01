@@ -14,6 +14,6 @@ type User struct {
 	LockedOutUntil                 nullable.NullableTime   `bson:"lockedOutUntil"`
 	LastLoginDate                  nullable.NullableTime   `bson:"lastLoginDate"`
 	PasswordResetToken             nullable.NullableString `bson:"passwordResetToken"`
-	PasswordTokenExpiration        nullable.NullableTime   `bson:"passwordTokenExpiration"`
+	PasswordResetTokenExpiration   nullable.NullableTime   `bson:"passwordResetTokenExpiration"`
 	AuditData                      auditable               `bson:",inline"`
 }

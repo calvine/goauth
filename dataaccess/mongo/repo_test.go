@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/models"
+	"github.com/calvine/goauth/core/normalization"
+
 	"github.com/calvine/goauth/core/nullable"
 	"github.com/calvine/goauth/core/utilities"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -17,7 +18,7 @@ import (
 )
 
 var (
-	testUserRepo *userRepo
+	testUserRepo userRepo
 
 	initialTestUser = models.User{
 		PasswordHash:  "passwordhash2",
@@ -46,7 +47,8 @@ var (
 
 func TestMongoRepos(t *testing.T) {
 	value, exists := os.LookupEnv(ENV_RUN_MONGO_TESTS)
-	if exists && strings.ToUpper(value) == "TRUE" {
+	shouldRun, _ := normalization.ReadBoolValue(value, true)
+	if exists && shouldRun {
 		// setup code for mongo user repo tests.
 		connectionString := utilities.GetEnv(ENV_MONGO_TEST_CONNECTION_STRING, DEFAULT_TEST_MONGO_CONNECTION_STRING)
 		client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(connectionString))
@@ -77,11 +79,11 @@ func TestMongoRepos(t *testing.T) {
 	}
 }
 
-func cleanupTestDatabase(userRepo *userRepo) error {
+func cleanupTestDatabase(userRepo userRepo) error {
 	return userRepo.mongoClient.Database(testUserRepo.dbName).Collection(testUserRepo.collectionName).Drop(context.TODO())
 }
 
-func setupTestData(t *testing.T, userRepo *userRepo) {
+func setupTestData(t *testing.T, userRepo userRepo) {
 	createdById := "test setup"
 	// add a test user
 	err := userRepo.AddUser(context.TODO(), &initialTestUser, createdById)

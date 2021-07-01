@@ -36,15 +36,15 @@ type userRepo struct {
 	collectionName string
 }
 
-func NewUserRepo(client *mongo.Client) *userRepo {
-	return &userRepo{client, DB_NAME, USER_COLLECTION}
+func NewUserRepo(client *mongo.Client) userRepo {
+	return userRepo{client, DB_NAME, USER_COLLECTION}
 }
 
-func NewUserRepoWithNames(client *mongo.Client, dbName, collectionName string) *userRepo {
-	return &userRepo{client, dbName, collectionName}
+func NewUserRepoWithNames(client *mongo.Client, dbName, collectionName string) userRepo {
+	return userRepo{client, dbName, collectionName}
 }
 
-func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, error) {
+func (ur *userRepo) GetUserById(ctx context.Context, id string) (models.User, error) {
 	var repoUser repoModels.RepoUser
 	options := options.FindOneOptions{
 		Projection: ProjUserOnly,
@@ -65,7 +65,7 @@ func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, err
 	return user, nil
 }
 
-func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, error) {
+func (ur *userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, error) {
 	var repoUser repoModels.RepoUser
 	options := options.FindOneOptions{
 		Projection: ProjUserOnly,
@@ -89,7 +89,7 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, con
 	return user, nil
 }
 
-func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdById string) error {
+func (ur *userRepo) AddUser(ctx context.Context, user *models.User, createdById string) error {
 	user.AuditData.CreatedByID = createdById
 	user.AuditData.CreatedOnDate = time.Now().UTC()
 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).InsertOne(ctx, user, nil)
@@ -104,7 +104,7 @@ func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdById s
 	return nil
 }
 
-func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedById string) error {
+func (ur *userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedById string) error {
 	user.AuditData.ModifiedByID.Set(modifiedById)
 	user.AuditData.ModifiedOnDate.Set(time.Now().UTC())
 	repoUser, err := repoModels.CoreUser(*user).ToRepoUser()
@@ -124,8 +124,8 @@ func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedBy
 			"consecutiveFailedLoginAttempts": repoUser.ConsecutiveFailedLoginAttempts,
 			"lockedOutUntil":                 repoUser.LockedOutUntil.GetPointerCopy(),
 			"lastLoginDate":                  repoUser.LastLoginDate.GetPointerCopy(),
-			"passwordResetToken":             repoUser.CoreUser.PasswordResetToken,
-			"passwordTokenExpiration":        repoUser.CoreUser.PasswordTokenExpiration,
+			"passwordResetToken":             repoUser.CoreUser.PasswordResetToken.GetPointerCopy(),
+			"passwordResetTokenExpiration":   repoUser.CoreUser.PasswordResetTokenExpiration.GetPointerCopy(),
 			"modifiedById":                   repoUser.AuditData.ModifiedByID.GetPointerCopy(),
 			"modifiedOnDate":                 repoUser.AuditData.ModifiedOnDate.GetPointerCopy(),
 		},

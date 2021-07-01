@@ -34,7 +34,12 @@ var (
 	}
 )
 
-func testMongoContactRepo(t *testing.T, userRepo *userRepo) {
+// func TestInterface(t *testing.T) {
+// 	cr := NewUserRepo(nil)
+// 	reflect.ValueOf(cr).
+// }
+
+func testMongoContactRepo(t *testing.T, userRepo userRepo) {
 	t.Run("AddContact", func(t *testing.T) {
 		_testAddContact(t, userRepo)
 	})
@@ -52,7 +57,7 @@ func testMongoContactRepo(t *testing.T, userRepo *userRepo) {
 	})
 }
 
-func _testAddContact(t *testing.T, userRepo *userRepo) {
+func _testAddContact(t *testing.T, userRepo userRepo) {
 	newContact1.UserID = testUser1.ID
 	err := userRepo.AddContact(context.TODO(), &newContact1, testUser1.ID)
 	if err != nil {
@@ -72,7 +77,7 @@ func _testAddContact(t *testing.T, userRepo *userRepo) {
 	}
 }
 
-func _testGetPrimaryContactByUserId(t *testing.T, userRepo *userRepo) {
+func _testGetPrimaryContactByUserId(t *testing.T, userRepo userRepo) {
 	userId := testUser1.ID
 	contact, err := userRepo.GetPrimaryContactByUserId(context.TODO(), userId)
 	if err != nil {
@@ -90,7 +95,7 @@ func _testGetPrimaryContactByUserId(t *testing.T, userRepo *userRepo) {
 
 }
 
-func _testGetContactsByUserId(t *testing.T, userRepo *userRepo) {
+func _testGetContactsByUserId(t *testing.T, userRepo userRepo) {
 	userId := testUser1.ID
 	contacts, err := userRepo.GetContactsByUserId(context.TODO(), userId)
 	if err != nil {
@@ -101,7 +106,7 @@ func _testGetContactsByUserId(t *testing.T, userRepo *userRepo) {
 	}
 }
 
-func _testGetContactByConfirmationCode(t *testing.T, userRepo *userRepo) {
+func _testGetContactByConfirmationCode(t *testing.T, userRepo userRepo) {
 	confirmationCode := newContact2.ConfirmationCode.Value
 	expectedPrincipal := newContact2.Principal
 	expectedIsPrimary := newContact2.IsPrimary
@@ -120,7 +125,7 @@ func _testGetContactByConfirmationCode(t *testing.T, userRepo *userRepo) {
 	}
 }
 
-func _testUpdateContact(t *testing.T, userRepo *userRepo) {
+func _testUpdateContact(t *testing.T, userRepo userRepo) {
 	modifiedByID := "test update contact"
 	preUpdateTime := time.Now().UTC()
 	newEmail := "a_different_email@mail.org"

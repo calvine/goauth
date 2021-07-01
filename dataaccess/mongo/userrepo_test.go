@@ -16,7 +16,7 @@ var (
 	}
 )
 
-func testMongoUserRepo(t *testing.T, userRepo *userRepo) {
+func testMongoUserRepo(t *testing.T, userRepo userRepo) {
 	// functionality tests
 	t.Run("userRepo.AddUser", func(t *testing.T) {
 		_testAddUser(t, userRepo)
@@ -33,7 +33,7 @@ func testMongoUserRepo(t *testing.T, userRepo *userRepo) {
 
 }
 
-func _testAddUser(t *testing.T, userRepo *userRepo) {
+func _testAddUser(t *testing.T, userRepo userRepo) {
 	createdById := "test1"
 
 	err := userRepo.AddUser(context.TODO(), &testUser1, createdById)
@@ -45,7 +45,7 @@ func _testAddUser(t *testing.T, userRepo *userRepo) {
 	}
 }
 
-func _testUpdateUser(t *testing.T, userRepo *userRepo) {
+func _testUpdateUser(t *testing.T, userRepo userRepo) {
 	preUpdateDate := time.Now().UTC()
 	newPasswordHash := "another secure password hash"
 	newSalt := "change password = change salt"
@@ -70,7 +70,7 @@ func _testUpdateUser(t *testing.T, userRepo *userRepo) {
 	}
 }
 
-func _testGetUserById(t *testing.T, userRepo *userRepo) {
+func _testGetUserById(t *testing.T, userRepo userRepo) {
 	userId := initialTestUser.ID
 	retreivedUser, err := userRepo.GetUserById(context.TODO(), userId)
 	if err != nil {
@@ -81,7 +81,7 @@ func _testGetUserById(t *testing.T, userRepo *userRepo) {
 	}
 }
 
-func _testGetUserByPrimaryContact(t *testing.T, userRepo *userRepo) {
+func _testGetUserByPrimaryContact(t *testing.T, userRepo userRepo) {
 	contactType, principal := core.CONTACT_TYPE_EMAIL, "InitialTestUser@email.com"
 	retreivedUser, err := userRepo.GetUserByPrimaryContact(context.TODO(), contactType, principal)
 	if err != nil {
