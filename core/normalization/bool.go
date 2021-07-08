@@ -1,8 +1,9 @@
 package normalization
 
 import (
-	"errors"
 	"reflect"
+
+	coreErrors "github.com/calvine/goauth/core/errors"
 )
 
 var (
@@ -46,8 +47,7 @@ func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
 			if defaultToFalse {
 				return false, nil
 			}
-			// TODO: specific error here?
-			return false, errors.New("")
+			return false, coreErrors.NewNilNotAllowedError().WithStach()
 		}
 		return stringToBool(*cv, defaultToFalse)
 	case string:
@@ -57,8 +57,7 @@ func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
 			if defaultToFalse {
 				return false, nil
 			}
-			// TODO: specific error here?
-			return false, errors.New("")
+			return false, coreErrors.NewNilNotAllowedError().WithStach()
 		}
 		value := reflect.ValueOf(cv).Elem().Interface()
 		return intToBool(value, defaultToFalse)
@@ -69,8 +68,7 @@ func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
 			if defaultToFalse {
 				return false, nil
 			}
-			// TODO: specific error here?
-			return false, errors.New("")
+			return false, coreErrors.NewNilNotAllowedError().WithStach()
 		}
 		value := reflect.ValueOf(cv).Elem().Interface()
 		return uintToBool(value, defaultToFalse)
@@ -81,8 +79,7 @@ func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
 			if defaultToFalse {
 				return false, nil
 			}
-			// TODO: specific error here?
-			return false, errors.New("")
+			return false, coreErrors.NewNilNotAllowedError().WithStach()
 		}
 		value := reflect.ValueOf(cv).Elem().Interface()
 		return floatToBool(value, defaultToFalse)
@@ -93,8 +90,7 @@ func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
 			if defaultToFalse {
 				return false, nil
 			}
-			// TODO: specific error here?
-			return false, errors.New("")
+			return false, coreErrors.NewNilNotAllowedError().WithStach()
 		}
 		value := reflect.ValueOf(cv).Elem().Bool()
 		return value, nil
@@ -104,11 +100,9 @@ func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
 		if defaultToFalse {
 			return false, nil
 		}
-		// TODO: specific error here?
-		return false, errors.New("")
+		return false, coreErrors.NewNilNotAllowedError().WithStach()
 	}
-	// TODO: specific error here?
-	return false, errors.New("")
+	return false, coreErrors.NewInvalidTypeError(reflect.TypeOf(v).String())
 }
 
 func stringToBool(value string, defaultToFalse bool) (bool, error) {
@@ -123,8 +117,7 @@ func stringToBool(value string, defaultToFalse bool) (bool, error) {
 	if defaultToFalse {
 		return false, nil
 	}
-	// TODO: specific error here?
-	return false, errors.New("")
+	return false, coreErrors.NewInvalidValueError(value)
 }
 
 func intToBool(value interface{}, defaultToFalse bool) (bool, error) {
@@ -139,8 +132,7 @@ func intToBool(value interface{}, defaultToFalse bool) (bool, error) {
 	if defaultToFalse {
 		return false, nil
 	}
-	// TODO: specific error here?
-	return false, errors.New("")
+	return false, coreErrors.NewInvalidValueError(value)
 }
 
 func uintToBool(value interface{}, defaultToFalse bool) (bool, error) {
@@ -155,8 +147,7 @@ func uintToBool(value interface{}, defaultToFalse bool) (bool, error) {
 	if defaultToFalse {
 		return false, nil
 	}
-	// TODO: specific error here?
-	return false, errors.New("")
+	return false, coreErrors.NewInvalidValueError(value)
 }
 
 func floatToBool(value interface{}, defaultToFalse bool) (bool, error) {
@@ -171,6 +162,5 @@ func floatToBool(value interface{}, defaultToFalse bool) (bool, error) {
 	if defaultToFalse {
 		return false, nil
 	}
-	// TODO: specific error here?
-	return false, errors.New("")
+	return false, coreErrors.NewInvalidValueError(value)
 }

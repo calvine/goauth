@@ -1,11 +1,13 @@
 package errors
 
-import "fmt"
+import (
+	"fmt"
 
-type WrongTypeError struct {
-	Expected, Actual string
-}
+	"github.com/calvine/goauth/core/errors/codes"
+)
 
-func (e WrongTypeError) Error() string {
-	return fmt.Sprintf("Wrong type found: Expected: %s - Actual: %s", e.Expected, e.Actual)
+func NewWrongTypeError(expected, actual string) RichError {
+	msg := fmt.Sprintf("wrong type found: expected: %s - actual: %s", expected, actual)
+	err := NewRichError(codes.ErrCodeWrongType, msg).AddMetaData("expected", expected).AddMetaData("actual", actual)
+	return err
 }
