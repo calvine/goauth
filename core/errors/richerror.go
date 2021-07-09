@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	indentString  = "\t" //""
-	partSeperator = "\n" //" - "
+	indentString  = ""    //"\t" //""
+	partSeperator = " - " //"\n" //" - "
 )
 
 type RichError struct {
@@ -161,7 +161,7 @@ func (e RichError) Error() string {
 	if len(e.MetaData) > 0 {
 		messageBuffer.WriteString("METADATA:")
 		for key, value := range e.MetaData {
-			metaDataMsg := fmt.Sprintf("%s%s%s: %v,", partSeperator, indentString, key, value)
+			metaDataMsg := fmt.Sprintf("%s%s%s: %v", partSeperator, indentString, key, value)
 			messageBuffer.WriteString(metaDataMsg)
 		}
 	}
