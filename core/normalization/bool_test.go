@@ -295,6 +295,9 @@ func TestReadBoolValue(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			value := test.Input
 			b, err := ReadBoolValue(value.Value, value.DefaultToFalse)
+			if err != nil {
+				t.Logf("error returned: %s", err.Error())
+			}
 			if test.ExpectedError && err == nil {
 				t.Error("expected an error to be thrown", test, test.Name)
 			} else if !test.ExpectedError && err != nil {

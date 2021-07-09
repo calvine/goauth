@@ -71,7 +71,7 @@ func (nt *NullableTime) Scan(value interface{}) error {
 	default:
 		nt.HasValue = false
 		nt.Value = time.Time{}
-		err := coreErrors.NewWrongTypeError(fmt.Sprintf("%T", t), "time.Time")
+		err := coreErrors.NewWrongTypeError(fmt.Sprintf("%T", t), "time.Time", true)
 		return err
 	}
 }
@@ -106,6 +106,6 @@ func (nt *NullableTime) UnmarshalBSONValue(btype bsontype.Type, data []byte) err
 		nt.Set(timeValue)
 		return nil
 	default:
-		return coreErrors.NewWrongTypeError(btype.String(), bsontype.DateTime.String())
+		return coreErrors.NewWrongTypeError(btype.String(), bsontype.DateTime.String(), true)
 	}
 }

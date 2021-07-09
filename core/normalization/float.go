@@ -1,8 +1,9 @@
 package normalization
 
 import (
-	"errors"
 	"reflect"
+
+	"github.com/calvine/goauth/core/errors"
 )
 
 func NormalizeFloatValue(intValue interface{}) (float64, error) {
@@ -15,7 +16,6 @@ func NormalizeFloatValue(intValue interface{}) (float64, error) {
 	case float64:
 		return ivt, nil
 	default:
-		// TODO: specific error here?
-		return 0, errors.New("")
+		return 0, errors.NewInvalidTypeError(reflect.TypeOf(intValue).String(), true)
 	}
 }

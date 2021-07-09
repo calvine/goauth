@@ -1,9 +1,10 @@
 package normalization
 
 import (
-	"errors"
 	"reflect"
 	"strings"
+
+	"github.com/calvine/goauth/core/errors"
 )
 
 func NormalizeStringValue(value interface{}) (string, error) {
@@ -17,7 +18,6 @@ func NormalizeStringValue(value interface{}) (string, error) {
 		sValue := string(svt)
 		return strings.ToUpper(sValue), nil
 	default:
-		// TODO: specific error here?
-		return "", errors.New("")
+		return "", errors.NewInvalidTypeError(reflect.TypeOf(value).String(), true)
 	}
 }

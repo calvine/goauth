@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	innerErrorMessageTemplate = " - INNER ERROR #%d: %s"
+	innerErrorMessageTemplate = "%sINNER ERROR #%d: %s\n"
 )
 
 type RichError struct {
@@ -25,36 +25,18 @@ type RichError struct {
 	MetaData    map[string]interface{} `json:"metaData"`
 }
 
-func NewRichError(errCode, message string) RichError {
+func NewRichError(errCode, message string, includeStack bool) RichError {
 	occurredAt := time.Now().UTC()
-	return RichError{
+	err := RichError{
 		ErrCode:    errCode,
 		Message:    message,
 		OccurredAt: occurredAt,
 	}
-}
-
-func NewRichErrorWithData(errCode, message, source, area, location string) RichError {
-	err := NewRichError(errCode, message)
-	err.Source = source
-	err.Area = area
-	err.Location = location
+	if includeStack == true {
+		err = err.WithStack()
+	}
 	return err
-}
 
-func (e RichError) AddSource(source string) RichError {
-	e.Source = source
-	return e
-}
-
-func (e RichError) AddArea(area string) RichError {
-	e.Area = area
-	return e
-}
-
-func (e RichError) AddLocation(location string) RichError {
-	e.Location = location
-	return e
 }
 
 func (e RichError) WithStack() RichError {
@@ -86,6 +68,31 @@ func (e RichError) WithMetaData(metaData map[string]interface{}) RichError {
 	return e
 }
 
+func (e RichError) WithErrors(errs []error) RichError {
+	if errs != nil {
+		if e.InnerErrors == nil {
+			e.InnerErrors = make([]error, len(errs))
+		}
+		e.InnerErrors = append(e.InnerErrors, errs...)
+	}
+	return e
+}
+
+func (e RichError) AddSource(source string) RichError {
+	e.Source = source
+	return e
+}
+
+func (e RichError) AddArea(area string) RichError {
+	e.Area = area
+	return e
+}
+
+func (e RichError) AddLocation(location string) RichError {
+	e.Location = location
+	return e
+}
+
 func (e RichError) AddMetaData(key string, value interface{}) RichError {
 	if e.MetaData == nil {
 		e.MetaData = make(map[string]interface{}, 1)
@@ -104,47 +111,38 @@ func (e RichError) AddError(err error) RichError {
 	return e
 }
 
-func (e RichError) WithErrors(errs []error) RichError {
-	if errs != nil {
-		if e.InnerErrors == nil {
-			e.InnerErrors = make([]error, len(errs))
-		}
-		e.InnerErrors = append(e.InnerErrors, errs...)
-	}
-	return e
-}
-
 func (e RichError) Error() string {
 	timeString := e.OccurredAt.String()
 	var messageBuffer bytes.Buffer
+	messageBuffer.WriteString("TIMESTAMP: ")
 	messageBuffer.WriteString(timeString)
 	if e.Source != "" {
-		sourceSection := fmt.Sprintf(" - SOURCE: %s", e.Source)
+		sourceSection := fmt.Sprintf("\nSOURCE: %s", e.Source)
 		messageBuffer.WriteString(sourceSection)
 	}
 	if e.Area != "" {
-		areaSection := fmt.Sprintf(" - AREA: %s", e.Area)
+		areaSection := fmt.Sprintf("\nAREA: %s", e.Area)
 		messageBuffer.WriteString(areaSection)
 	}
 	if e.Location != "" {
-		locationSection := fmt.Sprintf(" - LOCATION: %s", e.Location)
+		locationSection := fmt.Sprintf("\nLOCATION: %s", e.Location)
 		messageBuffer.WriteString(locationSection)
 	}
 	if e.ErrCode != "" {
-		errCodeSection := fmt.Sprintf(" - ERRCODE: %s", e.ErrCode)
+		errCodeSection := fmt.Sprintf("\nERRCODE: %s", e.ErrCode)
 		messageBuffer.WriteString(errCodeSection)
 	}
 	if e.Message != "" {
-		messageSection := fmt.Sprintf(" - MESSAGE: %s", e.Message)
+		messageSection := fmt.Sprintf("\nMESSAGE: %s", e.Message)
 		messageBuffer.WriteString(messageSection)
 	}
 	if e.Stack != "" {
-		stackSection := fmt.Sprintf(" - STACK: %s", e.Stack)
+		stackSection := fmt.Sprintf("\nSTACK: %s", e.Stack)
 		messageBuffer.WriteString(stackSection)
 	}
 	messageBuffer.WriteString(e.Message)
 	for i, err := range e.InnerErrors {
-		innerErrMessage := fmt.Sprintf(innerErrorMessageTemplate, i, err.Error())
+		innerErrMessage := fmt.Sprintf(innerErrorMessageTemplate, strings.Repeat("\t", i), i+1, err.Error())
 		messageBuffer.WriteString(innerErrMessage)
 	}
 	return messageBuffer.String()

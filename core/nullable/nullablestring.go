@@ -73,7 +73,7 @@ func (ns *NullableString) Scan(value interface{}) error {
 	default:
 		ns.HasValue = false
 		ns.Value = ""
-		err := errors.NewWrongTypeError(fmt.Sprintf("%T", t), "string")
+		err := errors.NewWrongTypeError(fmt.Sprintf("%T", t), "string", true)
 		return err
 	}
 }
@@ -88,7 +88,6 @@ func (ns *NullableString) MarshalBSONValue() (bsontype.Type, []byte, error) {
 }
 
 func (ns *NullableString) UnmarshalBSONValue(btype bsontype.Type, data []byte) error {
-	// TODO: Is there a need here to make sure data is a quoted string?
 	switch btype {
 	case bsontype.Null:
 		ns.Unset()
@@ -109,6 +108,6 @@ func (ns *NullableString) UnmarshalBSONValue(btype bsontype.Type, data []byte) e
 		ns.Set(value)
 		return nil
 	default:
-		return errors.NewWrongTypeError(btype.String(), bsontype.Array.String())
+		return errors.NewWrongTypeError(btype.String(), bsontype.Array.String(), true)
 	}
 }

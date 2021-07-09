@@ -47,7 +47,7 @@ func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
 			if defaultToFalse {
 				return false, nil
 			}
-			return false, coreErrors.NewNilNotAllowedError().WithStack()
+			return false, coreErrors.NewNilNotAllowedError(true)
 		}
 		return stringToBool(*cv, defaultToFalse)
 	case string:
@@ -58,7 +58,7 @@ func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
 			if defaultToFalse {
 				return false, nil
 			}
-			return false, coreErrors.NewNilNotAllowedError().WithStack()
+			return false, coreErrors.NewNilNotAllowedError(true)
 		}
 		value := val.Elem().Interface()
 		return intToBool(value, defaultToFalse)
@@ -70,7 +70,7 @@ func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
 			if defaultToFalse {
 				return false, nil
 			}
-			return false, coreErrors.NewNilNotAllowedError().WithStack()
+			return false, coreErrors.NewNilNotAllowedError(true)
 		}
 		value := val.Elem().Interface()
 		return uintToBool(value, defaultToFalse)
@@ -82,7 +82,7 @@ func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
 			if defaultToFalse {
 				return false, nil
 			}
-			return false, coreErrors.NewNilNotAllowedError().WithStack()
+			return false, coreErrors.NewNilNotAllowedError(true)
 		}
 		value := val.Elem().Interface()
 		return floatToBool(value, defaultToFalse)
@@ -94,7 +94,7 @@ func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
 			if defaultToFalse {
 				return false, nil
 			}
-			return false, coreErrors.NewNilNotAllowedError().WithStack()
+			return false, coreErrors.NewNilNotAllowedError(true)
 		}
 		value := val.Elem().Bool()
 		return value, nil
@@ -104,9 +104,9 @@ func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
 		if defaultToFalse {
 			return false, nil
 		}
-		return false, coreErrors.NewNilNotAllowedError().WithStack()
+		return false, coreErrors.NewNilNotAllowedError(true)
 	}
-	return false, coreErrors.NewInvalidTypeError(reflect.TypeOf(v).String())
+	return false, coreErrors.NewInvalidTypeError(reflect.TypeOf(v).String(), true)
 }
 
 func stringToBool(value string, defaultToFalse bool) (bool, error) {
@@ -121,7 +121,7 @@ func stringToBool(value string, defaultToFalse bool) (bool, error) {
 	if defaultToFalse {
 		return false, nil
 	}
-	return false, coreErrors.NewInvalidValueError(value)
+	return false, coreErrors.NewInvalidValueError(value, true)
 }
 
 func intToBool(value interface{}, defaultToFalse bool) (bool, error) {
@@ -136,7 +136,7 @@ func intToBool(value interface{}, defaultToFalse bool) (bool, error) {
 	if defaultToFalse {
 		return false, nil
 	}
-	return false, coreErrors.NewInvalidValueError(value)
+	return false, coreErrors.NewInvalidValueError(value, true)
 }
 
 func uintToBool(value interface{}, defaultToFalse bool) (bool, error) {
@@ -151,7 +151,7 @@ func uintToBool(value interface{}, defaultToFalse bool) (bool, error) {
 	if defaultToFalse {
 		return false, nil
 	}
-	return false, coreErrors.NewInvalidValueError(value)
+	return false, coreErrors.NewInvalidValueError(value, true)
 }
 
 func floatToBool(value interface{}, defaultToFalse bool) (bool, error) {
@@ -166,5 +166,5 @@ func floatToBool(value interface{}, defaultToFalse bool) (bool, error) {
 	if defaultToFalse {
 		return false, nil
 	}
-	return false, coreErrors.NewInvalidValueError(value)
+	return false, coreErrors.NewInvalidValueError(value, true)
 }

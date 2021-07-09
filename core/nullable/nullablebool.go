@@ -69,7 +69,7 @@ func (nb *NullableBool) Scan(value interface{}) error {
 	default:
 		nb.HasValue = false
 		nb.Value = false
-		err := errors.NewWrongTypeError(fmt.Sprintf("%T", t), "bool")
+		err := errors.NewWrongTypeError(fmt.Sprintf("%T", t), "bool", true)
 		return err
 	}
 }
@@ -97,6 +97,6 @@ func (nb *NullableBool) UnmarshalBSONValue(btype bsontype.Type, data []byte) err
 		nb.Set(value)
 		return nil
 	default:
-		return errors.NewWrongTypeError(btype.String(), bsontype.Boolean.String())
+		return errors.NewWrongTypeError(btype.String(), bsontype.Boolean.String(), true)
 	}
 }

@@ -4,7 +4,8 @@ import (
 	"github.com/calvine/goauth/core/errors/codes"
 )
 
-func NewNilNotAllowedError() RichError {
-	err := NewRichError(codes.ErrCodeNilNotAllowed, "a nil value was encountered, but not allowed")
+func NewNilNotAllowedError(includeStack bool) RichError {
+	msg := "a nil value was encountered, but not allowed"
+	err := NewRichError(codes.ErrCodeNilNotAllowed, msg, includeStack)
 	return err
 }

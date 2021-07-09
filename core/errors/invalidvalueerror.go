@@ -4,7 +4,8 @@ import (
 	"github.com/calvine/goauth/core/errors/codes"
 )
 
-func NewInvalidValueError(value interface{}) RichError {
-	err := NewRichError(codes.ErrCodeInvalidValue, "an invalid value was found.").AddMetaData("value", value)
+func NewInvalidValueError(value interface{}, includeStack bool) RichError {
+	msg := "an invalid value was found."
+	err := NewRichError(codes.ErrCodeInvalidValue, msg, includeStack).AddMetaData("value", value)
 	return err
 }
