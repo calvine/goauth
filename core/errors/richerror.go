@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+var (
+	indentString  = "\t" //""
+	partSeperator = "\n" //" - "
+)
+
 type RichError struct {
 	ErrCode     string                 `json:"code"`
 	Message     string                 `json:"message"`
@@ -21,28 +26,38 @@ type RichError struct {
 	MetaData    map[string]interface{} `json:"metaData"`
 }
 
-func NewRichError(errCode, message string, includeStack bool) RichError {
+func NewRichError(errCode, message string) RichError {
 	occurredAt := time.Now().UTC()
 	err := RichError{
 		ErrCode:    errCode,
 		Message:    message,
 		OccurredAt: occurredAt,
 	}
-	if includeStack {
-		err = err.WithStack()
-	}
 	return err
 
 }
 
-func (e RichError) WithStack() RichError {
+func NewRichErrorWithStack(errCode, message string, stackOffset int) RichError {
+	occurredAt := time.Now().UTC()
+	err := RichError{
+		ErrCode:    errCode,
+		Message:    message,
+		OccurredAt: occurredAt,
+	}
+	err = err.WithStack(stackOffset)
+	return err
+
+}
+
+func (e RichError) WithStack(stackOffset int) RichError {
+	baseStackOffset := 2
 	// Here we initialize the slice to 10 because the runtime.Callers
 	// function will not grow the slice as needed.
 	var callerData []uintptr = make([]uintptr, 10)
 	// Here we use 2 to remove the runtime.Callers call
 	// and the call to the RichError.WithStack call.
 	// This should leave only the relevant stack pieces
-	numFrames := runtime.Callers(2, callerData)
+	numFrames := runtime.Callers(baseStackOffset+stackOffset, callerData)
 	data := runtime.CallersFrames(callerData)
 	stackBuffer := bytes.Buffer{}
 	for i := 0; i < numFrames; i++ {
@@ -52,7 +67,7 @@ func (e RichError) WithStack() RichError {
 			e.Area = nextFrame.Function
 			e.Location = strconv.Itoa(nextFrame.Line)
 		}
-		stackFrame := fmt.Sprintf("%s%v - %s:%d - %s\n", strings.Repeat("\t", i), nextFrame.Entry, nextFrame.File, nextFrame.Line, nextFrame.Function)
+		stackFrame := fmt.Sprintf("%sL:%d %v - %s:%d - %s%s", strings.Repeat(indentString, i), i+1, nextFrame.Entry, nextFrame.File, nextFrame.Line, nextFrame.Function, partSeperator)
 		stackBuffer.WriteString(stackFrame)
 	}
 	e.Stack = string(stackBuffer.String())
@@ -108,10 +123,8 @@ func (e RichError) AddError(err error) RichError {
 }
 
 func (e RichError) Error() string {
-	indentString := "\t"
-	partSeperator := "\n"
 	var messageBuffer bytes.Buffer
-	timeStampMsg := fmt.Sprintf("TIMESTAMP: %s%s", e.OccurredAt.String(), partSeperator)
+	timeStampMsg := fmt.Sprintf("TIMESTAMP: %s", e.OccurredAt.String())
 	messageBuffer.WriteString(timeStampMsg)
 	if e.Source != "" {
 		sourceSection := fmt.Sprintf("%sSOURCE: %s", partSeperator, e.Source)
@@ -138,15 +151,14 @@ func (e RichError) Error() string {
 		messageBuffer.WriteString(stackSection)
 	}
 	if len(e.InnerErrors) > 0 {
-		messageBuffer.WriteString(partSeperator)
 		messageBuffer.WriteString("INNER ERRORS:")
 		for i, err := range e.InnerErrors {
 			innerErrMessage := fmt.Sprintf("%s%sERROR #%d: %s", partSeperator, strings.Repeat(indentString, i+1), i+1, err.Error())
 			messageBuffer.WriteString(innerErrMessage)
 		}
+		messageBuffer.WriteString(partSeperator)
 	}
 	if len(e.MetaData) > 0 {
-		messageBuffer.WriteString(partSeperator)
 		messageBuffer.WriteString("METADATA:")
 		for key, value := range e.MetaData {
 			metaDataMsg := fmt.Sprintf("%s%s%s: %v,", partSeperator, indentString, key, value)
