@@ -69,10 +69,7 @@ func (nf *NullableFloat32) Scan(value interface{}) error {
 	default:
 		nf.HasValue = false
 		nf.Value = 0
-		err := errors.WrongTypeError{
-			Actual:   fmt.Sprintf("%T", t),
-			Expected: "float32",
-		}
+		err := errors.NewWrongTypeError(fmt.Sprintf("%T", t), "float32")
 		return err
 	}
 }
@@ -100,6 +97,6 @@ func (nf *NullableFloat32) UnmarshalBSONValue(btype bsontype.Type, data []byte) 
 		nf.Set(value)
 		return err
 	default:
-		return errors.WrongTypeError{Expected: bsontype.Double.String(), Actual: btype.String()}
+		return errors.NewWrongTypeError(btype.String(), bsontype.Double.String())
 	}
 }

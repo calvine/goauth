@@ -47,52 +47,56 @@ func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
 			if defaultToFalse {
 				return false, nil
 			}
-			return false, coreErrors.NewNilNotAllowedError().WithStach()
+			return false, coreErrors.NewNilNotAllowedError().WithStack()
 		}
 		return stringToBool(*cv, defaultToFalse)
 	case string:
 		return stringToBool(cv, defaultToFalse)
 	case *int8, *int16, *int, *int32, *int64:
-		if cv == nil {
+		val := reflect.ValueOf(cv)
+		if val.IsNil() {
 			if defaultToFalse {
 				return false, nil
 			}
-			return false, coreErrors.NewNilNotAllowedError().WithStach()
+			return false, coreErrors.NewNilNotAllowedError().WithStack()
 		}
-		value := reflect.ValueOf(cv).Elem().Interface()
+		value := val.Elem().Interface()
 		return intToBool(value, defaultToFalse)
 	case int8, int16, int32, int, int64:
 		return intToBool(cv, defaultToFalse)
 	case *uint8, *uint16, *uint32, *uint, *uint64:
-		if cv == nil {
+		val := reflect.ValueOf(cv)
+		if val.IsNil() {
 			if defaultToFalse {
 				return false, nil
 			}
-			return false, coreErrors.NewNilNotAllowedError().WithStach()
+			return false, coreErrors.NewNilNotAllowedError().WithStack()
 		}
-		value := reflect.ValueOf(cv).Elem().Interface()
+		value := val.Elem().Interface()
 		return uintToBool(value, defaultToFalse)
 	case uint8, uint16, uint32, uint, uint64:
 		return uintToBool(cv, defaultToFalse)
 	case *float32, *float64:
-		if cv == nil {
+		val := reflect.ValueOf(cv)
+		if val.IsNil() {
 			if defaultToFalse {
 				return false, nil
 			}
-			return false, coreErrors.NewNilNotAllowedError().WithStach()
+			return false, coreErrors.NewNilNotAllowedError().WithStack()
 		}
-		value := reflect.ValueOf(cv).Elem().Interface()
+		value := val.Elem().Interface()
 		return floatToBool(value, defaultToFalse)
 	case float32, float64:
 		return floatToBool(cv, defaultToFalse)
 	case *bool:
-		if cv == nil {
+		val := reflect.ValueOf(cv)
+		if val.IsNil() {
 			if defaultToFalse {
 				return false, nil
 			}
-			return false, coreErrors.NewNilNotAllowedError().WithStach()
+			return false, coreErrors.NewNilNotAllowedError().WithStack()
 		}
-		value := reflect.ValueOf(cv).Elem().Bool()
+		value := val.Elem().Bool()
 		return value, nil
 	case bool:
 		return cv, nil
@@ -100,7 +104,7 @@ func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
 		if defaultToFalse {
 			return false, nil
 		}
-		return false, coreErrors.NewNilNotAllowedError().WithStach()
+		return false, coreErrors.NewNilNotAllowedError().WithStack()
 	}
 	return false, coreErrors.NewInvalidTypeError(reflect.TypeOf(v).String())
 }

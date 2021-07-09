@@ -1,11 +1,11 @@
 package nullable
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
 	goautherrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/errors/codes"
 )
 
 func TestNullableBoolGetPointerCopy(t *testing.T) {
@@ -58,8 +58,7 @@ func TestNullableBoolScan(t *testing.T) {
 	}
 	testNumber := 3
 	err = ns.Scan(testNumber)
-	emptyErr := &goautherrors.WrongTypeError{}
-	if !errors.As(err, emptyErr) {
+	if err != nil && err.(goautherrors.RichError).ErrCode != codes.ErrCodeWrongType {
 		t.Error("Expected error to be of type WrongTypeError", err)
 	}
 	if ns.Value != false || ns.HasValue != false {

@@ -69,10 +69,7 @@ func (ni *NullableInt) Scan(value interface{}) error {
 	default:
 		ni.HasValue = false
 		ni.Value = 0
-		err := errors.WrongTypeError{
-			Actual:   fmt.Sprintf("%T", t),
-			Expected: "int",
-		}
+		err := errors.NewWrongTypeError(fmt.Sprintf("%T", t), "int")
 		return err
 	}
 }
@@ -100,6 +97,6 @@ func (ni *NullableInt) UnmarshalBSONValue(btype bsontype.Type, data []byte) erro
 		ni.Set(value)
 		return nil
 	default:
-		return errors.WrongTypeError{Expected: bsontype.Int32.String(), Actual: btype.String()}
+		return errors.NewWrongTypeError(btype.String(), bsontype.Int32.String())
 	}
 }

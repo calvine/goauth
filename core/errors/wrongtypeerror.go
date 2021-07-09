@@ -6,8 +6,8 @@ import (
 	"github.com/calvine/goauth/core/errors/codes"
 )
 
-func NewWrongTypeError(expected, actual string) RichError {
-	msg := fmt.Sprintf("wrong type found: expected: %s - actual: %s", expected, actual)
-	err := NewRichError(codes.ErrCodeWrongType, msg).AddMetaData("expected", expected).AddMetaData("actual", actual)
+func NewWrongTypeError(actual, expected string) RichError {
+	msg := fmt.Sprintf("wrong type found: actual: %s - expected: %s", expected, actual)
+	err := NewRichError(codes.ErrCodeWrongType, msg).AddMetaData("actual", actual).AddMetaData("expected", expected)
 	return err
 }

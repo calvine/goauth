@@ -2,12 +2,12 @@ package nullable
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"testing"
 	"time"
 
 	goautherrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/errors/codes"
 )
 
 var emptyTime = time.Time{}
@@ -74,8 +74,7 @@ func TestNullableTimeScan(t *testing.T) {
 	}
 	testString := "abc"
 	err = ns.Scan(testString)
-	emptyErr := &goautherrors.WrongTypeError{}
-	if !errors.As(err, emptyErr) {
+	if err != nil && err.(goautherrors.RichError).ErrCode != codes.ErrCodeWrongType {
 		t.Error("Expected error to be of type WrongTypeError", err)
 	}
 	if ns.Value != emptyTime || ns.HasValue != false {

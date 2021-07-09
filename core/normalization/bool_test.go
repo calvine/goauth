@@ -10,6 +10,11 @@ func TestReadBoolValue(t *testing.T) {
 	testUint8 := uint8(1)
 	testFloat32 := float32(1)
 	testBool := true
+	var testNilString *string
+	var testNilInt8 *int8
+	var testNilUint8 *uint8
+	var testNilFloat32 *float32
+	var testNilBool *bool
 	type testArgs struct {
 		DefaultToFalse bool
 		Value          interface{}
@@ -254,6 +259,36 @@ func TestReadBoolValue(t *testing.T) {
 			Input:          testArgs{false, &testBool},
 			Name:           "testing *bool value of true",
 		},
+		{
+			ExpectedError:  true,
+			ExpectedOutput: false,
+			Input:          testArgs{false, testNilString},
+			Name:           "testing nil *string value of yes",
+		},
+		{
+			ExpectedError:  true,
+			ExpectedOutput: false,
+			Input:          testArgs{false, testNilInt8},
+			Name:           "testing nil *int8 value of 1",
+		},
+		{
+			ExpectedError:  true,
+			ExpectedOutput: false,
+			Input:          testArgs{false, testNilUint8},
+			Name:           "testing nil *uint8 value of 1",
+		},
+		{
+			ExpectedError:  true,
+			ExpectedOutput: false,
+			Input:          testArgs{false, testNilFloat32},
+			Name:           "testing nil *float32 value of 1",
+		},
+		{
+			ExpectedError:  true,
+			ExpectedOutput: false,
+			Input:          testArgs{false, testNilBool},
+			Name:           "testing nil *bool value of true",
+		},
 	}
 
 	for _, test := range testCases {
@@ -262,7 +297,7 @@ func TestReadBoolValue(t *testing.T) {
 			b, err := ReadBoolValue(value.Value, value.DefaultToFalse)
 			if test.ExpectedError && err == nil {
 				t.Error("expected an error to be thrown", test, test.Name)
-			} else if err != nil {
+			} else if !test.ExpectedError && err != nil {
 				t.Error("failed to read value as bool", value, err, test.Name)
 			} else if b != test.ExpectedOutput {
 				t.Error("expected parsed bool value to be true", b, test.Name)
