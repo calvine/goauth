@@ -9,10 +9,6 @@ import (
 	"time"
 )
 
-const (
-	innerErrorMessageTemplate = "%sINNER ERROR #%d: %s\n"
-)
-
 type RichError struct {
 	ErrCode     string                 `json:"code"`
 	Message     string                 `json:"message"`
@@ -32,7 +28,7 @@ func NewRichError(errCode, message string, includeStack bool) RichError {
 		Message:    message,
 		OccurredAt: occurredAt,
 	}
-	if includeStack == true {
+	if includeStack {
 		err = err.WithStack()
 	}
 	return err
@@ -112,38 +108,50 @@ func (e RichError) AddError(err error) RichError {
 }
 
 func (e RichError) Error() string {
-	timeString := e.OccurredAt.String()
+	indentString := "\t"
+	partSeperator := "\n"
 	var messageBuffer bytes.Buffer
-	messageBuffer.WriteString("TIMESTAMP: ")
-	messageBuffer.WriteString(timeString)
+	timeStampMsg := fmt.Sprintf("TIMESTAMP: %s%s", e.OccurredAt.String(), partSeperator)
+	messageBuffer.WriteString(timeStampMsg)
 	if e.Source != "" {
-		sourceSection := fmt.Sprintf("\nSOURCE: %s", e.Source)
+		sourceSection := fmt.Sprintf("%sSOURCE: %s", partSeperator, e.Source)
 		messageBuffer.WriteString(sourceSection)
 	}
 	if e.Area != "" {
-		areaSection := fmt.Sprintf("\nAREA: %s", e.Area)
+		areaSection := fmt.Sprintf("%sAREA: %s", partSeperator, e.Area)
 		messageBuffer.WriteString(areaSection)
 	}
 	if e.Location != "" {
-		locationSection := fmt.Sprintf("\nLOCATION: %s", e.Location)
+		locationSection := fmt.Sprintf("%sLOCATION: %s", partSeperator, e.Location)
 		messageBuffer.WriteString(locationSection)
 	}
 	if e.ErrCode != "" {
-		errCodeSection := fmt.Sprintf("\nERRCODE: %s", e.ErrCode)
+		errCodeSection := fmt.Sprintf("%sERRCODE: %s", partSeperator, e.ErrCode)
 		messageBuffer.WriteString(errCodeSection)
 	}
 	if e.Message != "" {
-		messageSection := fmt.Sprintf("\nMESSAGE: %s", e.Message)
+		messageSection := fmt.Sprintf("%sMESSAGE: %s", partSeperator, e.Message)
 		messageBuffer.WriteString(messageSection)
 	}
 	if e.Stack != "" {
-		stackSection := fmt.Sprintf("\nSTACK: %s", e.Stack)
+		stackSection := fmt.Sprintf("%sSTACK: %s", partSeperator, e.Stack)
 		messageBuffer.WriteString(stackSection)
 	}
-	messageBuffer.WriteString(e.Message)
-	for i, err := range e.InnerErrors {
-		innerErrMessage := fmt.Sprintf(innerErrorMessageTemplate, strings.Repeat("\t", i), i+1, err.Error())
-		messageBuffer.WriteString(innerErrMessage)
+	if len(e.InnerErrors) > 0 {
+		messageBuffer.WriteString(partSeperator)
+		messageBuffer.WriteString("INNER ERRORS:")
+		for i, err := range e.InnerErrors {
+			innerErrMessage := fmt.Sprintf("%s%sERROR #%d: %s", partSeperator, strings.Repeat(indentString, i+1), i+1, err.Error())
+			messageBuffer.WriteString(innerErrMessage)
+		}
+	}
+	if len(e.MetaData) > 0 {
+		messageBuffer.WriteString(partSeperator)
+		messageBuffer.WriteString("METADATA:")
+		for key, value := range e.MetaData {
+			metaDataMsg := fmt.Sprintf("%s%s%s: %v,", partSeperator, indentString, key, value)
+			messageBuffer.WriteString(metaDataMsg)
+		}
 	}
 	return messageBuffer.String()
 }

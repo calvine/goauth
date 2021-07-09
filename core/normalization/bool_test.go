@@ -2,6 +2,7 @@ package normalization
 
 import (
 	"testing"
+	"time"
 )
 
 func TestReadBoolValue(t *testing.T) {
@@ -289,14 +290,20 @@ func TestReadBoolValue(t *testing.T) {
 			Input:          testArgs{false, testNilBool},
 			Name:           "testing nil *bool value of true",
 		},
+		{
+			ExpectedError:  true,
+			ExpectedOutput: false,
+			Input:          testArgs{false, time.Time{}},
+			Name:           "testing nil time.Time with empty value",
+		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			value := test.Input
 			b, err := ReadBoolValue(value.Value, value.DefaultToFalse)
-			if err != nil {
-				t.Logf("error returned: %s", err.Error())
+			if test.ExpectedError && err != nil {
+				t.Logf("error returned but it was expectet: %s", err.Error())
 			}
 			if test.ExpectedError && err == nil {
 				t.Error("expected an error to be thrown", test, test.Name)
