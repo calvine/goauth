@@ -18,8 +18,8 @@ type RichError struct {
 	ErrCode     string                 `json:"code"`
 	Message     string                 `json:"message"`
 	Source      string                 `json:"source,omitempty"`
-	Area        string                 `json:"area,omitempty"`
-	Location    string                 `json:"location,omitempty"`
+	Function    string                 `json:"function,omitempty"`
+	LineNumber  string                 `json:"lineNumber,omitempty"`
 	Stack       string                 `json:"stack,omitempty"`
 	OccurredAt  time.Time              `json:"occurredAt"`
 	InnerErrors []error                `json:"innerErrors"`
@@ -63,9 +63,20 @@ func (e RichError) WithStack(stackOffset int) RichError {
 	for i := 0; i < numFrames; i++ {
 		nextFrame, _ := data.Next()
 		if i == 0 {
-			e.Source = nextFrame.File
-			e.Area = nextFrame.Function
-			e.Location = strconv.Itoa(nextFrame.Line)
+			source := nextFrame.File
+			// if len(source) > 0 {
+			// 	sourceLastIndex := strings.LastIndex(nextFrame.File, string(os.PathSeparator))
+			// 	source = source[sourceLastIndex+1:]
+			// }
+
+			functionName := nextFrame.Function
+			if len(functionName) > 0 {
+				functionNameLastIndex := strings.LastIndex(functionName, ".")
+				functionName = functionName[functionNameLastIndex+1:]
+			}
+			e.Source = source
+			e.Function = functionName
+			e.LineNumber = strconv.Itoa(nextFrame.Line)
 		}
 		stackFrame := fmt.Sprintf("%sL:%d %v - %s:%d - %s%s", strings.Repeat(indentString, i), i+1, nextFrame.Entry, nextFrame.File, nextFrame.Line, nextFrame.Function, partSeperator)
 		stackBuffer.WriteString(stackFrame)
@@ -94,13 +105,13 @@ func (e RichError) AddSource(source string) RichError {
 	return e
 }
 
-func (e RichError) AddArea(area string) RichError {
-	e.Area = area
+func (e RichError) AddFunction(function string) RichError {
+	e.Function = function
 	return e
 }
 
-func (e RichError) AddLocation(location string) RichError {
-	e.Location = location
+func (e RichError) AddLineNumber(lineNumber string) RichError {
+	e.LineNumber = lineNumber
 	return e
 }
 
@@ -130,13 +141,13 @@ func (e RichError) Error() string {
 		sourceSection := fmt.Sprintf("%sSOURCE: %s", partSeperator, e.Source)
 		messageBuffer.WriteString(sourceSection)
 	}
-	if e.Area != "" {
-		areaSection := fmt.Sprintf("%sAREA: %s", partSeperator, e.Area)
-		messageBuffer.WriteString(areaSection)
+	if e.Function != "" {
+		functionSection := fmt.Sprintf("%sFUNCTION: %s", partSeperator, e.Function)
+		messageBuffer.WriteString(functionSection)
 	}
-	if e.Location != "" {
-		locationSection := fmt.Sprintf("%sLOCATION: %s", partSeperator, e.Location)
-		messageBuffer.WriteString(locationSection)
+	if e.LineNumber != "" {
+		LineNumberSection := fmt.Sprintf("%sLINE_NUM: %s", partSeperator, e.LineNumber)
+		messageBuffer.WriteString(LineNumberSection)
 	}
 	if e.ErrCode != "" {
 		errCodeSection := fmt.Sprintf("%sERRCODE: %s", partSeperator, e.ErrCode)
