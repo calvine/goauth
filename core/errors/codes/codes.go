@@ -14,6 +14,9 @@ const (
 
 	//No Data Found
 
+	// ErrCodeRepoQueryFailed indicates that an error occurred while performing a db query.
+	ErrCodeRepoQueryFailed = "RepoQueryFailed"
+
 	// ErrCodeNoUserFound means no users was found for a given request.
 	ErrCodeNoUserFound = "NoUserFound"
 	// ErrCodeNoContactFound means no contact was found for a given request.

@@ -2,14 +2,15 @@ package mongo
 
 import (
 	"context"
-	"errors"
 	"time"
 
+	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/nullable"
 	repoModels "github.com/calvine/goauth/dataaccess/mongo/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -48,14 +49,14 @@ func (ur *userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string
 	}
 	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
 	if err != nil {
-		return emptyContact, err
-	}
-	if len(receiver.Contacts) == 0 {
-		return emptyContact, ErrUserNotFound
-	}
-	if len(receiver.Contacts) == 0 {
-		// TODO: implement specific error
-		return emptyContact, errors.New("no contacts fount")
+		if err == mongo.ErrNoDocuments {
+			fields := map[string]interface{}{
+				"_id":                userId,
+				"contacts.isPrimary": true,
+			}
+			return emptyContact, coreerrors.NewRepoNoContactFoundErrorWithFields(fields, true)
+		}
+		return emptyContact, coreerrors.NewRepoQueryFailed(err, true)
 	}
 	// TODO: need to make sure business logic exists to ensure that there is only 1 primary contact...
 	contact := receiver.Contacts[0].ToCoreContact()
@@ -82,7 +83,10 @@ func (ur *userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]m
 	filter := bson.M{"_id": oid}
 	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
 	if err != nil {
-		return nil, err
+		if err == mongo.ErrNoDocuments {
+			return nil, coreerrors.NewRepoNoContactFoundError("_id", userId, true)
+		}
+		return nil, coreerrors.NewRepoQueryFailed(err, true)
 	}
 	contacts := make([]models.Contact, len(receiver.Contacts))
 	for index, contact := range receiver.Contacts {
@@ -109,11 +113,10 @@ func (ur *userRepo) GetContactByConfirmationCode(ctx context.Context, confirmati
 	}
 	err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
 	if err != nil {
-		return emptyContact, err
-	}
-	if len(receiver.Contact) == 0 {
-		// TODO: implement specific error
-		return emptyContact, errors.New("no contacts fount")
+		if err == mongo.ErrNoDocuments {
+			return emptyContact, coreerrors.NewRepoNoContactFoundError("contacts.confirmationCode", confirmationCode, true)
+		}
+		return emptyContact, coreerrors.NewRepoQueryFailed(err, true)
 	}
 	receiver.Contact[0].UserID = receiver.UserId.Hex()
 	return receiver.Contact[0].ToCoreContact(), nil
@@ -150,16 +153,16 @@ func (ur *userRepo) AddContact(ctx context.Context, contact *models.Contact, cre
 	}
 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateByID(ctx, oid, update) //(ctx, contact, nil)
 	if err != nil {
-		return err
+		return coreerrors.NewRepoQueryFailed(err, true)
 	}
-	if result.ModifiedCount != 1 {
+	if result.ModifiedCount == 0 {
+		// TODO: replace with rich error.
 		return ErrUserNotFound
 	}
 	return nil
 }
 
 func (ur *userRepo) UpdateContact(ctx context.Context, contact *models.Contact, modifiedById string) error {
-	// TODO: Use array filters?
 	contact.AuditData.ModifiedByID = nullable.NullableString{}
 	contact.AuditData.ModifiedByID.Set(modifiedById)
 	contact.AuditData.ModifiedOnDate = nullable.NullableTime{}
@@ -169,16 +172,6 @@ func (ur *userRepo) UpdateContact(ctx context.Context, contact *models.Contact, 
 		// TODO: specific error here?
 		return err
 	}
-	// arrayFilters := options.ArrayFilters{
-	// 	Filters: bson.A{
-	// 		bson.D{
-	// 			{Key: "contacts.id", Value: contactID},
-	// 		},
-	// 	},
-	// }
-	// options := options.UpdateOptions{
-	// ArrayFilters: &arrayFilters,
-	// }
 	oid, err := primitive.ObjectIDFromHex(contact.UserID)
 	if err != nil {
 		// TODO: specific error here?
@@ -202,11 +195,37 @@ func (ur *userRepo) UpdateContact(ctx context.Context, contact *models.Contact, 
 	}
 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(ctx, filter, update, nil) //(ctx, contact, nil)
 	if err != nil {
-		return err
+		return coreerrors.NewRepoQueryFailed(err, true)
 	}
 	if result.ModifiedCount == 0 {
-		// TODO: specific error here?
-		return errors.New("no contact found for user id and contact id")
+		fields := map[string]interface{}{
+			"_id":        contact.UserID,
+			"contact.id": contact.ID,
+		}
+		return coreerrors.NewRepoNoContactFoundErrorWithFields(fields, true)
+	}
+	return nil
+}
+
+func (ur *userRepo) ConfirmContact(ctx context.Context, confirmationCode, modifiedById string) error {
+	now := time.Now().UTC()
+	filter := bson.D{
+		{Key: "contacts.confirmationCode", Value: confirmationCode},
+	}
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "contacts.$.confirmationCode", Value: nil},
+			{Key: "contacts.$.confirmedDate", Value: now},
+			{Key: "contacts.$.modifiedById", Value: modifiedById},
+			{Key: "contacts.$.modifiedOnDate", Value: now},
+		}},
+	}
+	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(ctx, filter, update, nil)
+	if err != nil {
+		return coreerrors.NewRepoQueryFailed(err, true)
+	}
+	if result.ModifiedCount == 0 {
+		return coreerrors.NewRepoNoContactFoundError("contacts.confirmationCode", confirmationCode, true)
 	}
 	return nil
 }

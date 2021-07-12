@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	indentString  = ""    //"\t" //""
-	partSeperator = " - " //"\n" //" - "
+	indentString  = "\t" //""
+	partSeperator = "\n" //" - "
 )
 
 type RichError struct {

@@ -33,6 +33,8 @@ type ContactRepo interface {
 	AddContact(ctx context.Context, contact *models.Contact, createdById string) error
 	// UpdateContact updates a users contact
 	UpdateContact(ctx context.Context, contact *models.Contact, modifiedById string) error
+	// ConfirmContact sets a contact to confirmed based on the received confirmation code.
+	ConfirmContact(ctx context.Context, confirmationCode, modifiedById string) error
 }
 
 type ProfileRepo interface {
