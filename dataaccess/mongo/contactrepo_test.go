@@ -8,6 +8,7 @@ import (
 	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/nullable"
+	repo "github.com/calvine/goauth/core/repositories"
 )
 
 var (
@@ -27,10 +28,19 @@ var (
 	}
 
 	newContact3 = models.Contact{
-		Principal:     "555-555-5555",
-		IsPrimary:     false,
-		Type:          core.CONTACT_TYPE_MOBILE,
-		ConfirmedDate: nullable.NullableTime{HasValue: true, Value: time.Now().UTC()},
+		Principal:        "555-555-5555",
+		IsPrimary:        false,
+		Type:             core.CONTACT_TYPE_MOBILE,
+		ConfirmationCode: nullable.NullableString{HasValue: false},
+		ConfirmedDate:    nullable.NullableTime{HasValue: true, Value: time.Now().UTC()},
+	}
+
+	newContact4 = models.Contact{
+		Principal:        "email@email.email",
+		IsPrimary:        false,
+		Type:             core.CONTACT_TYPE_MOBILE,
+		ConfirmationCode: nullable.NullableString{HasValue: true, Value: "54321"},
+		ConfirmedDate:    nullable.NullableTime{HasValue: false},
 	}
 )
 
@@ -39,25 +49,31 @@ var (
 // 	reflect.ValueOf(cr).
 // }
 
-func testMongoContactRepo(t *testing.T, userRepo userRepo) {
+func testMongoContactRepo(t *testing.T, contactRepo repo.ContactRepo) {
 	t.Run("AddContact", func(t *testing.T) {
-		_testAddContact(t, userRepo)
+		_testAddContact(t, contactRepo)
+	})
+	t.Run("GetContactById", func(t *testing.T) {
+		_testGetContactById(t, contactRepo)
 	})
 	t.Run("GetPrimaryContactByUserId", func(t *testing.T) {
-		_testGetPrimaryContactByUserId(t, userRepo)
+		_testGetPrimaryContactByUserId(t, contactRepo)
 	})
 	t.Run("GetContactsByUserId", func(t *testing.T) {
-		_testGetContactsByUserId(t, userRepo)
+		_testGetContactsByUserId(t, contactRepo)
 	})
 	t.Run("GetContactByConfirmationCode", func(t *testing.T) {
-		_testGetContactByConfirmationCode(t, userRepo)
+		_testGetContactByConfirmationCode(t, contactRepo)
 	})
 	t.Run("UpdateContact", func(t *testing.T) {
-		_testUpdateContact(t, userRepo)
+		_testUpdateContact(t, contactRepo)
+	})
+	t.Run("ConfirmContact", func(t *testing.T) {
+		_testConfirmContact(t, contactRepo)
 	})
 }
 
-func _testAddContact(t *testing.T, userRepo userRepo) {
+func _testAddContact(t *testing.T, userRepo repo.ContactRepo) {
 	newContact1.UserID = testUser1.ID
 	err := userRepo.AddContact(context.TODO(), &newContact1, testUser1.ID)
 	if err != nil {
@@ -75,9 +91,22 @@ func _testAddContact(t *testing.T, userRepo userRepo) {
 	if err != nil {
 		t.Error("failed to add contact to user", err)
 	}
+
+	newContact4.UserID = testUser1.ID
+	err = userRepo.AddContact(context.TODO(), &newContact4, testUser1.ID)
+	if err != nil {
+		t.Error("failed to add contact to user", err)
+	}
 }
 
-func _testGetPrimaryContactByUserId(t *testing.T, userRepo userRepo) {
+func _testGetContactById(t *testing.T, userRepo repo.ContactRepo) {
+	_, err := userRepo.GetContactByContactId(context.TODO(), newContact1.ID)
+	if err != nil {
+		t.Error("failed to get contact by given id", newContact1.ID, err)
+	}
+}
+
+func _testGetPrimaryContactByUserId(t *testing.T, userRepo repo.ContactRepo) {
 	userId := testUser1.ID
 	contact, err := userRepo.GetPrimaryContactByUserId(context.TODO(), userId)
 	if err != nil {
@@ -95,18 +124,18 @@ func _testGetPrimaryContactByUserId(t *testing.T, userRepo userRepo) {
 
 }
 
-func _testGetContactsByUserId(t *testing.T, userRepo userRepo) {
+func _testGetContactsByUserId(t *testing.T, userRepo repo.ContactRepo) {
 	userId := testUser1.ID
 	contacts, err := userRepo.GetContactsByUserId(context.TODO(), userId)
 	if err != nil {
 		t.Error("failed to get contacts by user id", userId, err)
 	}
-	if len(contacts) != 3 {
+	if len(contacts) != 4 {
 		t.Error("wrong number of contacts returned", 3, len(contacts))
 	}
 }
 
-func _testGetContactByConfirmationCode(t *testing.T, userRepo userRepo) {
+func _testGetContactByConfirmationCode(t *testing.T, userRepo repo.ContactRepo) {
 	confirmationCode := newContact2.ConfirmationCode.Value
 	expectedPrincipal := newContact2.Principal
 	expectedIsPrimary := newContact2.IsPrimary
@@ -125,7 +154,7 @@ func _testGetContactByConfirmationCode(t *testing.T, userRepo userRepo) {
 	}
 }
 
-func _testUpdateContact(t *testing.T, userRepo userRepo) {
+func _testUpdateContact(t *testing.T, userRepo repo.ContactRepo) {
 	modifiedByID := "test update contact"
 	preUpdateTime := time.Now().UTC()
 	newEmail := "a_different_email@mail.org"
@@ -149,5 +178,33 @@ func _testUpdateContact(t *testing.T, userRepo userRepo) {
 	}
 	if newContact3.AuditData.ModifiedByID.Value != modifiedByID {
 		t.Error("expected ModifiedByID to be updated", modifiedByID, newContact3.AuditData.ModifiedByID.Value)
+	}
+}
+
+func _testConfirmContact(t *testing.T, contactRepo repo.ContactRepo) {
+	modifiedById := "test confirm contact"
+	preConfirmTime := time.Now().UTC()
+	time.Sleep(time.Second * 3)
+	err := contactRepo.ConfirmContact(context.TODO(), newContact4.ConfirmationCode.Value, modifiedById)
+	if err != nil {
+		t.Error("failed to update contact", err)
+	}
+	updatedContact4, err := contactRepo.GetContactByContactId(context.TODO(), newContact4.ID)
+	if err != nil {
+		t.Error("failed to get instance of updated contact for comparison", err)
+	}
+	if updatedContact4.ConfirmationCode.HasValue {
+		t.Error("confirmed contact confirmation code should not have value", updatedContact4.ConfirmationCode.Value)
+	}
+	if !updatedContact4.ConfirmedDate.HasValue {
+		t.Error("confirmed contact confirmed date should have a value")
+	} else if updatedContact4.ConfirmedDate.Value.Before(preConfirmTime) {
+		t.Error("confirmed contact confirmed date should be after the pre confirm time", preConfirmTime.String(), updatedContact4.ConfirmedDate.Value.String())
+	}
+	if updatedContact4.AuditData.ModifiedByID.Value != modifiedById {
+		t.Error("confirmed contact modified by id should match modifiedById", modifiedById, updatedContact4.AuditData.ModifiedByID.Value)
+	}
+	if updatedContact4.AuditData.ModifiedOnDate.Value.Before(preConfirmTime) {
+		t.Error("confirmed contact modified on date should be after the pre confirm time", preConfirmTime.String(), updatedContact4.AuditData.ModifiedOnDate.Value.String())
 	}
 }

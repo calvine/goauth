@@ -28,7 +28,35 @@ var (
 	}
 )
 
-func (ur *userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string) (models.Contact, error) {
+func (ur userRepo) GetContactByContactId(ctx context.Context, contactId string) (models.Contact, error) {
+	var receiver struct {
+		UserId  primitive.ObjectID       `bson:"_id"`
+		Contact []repoModels.RepoContact `bson:"contacts"`
+	}
+	options := options.FindOneOptions{}
+	options.SetProjection(bson.D{
+		{Key: "_id", Value: 1},
+		{Key: "contacts.$", Value: 1},
+	})
+	contactOid, err := primitive.ObjectIDFromHex(contactId)
+	if err != nil {
+		return emptyContact, ErrFailedToParseObjectId
+	}
+	filter := bson.D{
+		{Key: "contacts.id", Value: contactOid},
+	}
+	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return emptyContact, coreerrors.NewRepoNoContactFoundError("contact.id", contactId, true)
+		}
+		return emptyContact, coreerrors.NewRepoQueryFailed(err, true)
+	}
+	receiver.Contact[0].UserID = receiver.UserId.Hex()
+	return receiver.Contact[0].ToCoreContact(), nil
+}
+
+func (ur userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string) (models.Contact, error) {
 	var receiver struct {
 		Contacts []repoModels.RepoContact `bson:"contacts"`
 	}
@@ -66,7 +94,7 @@ func (ur *userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string
 
 // TODO: finish implementing
 
-func (ur *userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]models.Contact, error) {
+func (ur userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]models.Contact, error) {
 	var receiver struct {
 		Contacts []repoModels.RepoContact `bson:"contacts"`
 	}
@@ -97,7 +125,7 @@ func (ur *userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]m
 }
 
 // TODO: Figure out why decoding confirmation code is failing...
-func (ur *userRepo) GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, error) {
+func (ur userRepo) GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, error) {
 	var receiver struct {
 		UserId  primitive.ObjectID       `bson:"_id"`
 		Contact []repoModels.RepoContact `bson:"contacts"`
@@ -122,7 +150,7 @@ func (ur *userRepo) GetContactByConfirmationCode(ctx context.Context, confirmati
 	return receiver.Contact[0].ToCoreContact(), nil
 }
 
-func (ur *userRepo) AddContact(ctx context.Context, contact *models.Contact, createdById string) error {
+func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, createdById string) error {
 	contact.AuditData.CreatedByID = createdById
 	contact.AuditData.CreatedOnDate = time.Now().UTC()
 	contact.ID = primitive.NewObjectID().Hex()
@@ -162,7 +190,7 @@ func (ur *userRepo) AddContact(ctx context.Context, contact *models.Contact, cre
 	return nil
 }
 
-func (ur *userRepo) UpdateContact(ctx context.Context, contact *models.Contact, modifiedById string) error {
+func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, modifiedById string) error {
 	contact.AuditData.ModifiedByID = nullable.NullableString{}
 	contact.AuditData.ModifiedByID.Set(modifiedById)
 	contact.AuditData.ModifiedOnDate = nullable.NullableTime{}
@@ -207,7 +235,7 @@ func (ur *userRepo) UpdateContact(ctx context.Context, contact *models.Contact, 
 	return nil
 }
 
-func (ur *userRepo) ConfirmContact(ctx context.Context, confirmationCode, modifiedById string) error {
+func (ur userRepo) ConfirmContact(ctx context.Context, confirmationCode, modifiedById string) error {
 	now := time.Now().UTC()
 	filter := bson.D{
 		{Key: "contacts.confirmationCode", Value: confirmationCode},
