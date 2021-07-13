@@ -29,6 +29,8 @@ var (
 	}
 )
 
+// TODO: need to update these to use new rich errors
+
 // userRepo is the repository struct for the user side of mongo db access. since other models related to users are embedded it makes sense (at least right now) to use a single struct for the related repository interfaces.
 type userRepo struct {
 	mongoClient    *mongo.Client
