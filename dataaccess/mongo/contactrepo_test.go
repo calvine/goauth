@@ -184,7 +184,7 @@ func _testUpdateContact(t *testing.T, userRepo repo.ContactRepo) {
 func _testConfirmContact(t *testing.T, contactRepo repo.ContactRepo) {
 	modifiedById := "test confirm contact"
 	preConfirmTime := time.Now().UTC()
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Millisecond * 5)
 	err := contactRepo.ConfirmContact(context.TODO(), newContact4.ConfirmationCode.Value, modifiedById)
 	if err != nil {
 		t.Error("failed to update contact", err)

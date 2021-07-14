@@ -7,6 +7,7 @@ import (
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/nullable"
+	mongoerrors "github.com/calvine/goauth/dataaccess/mongo/internal/errors"
 	repoModels "github.com/calvine/goauth/dataaccess/mongo/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -40,7 +41,7 @@ func (ur userRepo) GetContactByContactId(ctx context.Context, contactId string) 
 	})
 	contactOid, err := primitive.ObjectIDFromHex(contactId)
 	if err != nil {
-		return emptyContact, ErrFailedToParseObjectId
+		return emptyContact, mongoerrors.NewMongoFailedToParseObjectID(contactId, true)
 	}
 	filter := bson.D{
 		{Key: "contacts.id", Value: contactOid},
@@ -67,7 +68,7 @@ func (ur userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string)
 	})
 	oid, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
-		return emptyContact, ErrFailedToParseObjectId
+		return emptyContact, mongoerrors.NewMongoFailedToParseObjectID(userId, true)
 	}
 	filter := bson.M{
 		"$and": bson.A{
@@ -106,7 +107,7 @@ func (ur userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]mo
 	}
 	oid, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
-		return nil, ErrFailedToParseObjectId
+		return nil, mongoerrors.NewMongoFailedToParseObjectID(userId, true)
 	}
 	filter := bson.M{"_id": oid}
 	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
@@ -156,7 +157,7 @@ func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, crea
 	contact.ID = primitive.NewObjectID().Hex()
 	oid, err := primitive.ObjectIDFromHex(contact.UserID)
 	if err != nil {
-		return ErrFailedToParseObjectId
+		return mongoerrors.NewMongoFailedToParseObjectID(contact.UserID, true)
 	}
 	repoContact, err := repoModels.CoreContact(*contact).ToRepoContact()
 	if err != nil {
@@ -184,8 +185,7 @@ func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, crea
 		return coreerrors.NewRepoQueryFailed(err, true)
 	}
 	if result.ModifiedCount == 0 {
-		// TODO: replace with rich error.
-		return ErrUserNotFound
+		return coreerrors.NewRepoNoUserFoundError("_id", contact.UserID, true)
 	}
 	return nil
 }

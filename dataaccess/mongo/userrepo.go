@@ -2,10 +2,11 @@ package mongo
 
 import (
 	"context"
-	"errors"
 	"time"
 
+	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
+	mongoerrors "github.com/calvine/goauth/dataaccess/mongo/internal/errors"
 	repoModels "github.com/calvine/goauth/dataaccess/mongo/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -15,9 +16,6 @@ import (
 
 var (
 	emptyUser = models.User{}
-
-	ErrUserNotFound          = errors.New("unable to find user with given id")
-	ErrFailedToParseObjectId = errors.New("failed to parse object id")
 
 	ProjUserOnly = bson.M{
 		"_id":                            1,
@@ -59,10 +57,10 @@ func (ur *userRepo) GetUserById(ctx context.Context, id string) (models.User, er
 	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&repoUser)
 	user := repoUser.ToCoreUser()
 	if err != nil {
-		return user, err
-	}
-	if user == emptyUser {
-		return user, ErrUserNotFound
+		if err == mongo.ErrNoDocuments {
+			return user, coreerrors.NewRepoNoUserFoundError("_id", id, true)
+		}
+		return user, coreerrors.NewRepoQueryFailed(err, true)
 	}
 	return user, nil
 }
@@ -86,7 +84,15 @@ func (ur *userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, co
 	err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&repoUser)
 	user := repoUser.ToCoreUser()
 	if err != nil {
-		return user, err
+		if err == mongo.ErrNoDocuments {
+			fields := map[string]interface{}{
+				"contacts.isPrimary": true,
+				"contacts.type":      contactType,
+				"contacts.principal": contactPrincipal,
+			}
+			return user, coreerrors.NewRepoNoUserFoundErrorWithFields(fields, true)
+		}
+		return user, coreerrors.NewRepoQueryFailed(err, true)
 	}
 	return user, nil
 }
@@ -100,7 +106,7 @@ func (ur *userRepo) AddUser(ctx context.Context, user *models.User, createdById 
 	}
 	oid, ok := result.InsertedID.(primitive.ObjectID)
 	if !ok {
-		return ErrFailedToParseObjectId
+		return mongoerrors.NewMongoFailedToParseObjectID(result.InsertedID, true)
 	}
 	user.ID = oid.Hex()
 	return nil
@@ -134,10 +140,10 @@ func (ur *userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedB
 	}
 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(ctx, filter, update)
 	if err != nil {
-		return err
+		return coreerrors.NewRepoQueryFailed(err, true)
 	}
 	if result.ModifiedCount == 0 {
-		return ErrUserNotFound
+		return coreerrors.NewRepoNoUserFoundError("_id", user.ID, true)
 	}
 	return nil
 }
