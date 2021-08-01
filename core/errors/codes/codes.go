@@ -11,11 +11,12 @@ const (
 	ErrCodeInvalidType = "InvalidType"
 	// ErrCodeInvalidValue
 	ErrCodeInvalidValue = "ErrCodeInvalidValue"
-
-	//No Data Found
-
 	// ErrCodeRepoQueryFailed indicates that an error occurred while performing a db query.
 	ErrCodeRepoQueryFailed = "RepoQueryFailed"
+	// ErrCodeContactNotPrimary
+	ErrCodeContactNotPrimary = "ContactNotPrimary"
+
+	//No Data Found
 
 	// ErrCodeNoUserFound means no users was found for a given request.
 	ErrCodeNoUserFound = "NoUserFound"
@@ -24,10 +25,8 @@ const (
 	// ErrCodeNoAddressFound means no address was found for a given request.
 	ErrCodeNoAddressFound = "NoAddressFound"
 
-	//
+	// Login Errors
 
-	// ErrCodeContactNotPrimary
-	ErrCodeContactNotPrimary = "ContactNotPrimary"
-	// ErrCodeUserLockedOut
+	// ErrCodeUserLockedOut means that a user is currently locked out.
 	ErrCodeUserLockedOut = "UserLockedOut"
 )

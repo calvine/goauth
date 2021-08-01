@@ -11,7 +11,7 @@ import (
 type LoginService interface {
 	// LoginWithContact attempts to confirm a users credentials and if they match it returns true and resets the users ConsecutiveFailedLoginAttempts, otherwise it returns false and increments the users ConsecutiveFailedLoginAttempts
 	// The principal should only work when it has been confirmed
-	LoginWithContact(ctx context.Context, principal, principalType, password string, initiator string) (bool, error)
+	LoginWithPrimaryContact(ctx context.Context, principal, principalType, password string, initiator string) (models.User, error)
 	// StartPasswordResetByContact sets a password reset token for the user with the corresponding principal and type that are confirmed.
 	StartPasswordResetByContact(ctx context.Context, principal, principalType string, initiator string) (string, error)
 	// ConfirmContact takes a confirmation code and updates the users contact record to be confirmed.
@@ -20,8 +20,8 @@ type LoginService interface {
 	ResetPassword(ctx context.Context, userId string, newPasswordHash string, newSalt string, initiator string) (bool, error)
 }
 
-// UserDataService is a service that facilitates access to user related data.
-type UserDataService interface {
+// UserService is a service that facilitates access to user related data.
+type UserService interface {
 	// GetUserByConfirmedContact gets a user record via a confirmed contact
 	GetUserByConfirmedContact(ctx context.Context, contactPrincipal string, initiator string) (models.User, error)
 	// AddUser adds a user record to the database
