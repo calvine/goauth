@@ -10,7 +10,7 @@ const (
 	// ErrTypeNotAllowed indicates that a type is not allowed
 	ErrCodeInvalidType = "InvalidType"
 	// ErrCodeInvalidValue
-	ErrCodeInvalidValue = "ErrCodeInvalidValue"
+	ErrCodeInvalidValue = "InvalidValue"
 	// ErrCodeRepoQueryFailed indicates that an error occurred while performing a db query.
 	ErrCodeRepoQueryFailed = "RepoQueryFailed"
 	// ErrCodeContactNotPrimary

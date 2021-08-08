@@ -1,0 +1,11 @@
+[
+    {
+        "code": "ContactNotConfirmed",
+        "message": "contact is not confirmed",
+        "metaData": [
+            "contactId",
+            "principal",
+            "type"
+        ]
+    }
+]
