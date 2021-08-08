@@ -2,6 +2,13 @@
 
 package main
 
+import (
+	"strings"
+	"text/template"
+
+	"github.com/calvine/goauth/core/utilities"
+)
+
 type errorData struct {
 	// Code is expected to be Pascal Case
 	Code     string
@@ -10,7 +17,14 @@ type errorData struct {
 }
 
 func main() {
-
+	funcMap := template.FuncMap{
+		"ToUpper":            strings.ToUpper,
+		"ToLower":            strings.ToLower,
+		"UpperCaseFirstChar": utilities.UpperCaseFirstChar,
+		"LowerCaseFirstChar": utilities.LowerCaseFirstChar,
+	}
+	errConstructorTemplate := template.Must(template.New("Error constructor template").Parse(errorConstructorTemplate)).Funcs(funcMap)
+	errCodeTemplate := template.Must(template.New("Error code template").Parse(errorCodeTemplate)).Funcs(funcMap)
 }
 
 const errorConstructorTemplate = `
