@@ -3,6 +3,10 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
+	"go/format"
+	"os"
 	"strings"
 	"text/template"
 
@@ -17,6 +21,13 @@ type errorData struct {
 }
 
 func main() {
+	example := errorData{
+		Code:    "NoUserIdFound",
+		Message: "failed to get item by user id",
+		MetaData: []string{
+			"userId",
+		},
+	}
 	funcMap := template.FuncMap{
 		"ToUpper":            strings.ToUpper,
 		"ToLower":            strings.ToLower,
@@ -25,6 +36,16 @@ func main() {
 	}
 	errConstructorTemplate := template.Must(template.New("Error constructor template").Parse(errorConstructorTemplate)).Funcs(funcMap)
 	errCodeTemplate := template.Must(template.New("Error code template").Parse(errorCodeTemplate)).Funcs(funcMap)
+	constructorBuffer := bytes.NewBufferString("")
+	codeBuffer := bytes.NewBufferString("")
+	errConstructorTemplate.Execute(constructorBuffer, example)
+	errCodeTemplate.Execute(codeBuffer, example)
+
+	errConstructorCode, _ := format.Source([]byte(constructorBuffer.String()))
+	errCodeCode, _ := format.Source([]byte(codeBuffer.String()))
+
+	fmt.Fprint(os.Stdout, string(errConstructorCode))
+	fmt.Fprint(os.Stdout, string(errCodeCode))
 }
 
 const errorConstructorTemplate = `
@@ -37,9 +58,9 @@ import (
 )
 
 // New{{ .Code }}Error creates a new specific error
-func New{{ .Code }}Error(actual string, includeStack bool) RichError {
-	msg := {{ .Message }}
-	err := NewRichError(codes.ErrCode{{ .Code }}, msg){{ range .MetaData }}.AddMetaData("actual", actual){{ end }}
+func New{{ .Code }}Error({{ range .MetaData }}{{ . }} interface{},{{ end }} includeStack bool) RichError {
+	msg := "{{ .Message }}"
+	err := NewRichError(codes.ErrCode{{ .Code }}, msg){{ range .MetaData }}.AddMetaData("{{ . }}", {{ . }}){{ end }}
 	if includeStack {
 		err = err.WithStack(1)
 	}

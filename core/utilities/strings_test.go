@@ -3,8 +3,9 @@ package utilities
 import "testing"
 
 type testCase struct {
-	input          string
 	expectedOutput string
+	input          string
+	name           string
 }
 
 func TestUpperCaseFirstChar(t *testing.T) {
@@ -12,16 +13,18 @@ func TestUpperCaseFirstChar(t *testing.T) {
 		{
 			expectedOutput: "",
 			input:          "",
+			name:           "empty string",
 		},
 		{
 			expectedOutput: "ThingOrTwo",
 			input:          "thingOrTwo",
+			name:           "string test",
 		},
 	}
 	for _, test := range testCases {
 		output := UpperCaseFirstChar(test.input)
 		if output != test.expectedOutput {
-			t.Errorf("output not expected: (expected: %s) (actual: %s)", test.expectedOutput, output)
+			t.Errorf("%s test failed: output not expected: (expected: %s) (actual: %s)", test.name, test.expectedOutput, output)
 		}
 	}
 }
@@ -31,16 +34,18 @@ func TestLowerCaseFirstChar(t *testing.T) {
 		{
 			expectedOutput: "",
 			input:          "",
+			name:           "enpty string",
 		},
 		{
 			expectedOutput: "thingOrTwo",
 			input:          "ThingOrTwo",
+			name:           "string test",
 		},
 	}
 	for _, test := range testCases {
 		output := LowerCaseFirstChar(test.input)
 		if output != test.expectedOutput {
-			t.Errorf("output not expected: (expected: %s) (actual: %s)", test.expectedOutput, output)
+			t.Errorf("%s test failed: output not expected: (expected: %s) (actual: %s)", test.name, test.expectedOutput, output)
 		}
 	}
 }
