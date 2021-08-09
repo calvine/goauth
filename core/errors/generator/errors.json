@@ -3,9 +3,9 @@
         "code": "ContactNotConfirmed",
         "message": "contact is not confirmed",
         "metaData": [
-            "contactId",
-            "principal",
-            "type"
+            { "name": "contactId", "dataType": "string"},
+            { "name": "principal", "dataType": "string"},
+            { "name": "issueType", "dataType": "string"}
         ]
     }
 ]
