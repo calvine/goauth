@@ -108,10 +108,12 @@ func main() {
 		}
 
 		if !genOptions.emitOutputFiles {
-			fmt.Printf("\n\n************** Error Constructor Code **************\n\n")
+			fmt.Printf("\n\n************** %s Error Constructor Code **************\n\n", data.Code)
 			fmt.Fprint(os.Stdout, string(errConstructorCode))
-			fmt.Printf("\n\n************** Error Code Code **************\n\n")
+			fmt.Printf("\n\n****************************************************")
+			fmt.Printf("\n\n************** %s Error Code Code **************\n\n", data.Code)
 			fmt.Fprint(os.Stdout, string(errCodeCode))
+			fmt.Printf("\n\n*********************************************")
 		} else {
 			// emit files...
 		}
