@@ -1,14 +1,15 @@
 package errors
 
-import (
-	"fmt"
+/* WARNING: This is GENERATED CODE Please do not edit. */
 
+import (
 	"github.com/calvine/goauth/core/errors/codes"
 )
 
-func NewRepoQueryFailed(queryError error, includeStack bool) RichError {
-	msg := fmt.Sprintf("repo query failed with error: %s", queryError.Error())
-	err := NewRichError(codes.ErrCodeRepoQueryFailed, msg).AddError(queryError)
+// NewRepoQueryFailedError creates a new specific error
+func NewRepoQueryFailedError(queryError error, includeStack bool) RichError {
+	msg := "repo query failed with error"
+	err := NewRichError(codes.ErrCodeRepoQueryFailed, msg).AddMetaData("queryError", queryError)
 	if includeStack {
 		err = err.WithStack(1)
 	}

@@ -7,8 +7,6 @@ package errors
 /* WARNING: This is GENERATED CODE Please do not edit. */
 
 import (
-	"fmt"
-
 	"github.com/calvine/goauth/core/errors/codes"
 )
 

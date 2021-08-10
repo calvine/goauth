@@ -1,14 +1,15 @@
 package errors
 
-import (
-	"fmt"
+/* WARNING: This is GENERATED CODE Please do not edit. */
 
+import (
 	"github.com/calvine/goauth/core/errors/codes"
 )
 
+// NewUserLockedOutError creates a new specific error
 func NewUserLockedOutError(userID string, includeStack bool) RichError {
-	msg := fmt.Sprintf("attempted login by locked out user with id: %s", userID)
-	err := NewRichError(codes.ErrCodeUserLockedOut, msg)
+	msg := "attempted login by locked out user"
+	err := NewRichError(codes.ErrCodeUserLockedOut, msg).AddMetaData("userID", userID)
 	if includeStack {
 		err = err.WithStack(1)
 	}

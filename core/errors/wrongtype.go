@@ -1,13 +1,14 @@
 package errors
 
-import (
-	"fmt"
+/* WARNING: This is GENERATED CODE Please do not edit. */
 
+import (
 	"github.com/calvine/goauth/core/errors/codes"
 )
 
-func NewWrongTypeError(actual, expected string, includeStack bool) RichError {
-	msg := fmt.Sprintf("wrong type found: actual: %s - expected: %s", expected, actual)
+// NewWrongTypeError creates a new specific error
+func NewWrongTypeError(actual string, expected string, includeStack bool) RichError {
+	msg := "unexpected type encountered"
 	err := NewRichError(codes.ErrCodeWrongType, msg).AddMetaData("actual", actual).AddMetaData("expected", expected)
 	if includeStack {
 		err = err.WithStack(1)

@@ -8,8 +8,10 @@ import (
 	"flag"
 	"fmt"
 	"go/format"
+	"io/fs"
 	"io/ioutil"
 	"os"
+	"path"
 	"strings"
 	"text/template"
 
@@ -116,6 +118,19 @@ func main() {
 			fmt.Printf("\n\n*********************************************")
 		} else {
 			// emit files...
+			fileName := fmt.Sprintf("%s.go", strings.ToLower(data.Code))
+			errConstructorFilePath := path.Join(errorsDir, fileName)
+			err = ioutil.WriteFile(errConstructorFilePath, errConstructorCode, fs.ModePerm)
+			if err != nil {
+				fmt.Printf("Failed to write file %s for err constructor for code %s", errConstructorFilePath, data.Code)
+				continue
+			}
+			errCodeFilePath := path.Join(codesDir, fileName)
+			err = ioutil.WriteFile(errCodeFilePath, errCodeCode, fs.ModePerm)
+			if err != nil {
+				fmt.Printf("Failed to write file %s for err code for code %s", errCodeFilePath, data.Code)
+				continue
+			}
 		}
 	}
 }

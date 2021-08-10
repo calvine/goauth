@@ -58,9 +58,12 @@ func (ur *userRepo) GetUserById(ctx context.Context, id string) (models.User, er
 	user := repoUser.ToCoreUser()
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return user, coreerrors.NewRepoNoUserFoundError("_id", id, true)
+			fields := map[string]interface{}{
+				"_id": id,
+			}
+			return user, coreerrors.NewNoUserFoundError(fields, true)
 		}
-		return user, coreerrors.NewRepoQueryFailed(err, true)
+		return user, coreerrors.NewRepoQueryFailedError(err, true)
 	}
 	return user, nil
 }
@@ -90,9 +93,9 @@ func (ur *userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, co
 				"contacts.type":      contactType,
 				"contacts.principal": contactPrincipal,
 			}
-			return user, coreerrors.NewRepoNoUserFoundErrorWithFields(fields, true)
+			return user, coreerrors.NewNoUserFoundError(fields, true)
 		}
-		return user, coreerrors.NewRepoQueryFailed(err, true)
+		return user, coreerrors.NewRepoQueryFailedError(err, true)
 	}
 	return user, nil
 }
@@ -140,10 +143,13 @@ func (ur *userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedB
 	}
 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(ctx, filter, update)
 	if err != nil {
-		return coreerrors.NewRepoQueryFailed(err, true)
+		return coreerrors.NewRepoQueryFailedError(err, true)
 	}
 	if result.ModifiedCount == 0 {
-		return coreerrors.NewRepoNoUserFoundError("_id", user.ID, true)
+		fields := map[string]interface{}{
+			"_id": user.ID,
+		}
+		return coreerrors.NewNoUserFoundError(fields, true)
 	}
 	return nil
 }

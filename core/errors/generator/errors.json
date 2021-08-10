@@ -1,11 +1,66 @@
 [
     {
+        "code": "InvalidType",
+        "message": "invalid type encountered",
+        "metaData": [
+            { "name": "typeEncountered", "dataType": "string"}
+        ]
+    },
+    {
+        "code": "InvalidValue",
+        "message": "an invalid value was found",
+        "metaData": [
+            { "name": "value", "dataType": "interface{}"}
+        ]
+    },
+    {
+        "code": "NilNotAllowed",
+        "message": "a nil value was encountered, but not allowed",
+        "metaData": []
+    },
+    {
+        "code": "NoContactFound",
+        "message": "no contact found for given query",
+        "metaData": [
+            { "name": "fields", "dataType": "map[string]interface{}"}
+        ]
+    },
+    {
+        "code": "NoUserFound",
+        "message": "no user found for given query",
+        "metaData": [
+            { "name": "fields", "dataType": "map[string]interface{}"}
+        ]
+    },
+    {
+        "code": "RepoQueryFailed",
+        "message": "repo query failed with error",
+        "metaData": [
+            { "name": "queryError", "dataType": "error"}
+        ]
+    },
+    {
         "code": "ContactNotConfirmed",
         "message": "contact is not confirmed",
         "metaData": [
             { "name": "contactId", "dataType": "string"},
             { "name": "principal", "dataType": "string"},
             { "name": "issueType", "dataType": "string"}
+        ]
+    },
+    {
+        "code": "UserLockedOut",
+        "message": "attempted login by locked out user",
+        "metaData": [
+            { "name": "userID", "dataType": "string"}
+        ]
+    },
+    {
+        "code": "WrongType",
+        "message": "unexpected type encountered",
+        "metaData": [
+            { "name": "actual", "dataType": "string"},
+            { "name": "expected", "dataType": "string"}
         ]
     }
 ]
