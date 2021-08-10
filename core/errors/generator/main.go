@@ -2,6 +2,8 @@
 
 package main
 
+// TODO: add code to handle map[string]interface{} to use RichError.WithMetadata...
+
 import (
 	"bytes"
 	"encoding/json"
