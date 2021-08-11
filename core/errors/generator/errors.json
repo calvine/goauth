@@ -48,7 +48,17 @@
         "metaData": [
             { "name": "contactId", "dataType": "string"},
             { "name": "principal", "dataType": "string"},
-            { "name": "issueType", "dataType": "string"}
+            { "name": "principalType", "dataType": "string"}
+        ]
+    },
+    {
+        "code": "LoginContactNotPrimary",
+        "message": "contact user for login is not a primary contact",
+        "includeMap": false,
+        "metaData": [
+            { "name": "contactId", "dataType": "string"},
+            { "name": "principal", "dataType": "string"},
+            { "name": "principalType", "dataType": "string"}
         ]
     },
     {
@@ -66,6 +76,23 @@
         "metaData": [
             { "name": "actual", "dataType": "string"},
             { "name": "expected", "dataType": "string"}
+        ]
+    },
+    {
+        "code": "LoginFailedWrongPassword",
+        "message": "login for user failed due to incorrect password",
+        "includeMap": false,
+        "metaData": [
+            { "name": "userID", "dataType": "string"}
+        ]
+    },
+    {
+        "code": "ComputeHashFailed",
+        "message": "a failure occurred while attempting to calculate a hash",
+        "includeMap": false,
+        "metaData": [
+            { "name": "algorithm", "dataType": "string"},
+            { "name": "error", "dataType": "error"}
         ]
     }
 ]

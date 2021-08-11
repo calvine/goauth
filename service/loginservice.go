@@ -41,18 +41,24 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, p
 	if err != nil {
 		return models.User{}, err
 	}
+	if !contact.IsPrimary {
+		return models.User{}, errors.NewLoginContactNotPrimaryError(contact.ID, contact.Principal, contact.Type, true)
+	}
 	if !contact.ConfirmedDate.HasValue { // || contact.ConfirmedDate.Value.After(now)
 		// TODO: return error that primary contact is not confirmed.
+		return models.User{}, errors.NewContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
 	}
 	// check password
 	saltedString := utilities.InterleaveStrings(password, user.Salt)
 	computedHash, err := utilities.SHA512(saltedString)
 	if err != nil {
 		// TOOD: return custom error for this case...
+		return models.User{}, errors.NewComputeHashFailedError("SHA512", err, true)
 	}
 	if computedHash != user.PasswordHash {
 		// TODO: handle failed login
 		// TODO: if password check fails increment consecutive failed login attempts and handle logic to set lockout and reset consecutive attempts
+		return models.User{}, errors.NewLoginFailedWrongPasswordError(user.ID, true)
 	}
 	if user.ConsecutiveFailedLoginAttempts > 0 {
 		// TODO: reset consecutive failed login attempts
