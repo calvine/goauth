@@ -38,13 +38,7 @@ func NewRichError(errCode, message string) RichError {
 }
 
 func NewRichErrorWithStack(errCode, message string, stackOffset int) RichError {
-	occurredAt := time.Now().UTC()
-	err := RichError{
-		ErrCode:    errCode,
-		Message:    message,
-		OccurredAt: occurredAt,
-	}
-	err = err.WithStack(stackOffset)
+	err := NewRichError(errCode, message).WithStack(stackOffset)
 	return err
 
 }
