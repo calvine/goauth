@@ -9,7 +9,7 @@ import (
 // NewNoUserFoundError creates a new specific error
 func NewNoUserFoundError(fields map[string]interface{}, includeStack bool) RichError {
 	msg := "no user found for given query"
-	err := NewRichError(codes.ErrCodeNoUserFound, msg).AddMetaData("fields", fields)
+	err := NewRichError(codes.ErrCodeNoUserFound, msg).WithMetaData(fields)
 	if includeStack {
 		err = err.WithStack(1)
 	}

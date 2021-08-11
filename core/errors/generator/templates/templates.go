@@ -11,9 +11,9 @@ import (
 )
 
 // New{{ .Code }}Error creates a new specific error
-func New{{ .Code }}Error({{ range .MetaData }}{{ .Name }} {{ .DataType }}, {{ end }}includeStack bool) RichError {
+func New{{ .Code }}Error({{ range .MetaData }}{{ .Name }} {{ .DataType }}, {{ end }}{{ if .IncludeMap }}fields map[string]interface{}, {{ end }}includeStack bool) RichError {
 	msg := "{{ .Message }}"
-	err := NewRichError(codes.ErrCode{{ .Code }}, msg){{ range .MetaData }}.AddMetaData("{{ .Name }}", {{ .Name }}){{ end }}
+	err := NewRichError(codes.ErrCode{{ .Code }}, msg){{ if .IncludeMap }}.WithMetaData(fields){{ end }}{{ range .MetaData }}.AddMetaData("{{ .Name }}", {{ .Name }}){{ end }}
 	if includeStack {
 		err = err.WithStack(1)
 	}

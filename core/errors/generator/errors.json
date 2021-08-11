@@ -2,6 +2,7 @@
     {
         "code": "InvalidType",
         "message": "invalid type encountered",
+        "includeMap": false,
         "metaData": [
             { "name": "typeEncountered", "dataType": "string"}
         ]
@@ -9,6 +10,7 @@
     {
         "code": "InvalidValue",
         "message": "an invalid value was found",
+        "includeMap": false,
         "metaData": [
             { "name": "value", "dataType": "interface{}"}
         ]
@@ -16,25 +18,25 @@
     {
         "code": "NilNotAllowed",
         "message": "a nil value was encountered, but not allowed",
+        "includeMap": false,
         "metaData": []
     },
     {
         "code": "NoContactFound",
         "message": "no contact found for given query",
-        "metaData": [
-            { "name": "fields", "dataType": "map[string]interface{}"}
-        ]
+        "includeMap": true,
+        "metaData": []
     },
     {
         "code": "NoUserFound",
         "message": "no user found for given query",
-        "metaData": [
-            { "name": "fields", "dataType": "map[string]interface{}"}
-        ]
+        "includeMap": true,
+        "metaData": []
     },
     {
         "code": "RepoQueryFailed",
         "message": "repo query failed with error",
+        "includeMap": false,
         "metaData": [
             { "name": "queryError", "dataType": "error"}
         ]
@@ -42,6 +44,7 @@
     {
         "code": "ContactNotConfirmed",
         "message": "contact is not confirmed",
+        "includeMap": false,
         "metaData": [
             { "name": "contactId", "dataType": "string"},
             { "name": "principal", "dataType": "string"},
@@ -51,6 +54,7 @@
     {
         "code": "UserLockedOut",
         "message": "attempted login by locked out user",
+        "includeMap": false,
         "metaData": [
             { "name": "userID", "dataType": "string"}
         ]
@@ -58,6 +62,7 @@
     {
         "code": "WrongType",
         "message": "unexpected type encountered",
+        "includeMap": false,
         "metaData": [
             { "name": "actual", "dataType": "string"},
             { "name": "expected", "dataType": "string"}

@@ -33,9 +33,10 @@ type dataItem struct {
 
 type errorData struct {
 	// Code is expected to be Pascal Case
-	Code     string     `json:"code"`
-	Message  string     `json:"message"`
-	MetaData []dataItem `json:"metaData"`
+	Code       string     `json:"code"`
+	Message    string     `json:"message"`
+	IncludeMap bool       `json:"includeMap"`
+	MetaData   []dataItem `json:"metaData"`
 }
 
 type jsonErrorFileData struct {
