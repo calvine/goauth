@@ -15,8 +15,6 @@ import (
 )
 
 var (
-	emptyUser = models.User{}
-
 	ProjUserOnly = bson.M{
 		"_id":                            1,
 		"passwordHash":                   1,
@@ -44,14 +42,14 @@ func NewUserRepoWithNames(client *mongo.Client, dbName, collectionName string) u
 	return userRepo{client, dbName, collectionName}
 }
 
-func (ur *userRepo) GetUserById(ctx context.Context, id string) (models.User, error) {
+func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, error) {
 	var repoUser repoModels.RepoUser
 	options := options.FindOneOptions{
 		Projection: ProjUserOnly,
 	}
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return repoUser.ToCoreUser(), err
+		return repoUser.ToCoreUser(), coreerrors.NewFailedToParseObjectIDError(id, err, true)
 	}
 	filter := bson.M{"_id": oid}
 	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&repoUser)
@@ -68,7 +66,7 @@ func (ur *userRepo) GetUserById(ctx context.Context, id string) (models.User, er
 	return user, nil
 }
 
-func (ur *userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, error) {
+func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, error) {
 	var repoUser repoModels.RepoUser
 	options := options.FindOneOptions{
 		Projection: ProjUserOnly,
@@ -100,7 +98,7 @@ func (ur *userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, co
 	return user, nil
 }
 
-func (ur *userRepo) AddUser(ctx context.Context, user *models.User, createdById string) error {
+func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdById string) error {
 	user.AuditData.CreatedByID = createdById
 	user.AuditData.CreatedOnDate = time.Now().UTC()
 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).InsertOne(ctx, user, nil)
@@ -115,7 +113,7 @@ func (ur *userRepo) AddUser(ctx context.Context, user *models.User, createdById 
 	return nil
 }
 
-func (ur *userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedById string) error {
+func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedById string) error {
 	user.AuditData.ModifiedByID.Set(modifiedById)
 	user.AuditData.ModifiedOnDate.Set(time.Now().UTC())
 	repoUser, err := repoModels.CoreUser(*user).ToRepoUser()

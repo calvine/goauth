@@ -94,5 +94,14 @@
             { "name": "algorithm", "dataType": "string"},
             { "name": "error", "dataType": "error"}
         ]
+    },
+    {
+        "code": "FailedToParseObjectID",
+        "message": "failed to parse an object id string",
+        "includeMap": false,
+        "metaData": [
+            { "name": "oid", "dataType": "string"},
+            { "name": "error", "dataType": "error"}
+        ]
     }
 ]

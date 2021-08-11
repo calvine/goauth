@@ -61,7 +61,12 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, p
 		return models.User{}, errors.NewLoginFailedWrongPasswordError(user.ID, true)
 	}
 	if user.ConsecutiveFailedLoginAttempts > 0 {
-		// TODO: reset consecutive failed login attempts
+		// reset consecutive failed login attempts because we have a successful login
+		user.ConsecutiveFailedLoginAttempts = 0
+		err = ls.userRepo.UpdateUser(ctx, &user, user.ID)
+		if err != nil {
+			return models.User{}, err
+		}
 	}
 	return user, nil
 }
