@@ -6,7 +6,8 @@ import (
 	"github.com/calvine/goauth/core/models"
 )
 
-// TODO: implemet account lockout after X number of consecutive failed login attempts.
+// TODO: change all instances of error to RichError
+
 // LoginService is a service used to facilitate logging in
 type LoginService interface {
 	// LoginWithContact attempts to confirm a users credentials and if they match it returns true and resets the users ConsecutiveFailedLoginAttempts, otherwise it returns false and increments the users ConsecutiveFailedLoginAttempts

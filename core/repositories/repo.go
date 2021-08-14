@@ -6,6 +6,8 @@ import (
 	"github.com/calvine/goauth/core/models"
 )
 
+// TODO: change all instances of error to RichError
+
 type AuditLogRepo interface {
 	LogMessage(ctx context.Context, message models.AuditLog) error
 }
