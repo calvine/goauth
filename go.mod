@@ -2,4 +2,4 @@ module github.com/calvine/goauth
 
 go 1.16
 
-require go.mongodb.org/mongo-driver v1.5.3 // indirect
+require go.mongodb.org/mongo-driver v1.5.3
