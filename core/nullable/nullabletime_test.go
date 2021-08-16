@@ -74,7 +74,7 @@ func TestNullableTimeScan(t *testing.T) {
 	}
 	testString := "abc"
 	err = ns.Scan(testString)
-	if err != nil && err.(goautherrors.RichError).ErrCode != codes.ErrCodeWrongType {
+	if err != nil && err.(goautherrors.RichError).GetErrorCode() != codes.ErrCodeWrongType {
 		t.Error("Expected error to be of type WrongTypeError", err)
 	}
 	if ns.Value != emptyTime || ns.HasValue != false {

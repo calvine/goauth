@@ -14,7 +14,33 @@ var (
 	partSeperator = "\n" //" - "
 )
 
-type RichError struct {
+type ReadOnlyRichError interface {
+	GetErrorCode() string
+	GetErrorMessage() string
+	GetStack() string
+	GetSource() string
+	GetFunction() string
+	GetLineNumber() string
+	GetMetaData() map[string]interface{}
+	GetMetaDataItem(key string) (interface{}, bool)
+	GetErrors() []error
+}
+
+type RichError interface {
+	WithStack(stackOffset int) RichError
+	WithMetaData(metaData map[string]interface{}) RichError
+	WithErrors(errs []error) RichError
+	AddSource(source string) RichError
+	AddFunction(function string) RichError
+	AddLineNumber(lineNumber string) RichError
+	AddMetaData(key string, value interface{}) RichError
+	AddError(err error) RichError
+
+	ReadOnlyRichError
+	error
+}
+
+type richError struct {
 	ErrCode     string                 `json:"code"`
 	Message     string                 `json:"message"`
 	Source      string                 `json:"source,omitempty"`
@@ -28,7 +54,7 @@ type RichError struct {
 
 func NewRichError(errCode, message string) RichError {
 	occurredAt := time.Now().UTC()
-	err := RichError{
+	err := richError{
 		ErrCode:    errCode,
 		Message:    message,
 		OccurredAt: occurredAt,
@@ -43,7 +69,7 @@ func NewRichErrorWithStack(errCode, message string, stackOffset int) RichError {
 
 }
 
-func (e RichError) WithStack(stackOffset int) RichError {
+func (e richError) WithStack(stackOffset int) RichError {
 	baseStackOffset := 2
 	// Here we initialize the slice to 10 because the runtime.Callers
 	// function will not grow the slice as needed.
@@ -79,12 +105,12 @@ func (e RichError) WithStack(stackOffset int) RichError {
 	return e
 }
 
-func (e RichError) WithMetaData(metaData map[string]interface{}) RichError {
+func (e richError) WithMetaData(metaData map[string]interface{}) RichError {
 	e.MetaData = metaData
 	return e
 }
 
-func (e RichError) WithErrors(errs []error) RichError {
+func (e richError) WithErrors(errs []error) RichError {
 	if errs != nil {
 		if e.InnerErrors == nil {
 			e.InnerErrors = make([]error, len(errs))
@@ -94,22 +120,22 @@ func (e RichError) WithErrors(errs []error) RichError {
 	return e
 }
 
-func (e RichError) AddSource(source string) RichError {
+func (e richError) AddSource(source string) RichError {
 	e.Source = source
 	return e
 }
 
-func (e RichError) AddFunction(function string) RichError {
+func (e richError) AddFunction(function string) RichError {
 	e.Function = function
 	return e
 }
 
-func (e RichError) AddLineNumber(lineNumber string) RichError {
+func (e richError) AddLineNumber(lineNumber string) RichError {
 	e.LineNumber = lineNumber
 	return e
 }
 
-func (e RichError) AddMetaData(key string, value interface{}) RichError {
+func (e richError) AddMetaData(key string, value interface{}) RichError {
 	if e.MetaData == nil {
 		e.MetaData = make(map[string]interface{}, 1)
 	}
@@ -117,7 +143,7 @@ func (e RichError) AddMetaData(key string, value interface{}) RichError {
 	return e
 }
 
-func (e RichError) AddError(err error) RichError {
+func (e richError) AddError(err error) RichError {
 	if err != nil {
 		if e.InnerErrors == nil {
 			e.InnerErrors = make([]error, 1)
@@ -127,7 +153,47 @@ func (e RichError) AddError(err error) RichError {
 	return e
 }
 
-func (e RichError) Error() string {
+func (e richError) GetErrorCode() string {
+	return e.ErrCode
+}
+
+func (e richError) GetErrorMessage() string {
+	return e.Message
+}
+
+func (e richError) GetStack() string {
+	return e.Stack
+}
+
+func (e richError) GetSource() string {
+	return e.Source
+}
+
+func (e richError) GetFunction() string {
+	return e.Function
+}
+
+func (e richError) GetLineNumber() string {
+	return e.LineNumber
+}
+
+func (e richError) GetMetaData() map[string]interface{} {
+	return e.MetaData
+}
+
+func (e richError) GetMetaDataItem(key string) (interface{}, bool) {
+	if e.MetaData == nil {
+		return nil, false
+	}
+	val, ok := e.MetaData[key]
+	return val, ok
+}
+
+func (e richError) GetErrors() []error {
+	return e.InnerErrors
+}
+
+func (e richError) Error() string {
 	var messageBuffer bytes.Buffer
 	timeStampMsg := fmt.Sprintf("TIMESTAMP: %s", e.OccurredAt.String())
 	messageBuffer.WriteString(timeStampMsg)
