@@ -45,12 +45,9 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, p
 		return models.User{}, errors.NewLoginContactNotPrimaryError(contact.ID, contact.Principal, contact.Type, true)
 	}
 	if !contact.ConfirmedDate.HasValue { // || contact.ConfirmedDate.Value.After(now)
-		// TODO: return error that primary contact is not confirmed.
 		return models.User{}, errors.NewContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
 	}
 	// check password
-	// saltedString := utilities.InterleaveStrings(password, user.Salt)
-	// TODO: use bcrypt...
 	// hash, bcryptErr := bcrypt.GenerateFromPassword([]byte(password), 10)
 	bcryptErr := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if bcryptErr == bcrypt.ErrMismatchedHashAndPassword {
