@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/calvine/goauth/core/errors"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/nullable"
@@ -29,7 +30,7 @@ var (
 	}
 )
 
-func (ur userRepo) GetContactByContactId(ctx context.Context, contactId string) (models.Contact, error) {
+func (ur userRepo) GetContactByContactId(ctx context.Context, contactId string) (models.Contact, errors.RichError) {
 	var receiver struct {
 		UserId  primitive.ObjectID       `bson:"_id"`
 		Contact []repoModels.RepoContact `bson:"contacts"`
@@ -60,7 +61,7 @@ func (ur userRepo) GetContactByContactId(ctx context.Context, contactId string) 
 	return receiver.Contact[0].ToCoreContact(), nil
 }
 
-func (ur userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string) (models.Contact, error) {
+func (ur userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string) (models.Contact, errors.RichError) {
 	var receiver struct {
 		Contacts []repoModels.RepoContact `bson:"contacts"`
 	}
@@ -98,7 +99,7 @@ func (ur userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string)
 
 // TODO: finish implementing
 
-func (ur userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]models.Contact, error) {
+func (ur userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]models.Contact, errors.RichError) {
 	var receiver struct {
 		Contacts []repoModels.RepoContact `bson:"contacts"`
 	}
@@ -132,7 +133,7 @@ func (ur userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]mo
 }
 
 // TODO: Figure out why decoding confirmation code is failing...
-func (ur userRepo) GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, error) {
+func (ur userRepo) GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, errors.RichError) {
 	var receiver struct {
 		UserId  primitive.ObjectID       `bson:"_id"`
 		Contact []repoModels.RepoContact `bson:"contacts"`
@@ -160,7 +161,7 @@ func (ur userRepo) GetContactByConfirmationCode(ctx context.Context, confirmatio
 	return receiver.Contact[0].ToCoreContact(), nil
 }
 
-func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, createdById string) error {
+func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, createdById string) errors.RichError {
 	contact.AuditData.CreatedByID = createdById
 	contact.AuditData.CreatedOnDate = time.Now().UTC()
 	contact.ID = primitive.NewObjectID().Hex()
@@ -168,9 +169,9 @@ func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, crea
 	if err != nil {
 		return mongoerrors.NewMongoFailedToParseObjectID(contact.UserID, true)
 	}
-	repoContact, err := repoModels.CoreContact(*contact).ToRepoContact()
+	repoContact, convertErr := repoModels.CoreContact(*contact).ToRepoContact()
 	if err != nil {
-		return err
+		return convertErr
 	}
 	update := bson.M{
 		"$push": bson.M{
@@ -202,7 +203,7 @@ func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, crea
 	return nil
 }
 
-func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, modifiedById string) error {
+func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, modifiedById string) errors.RichError {
 	contact.AuditData.ModifiedByID = nullable.NullableString{}
 	contact.AuditData.ModifiedByID.Set(modifiedById)
 	contact.AuditData.ModifiedOnDate = nullable.NullableTime{}
@@ -210,12 +211,12 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 	contactID, err := primitive.ObjectIDFromHex(contact.ID)
 	if err != nil {
 		// TODO: specific error here?
-		return err
+		return coreerrors.NewFailedToParseObjectIDError(contact.ID, err, true)
 	}
 	oid, err := primitive.ObjectIDFromHex(contact.UserID)
 	if err != nil {
 		// TODO: specific error here?
-		return err
+		return coreerrors.NewFailedToParseObjectIDError(contact.UserID, err, true)
 	}
 	filter := bson.D{
 		{Key: "_id", Value: oid},
@@ -247,7 +248,7 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 	return nil
 }
 
-func (ur userRepo) ConfirmContact(ctx context.Context, confirmationCode, modifiedById string) error {
+func (ur userRepo) ConfirmContact(ctx context.Context, confirmationCode, modifiedById string) errors.RichError {
 	now := time.Now().UTC()
 	filter := bson.D{
 		{Key: "contacts.confirmationCode", Value: confirmationCode},

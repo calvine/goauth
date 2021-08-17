@@ -24,7 +24,7 @@ func NewLoginService(userRepo repo.UserRepo, contactRepo repo.ContactRepo, audit
 	}
 }
 
-func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, principalType, password string, initiator string) (models.User, error) {
+func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, principalType, password string, initiator string) (models.User, errors.RichError) {
 	user, err := ls.userRepo.GetUserByPrimaryContact(ctx, principalType, principal)
 	if err != nil {
 		return models.User{}, err
@@ -49,9 +49,9 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, p
 	// check password
 	saltedString := utilities.InterleaveStrings(password, user.Salt)
 	// TODO: use bcrypt...
-	computedHash, err := utilities.SHA512(saltedString)
+	computedHash, hashErr := utilities.SHA512(saltedString)
 	if err != nil {
-		return models.User{}, errors.NewComputeHashFailedError("SHA512", err, true)
+		return models.User{}, errors.NewComputeHashFailedError("SHA512", hashErr, true)
 	}
 	if computedHash != user.PasswordHash {
 		user.ConsecutiveFailedLoginAttempts += 1
@@ -61,7 +61,7 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, p
 			// TODO: make lockout time configurable
 			user.LockedOutUntil.Set(now.Add(time.Minute * 15))
 		}
-		err = ls.userRepo.UpdateUser(ctx, &user, user.ID)
+		_ = ls.userRepo.UpdateUser(ctx, &user, user.ID)
 		return models.User{}, errors.NewLoginFailedWrongPasswordError(user.ID, true)
 	}
 	if user.ConsecutiveFailedLoginAttempts > 0 {

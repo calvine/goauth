@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -19,10 +20,10 @@ func (ru RepoUser) ToCoreUser() models.User {
 	return models.User(ru.CoreUser)
 }
 
-func (cu CoreUser) ToRepoUser() (RepoUser, error) {
+func (cu CoreUser) ToRepoUser() (RepoUser, errors.RichError) {
 	oid, err := primitive.ObjectIDFromHex(cu.ID)
 	if err != nil {
-		return RepoUser{}, err
+		return RepoUser{}, errors.NewFailedToParseObjectIDError(cu.ID, err, true)
 	}
 	return RepoUser{
 		ObjectId: oid,

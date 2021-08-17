@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/calvine/goauth/core/errors"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	mongoerrors "github.com/calvine/goauth/dataaccess/mongo/internal/errors"
@@ -42,7 +43,7 @@ func NewUserRepoWithNames(client *mongo.Client, dbName, collectionName string) u
 	return userRepo{client, dbName, collectionName}
 }
 
-func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, error) {
+func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, errors.RichError) {
 	var repoUser repoModels.RepoUser
 	options := options.FindOneOptions{
 		Projection: ProjUserOnly,
@@ -66,7 +67,7 @@ func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, err
 	return user, nil
 }
 
-func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, error) {
+func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, errors.RichError) {
 	var repoUser repoModels.RepoUser
 	options := options.FindOneOptions{
 		Projection: ProjUserOnly,
@@ -98,12 +99,12 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, con
 	return user, nil
 }
 
-func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdById string) error {
+func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdById string) errors.RichError {
 	user.AuditData.CreatedByID = createdById
 	user.AuditData.CreatedOnDate = time.Now().UTC()
 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).InsertOne(ctx, user, nil)
 	if err != nil {
-		return err
+		return errors.NewRepoQueryFailedError(err, true)
 	}
 	oid, ok := result.InsertedID.(primitive.ObjectID)
 	if !ok {
@@ -113,7 +114,7 @@ func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdById s
 	return nil
 }
 
-func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedById string) error {
+func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedById string) errors.RichError {
 	user.AuditData.ModifiedByID.Set(modifiedById)
 	user.AuditData.ModifiedOnDate.Set(time.Now().UTC())
 	repoUser, err := repoModels.CoreUser(*user).ToRepoUser()
@@ -139,9 +140,9 @@ func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedBy
 			"modifiedOnDate":                 repoUser.AuditData.ModifiedOnDate.GetPointerCopy(),
 		},
 	}
-	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(ctx, filter, update)
-	if err != nil {
-		return coreerrors.NewRepoQueryFailedError(err, true)
+	result, updateErr := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(ctx, filter, update)
+	if updateErr != nil {
+		return coreerrors.NewRepoQueryFailedError(updateErr, true)
 	}
 	if result.ModifiedCount == 0 {
 		fields := map[string]interface{}{

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	"github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 )
 
@@ -12,31 +13,31 @@ import (
 type LoginService interface {
 	// LoginWithContact attempts to confirm a users credentials and if they match it returns true and resets the users ConsecutiveFailedLoginAttempts, otherwise it returns false and increments the users ConsecutiveFailedLoginAttempts
 	// The principal should only work when it has been confirmed
-	LoginWithPrimaryContact(ctx context.Context, principal, principalType, password string, initiator string) (models.User, error)
+	LoginWithPrimaryContact(ctx context.Context, principal, principalType, password string, initiator string) (models.User, errors.RichError)
 	// StartPasswordResetByContact sets a password reset token for the user with the corresponding principal and type that are confirmed.
-	StartPasswordResetByContact(ctx context.Context, principal, principalType string, initiator string) (string, error)
+	StartPasswordResetByContact(ctx context.Context, principal, principalType string, initiator string) (string, errors.RichError)
 	// ConfirmContact takes a confirmation code and updates the users contact record to be confirmed.
-	ConfirmContact(ctx context.Context, confirmationCode string, initiator string) (bool, error)
+	ConfirmContact(ctx context.Context, confirmationCode string, initiator string) (bool, errors.RichError)
 	// ResetPassword resets a users password given a userId and new password hash and salt.
-	ResetPassword(ctx context.Context, userId string, newPasswordHash string, newSalt string, initiator string) (bool, error)
+	ResetPassword(ctx context.Context, userId string, newPasswordHash string, newSalt string, initiator string) (bool, errors.RichError)
 }
 
 // UserService is a service that facilitates access to user related data.
 type UserService interface {
 	// GetUserByConfirmedContact gets a user record via a confirmed contact
-	GetUserByConfirmedContact(ctx context.Context, contactPrincipal string, initiator string) (models.User, error)
+	GetUserByConfirmedContact(ctx context.Context, contactPrincipal string, initiator string) (models.User, errors.RichError)
 	// AddUser adds a user record to the database
-	AddUser(ctx context.Context, user *models.User, initiator string) error
+	AddUser(ctx context.Context, user *models.User, initiator string) errors.RichError
 	// UpdateUser updates a use record in the database
-	UpdateUser(ctx context.Context, user *models.User, initiator string) error
+	UpdateUser(ctx context.Context, user *models.User, initiator string) errors.RichError
 	// GetUserPrimaryContact gets a users primary contact
-	GetUserPrimaryContact(ctx context.Context, userId string, initiator string) (models.Contact, error)
+	GetUserPrimaryContact(ctx context.Context, userId string, initiator string) (models.Contact, errors.RichError)
 	// GetUsersContacts gets all of a users contacts
-	GetUsersContacts(ctx context.Context, userId string, initiator string) ([]models.Contact, error)
+	GetUsersContacts(ctx context.Context, userId string, initiator string) ([]models.Contact, errors.RichError)
 	// GetUsersConfirmedContacts gets all of a users confirmed contacts
-	GetUsersConfirmedContacts(ctx context.Context, userId string, initiator string) ([]models.Contact, error)
+	GetUsersConfirmedContacts(ctx context.Context, userId string, initiator string) ([]models.Contact, errors.RichError)
 	// AddContact adds a contact to a user
-	AddContact(ctx context.Context, contact *models.Contact, initiator string) error
+	AddContact(ctx context.Context, contact *models.Contact, initiator string) errors.RichError
 	// UpdateContact updates a contact for a user
-	UpdateContact(ctx context.Context, contact *models.Contact, initiator string) error
+	UpdateContact(ctx context.Context, contact *models.Contact, initiator string) errors.RichError
 }
