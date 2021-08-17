@@ -103,5 +103,23 @@
             { "name": "oid", "dataType": "string"},
             { "name": "error", "dataType": "error"}
         ]
+    },
+    {
+        "code": "ComponentNotImplemented",
+        "message": "component not implemented",
+        "includeMap": false,
+        "metaData": [
+            { "name": "compoenentType", "dataType": "string"},
+            { "name": "missingType", "dataType": "string"}
+        ]
+    },
+    {
+        "code": "BcryptPasswordHashError",
+        "message": "an error occurred while processing bcrypt hash for password",
+        "includeMap": false,
+        "metaData": [
+            { "name": "assetId", "dataType": "string"},
+            { "name": "error", "dataType": "error"}
+        ]
     }
 ]

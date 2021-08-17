@@ -9,7 +9,7 @@ import (
 // NewFailedToParseObjectIDError creates a new specific error
 func NewFailedToParseObjectIDError(oid string, error error, includeStack bool) RichError {
 	msg := "failed to parse an object id string"
-	err := NewRichError(codes.ErrCodeFailedToParseObjectID, msg).AddMetaData("oid", oid).AddMetaData("error", error)
+	err := NewRichError(codes.ErrCodeFailedToParseObjectID, msg).AddMetaData("oid", oid).AddError(error)
 	if includeStack {
 		err = err.WithStack(1)
 	}

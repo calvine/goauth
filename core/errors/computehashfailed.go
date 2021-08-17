@@ -9,7 +9,7 @@ import (
 // NewComputeHashFailedError creates a new specific error
 func NewComputeHashFailedError(algorithm string, error error, includeStack bool) RichError {
 	msg := "a failure occurred while attempting to calculate a hash"
-	err := NewRichError(codes.ErrCodeComputeHashFailed, msg).AddMetaData("algorithm", algorithm).AddMetaData("error", error)
+	err := NewRichError(codes.ErrCodeComputeHashFailed, msg).AddMetaData("algorithm", algorithm).AddError(error)
 	if includeStack {
 		err = err.WithStack(1)
 	}

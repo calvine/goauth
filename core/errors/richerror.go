@@ -24,6 +24,8 @@ type ReadOnlyRichError interface {
 	GetMetaData() map[string]interface{}
 	GetMetaDataItem(key string) (interface{}, bool)
 	GetErrors() []error
+
+	error
 }
 
 type RichError interface {
@@ -37,7 +39,6 @@ type RichError interface {
 	AddError(err error) RichError
 
 	ReadOnlyRichError
-	error
 }
 
 type richError struct {

@@ -7,20 +7,22 @@ import (
 	"github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
-	"github.com/calvine/goauth/core/utilities"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type loginService struct {
-	userRepo     repo.UserRepo
-	contactRepo  repo.ContactRepo
 	auditLogRepo repo.AuditLogRepo
+	contactRepo  repo.ContactRepo
+	emailService EmailService
+	userRepo     repo.UserRepo
 }
 
-func NewLoginService(userRepo repo.UserRepo, contactRepo repo.ContactRepo, auditLogRepo repo.AuditLogRepo) loginService {
+func NewLoginService(auditLogRepo repo.AuditLogRepo, contactRepo repo.ContactRepo, emailService EmailService, userRepo repo.UserRepo) loginService {
 	return loginService{
-		userRepo:     userRepo,
-		contactRepo:  contactRepo,
 		auditLogRepo: auditLogRepo,
+		contactRepo:  contactRepo,
+		emailService: emailService,
+		userRepo:     userRepo,
 	}
 }
 
@@ -47,13 +49,11 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, p
 		return models.User{}, errors.NewContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
 	}
 	// check password
-	saltedString := utilities.InterleaveStrings(password, user.Salt)
+	// saltedString := utilities.InterleaveStrings(password, user.Salt)
 	// TODO: use bcrypt...
-	computedHash, hashErr := utilities.SHA512(saltedString)
-	if err != nil {
-		return models.User{}, errors.NewComputeHashFailedError("SHA512", hashErr, true)
-	}
-	if computedHash != user.PasswordHash {
+	// hash, bcryptErr := bcrypt.GenerateFromPassword([]byte(password), 10)
+	bcryptErr := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	if bcryptErr == bcrypt.ErrMismatchedHashAndPassword {
 		user.ConsecutiveFailedLoginAttempts += 1
 		// TODO: make max ConsecutiveFailedLoginAttempts configurable
 		if user.ConsecutiveFailedLoginAttempts >= 10 {
@@ -63,6 +63,8 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, p
 		}
 		_ = ls.userRepo.UpdateUser(ctx, &user, user.ID)
 		return models.User{}, errors.NewLoginFailedWrongPasswordError(user.ID, true)
+	} else if bcryptErr != nil {
+		return models.User{}, errors.NewBcryptPasswordHashErrorError(user.ID, bcryptErr, true)
 	}
 	if user.ConsecutiveFailedLoginAttempts > 0 {
 		// reset consecutive failed login attempts because we have a successful login

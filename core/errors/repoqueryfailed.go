@@ -9,7 +9,7 @@ import (
 // NewRepoQueryFailedError creates a new specific error
 func NewRepoQueryFailedError(queryError error, includeStack bool) RichError {
 	msg := "repo query failed with error"
-	err := NewRichError(codes.ErrCodeRepoQueryFailed, msg).AddMetaData("queryError", queryError)
+	err := NewRichError(codes.ErrCodeRepoQueryFailed, msg).AddError(queryError)
 	if includeStack {
 		err = err.WithStack(1)
 	}
