@@ -13,6 +13,11 @@ var (
 	testUser1 = models.User{
 		PasswordHash: "passwordhash1",
 	}
+	// TODO: Finish implementing for get user my password reset token test.
+	// testUser2 = models.User{
+	// 	PasswordResetToken: "",
+	// 	PasswordResetTokenExpiration: time.Now().Add(time.Minute * 15),
+	// }
 )
 
 func testMongoUserRepo(t *testing.T, userRepo userRepo) {
@@ -32,7 +37,9 @@ func testMongoUserRepo(t *testing.T, userRepo userRepo) {
 	t.Run("userRepo.GetUserAndContactByPrimaryContact", func(t *testing.T) {
 		_testGetUserAndContactByPrimaryContact(t, userRepo)
 	})
-
+	t.Run("userRepo.GetUserByPasswordResetToken", func(t *testing.T) {
+		// TODO: implement get user by password reset token test.
+	})
 }
 
 func _testAddUser(t *testing.T, userRepo userRepo) {

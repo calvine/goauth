@@ -19,7 +19,7 @@ type LoginService interface {
 	// ConfirmContact takes a confirmation code and updates the users contact record to be confirmed.
 	ConfirmContact(ctx context.Context, confirmationCode string, initiator string) (bool, errors.RichError)
 	// ResetPassword resets a users password given a userId and new password hash and salt.
-	ResetPassword(ctx context.Context, userId string, newPasswordHash string, newSalt string, initiator string) (bool, errors.RichError)
+	ResetPassword(ctx context.Context, passwordResetToken string, newPasswordHash string, initiator string) (bool, errors.RichError)
 }
 
 // UserService is a service that facilitates access to user related data.

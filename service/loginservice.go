@@ -9,6 +9,7 @@ import (
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
+	"github.com/calvine/goauth/core/services"
 	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/richerror/errors"
 	"golang.org/x/crypto/bcrypt"
@@ -21,7 +22,7 @@ type loginService struct {
 	userRepo     repo.UserRepo
 }
 
-func NewLoginService(auditLogRepo repo.AuditLogRepo, contactRepo repo.ContactRepo, emailService EmailService, userRepo repo.UserRepo) loginService {
+func NewLoginService(auditLogRepo repo.AuditLogRepo, contactRepo repo.ContactRepo, emailService EmailService, userRepo repo.UserRepo) services.LoginService {
 	return loginService{
 		auditLogRepo: auditLogRepo,
 		contactRepo:  contactRepo,
@@ -103,10 +104,10 @@ func (ls loginService) StartPasswordResetByContact(ctx context.Context, principa
 	return passwordResetToken, nil
 }
 
-// func (ls loginService) ConfirmContact(ctx context.Context, confirmationCode string, initiator string) (bool, error) {
+func (ls loginService) ResetPassword(ctx context.Context, passwordResetToken string, newPasswordHash string, initiator string) (bool, errors.RichError) {
 
-// }
+}
 
-// func (ls loginService) ResetPassword(ctx context.Context, userId string, newPasswordHash string, newSalt string, initiator string) (bool, error) {
+func (ls loginService) ConfirmContact(ctx context.Context, confirmationCode string, initiator string) (bool, errors.RichError) {
 
-// }
+}

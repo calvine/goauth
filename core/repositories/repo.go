@@ -23,6 +23,8 @@ type UserRepo interface {
 	GetUserByPrimaryContact(ctx context.Context, contactPrincipalType, contactPrincipal string) (models.User, errors.RichError)
 	// GetUserAndContactByPrimaryContact gets the user and the primary contact by their primary contact principal and contactType
 	GetUserAndContactByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError)
+	// Get a user record by its password reset token
+	GetUserByPasswordResetToken(ctx context.Context, passwordResetToken string) (models.User, errors.RichError)
 }
 
 type ContactRepo interface {
