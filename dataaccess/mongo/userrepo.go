@@ -18,10 +18,21 @@ var (
 	ProjUserOnly = bson.M{
 		"_id":                            1,
 		"passwordHash":                   1,
-		"salt":                           1,
 		"consecutiveFailedLoginAttempts": 1,
 		"lockedOutUntil":                 1,
 		"lastLoginDate":                  1,
+		"passwordResetToken":             1,
+		"passwordResetTokenExpiration":   1,
+	}
+	ProjUserWithSpecificContact = bson.M{
+		"_id":                            1,
+		"passwordHash":                   1,
+		"consecutiveFailedLoginAttempts": 1,
+		"lockedOutUntil":                 1,
+		"lastLoginDate":                  1,
+		"passwordResetToken":             1,
+		"passwordResetTokenExpiration":   1,
+		"contacts.$":                     1,
 	}
 )
 
@@ -64,6 +75,46 @@ func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, err
 		return user, coreerrors.NewRepoQueryFailedError(err, true)
 	}
 	return user, nil
+}
+
+func (ur userRepo) GetUserAndContactByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
+	var receiver struct {
+		User    repoModels.RepoUser      `bson:",inline"`
+		Contact []repoModels.RepoContact `bson:"contacts"`
+	}
+	var user models.User
+	var contact models.Contact
+
+	options := options.FindOneOptions{
+		Projection: ProjUserWithSpecificContact,
+	}
+	filter := bson.M{
+		"contacts": bson.D{
+			{
+				Key: "$elemMatch", Value: bson.D{
+					{Key: "isPrimary", Value: true},
+					{Key: "type", Value: contactType},
+					{Key: "principal", Value: contactPrincipal},
+				},
+			},
+		},
+	}
+	err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			fields := map[string]interface{}{
+				"contacts.isPrimary": true,
+				"contacts.type":      contactType,
+				"contacts.principal": contactPrincipal,
+			}
+			return user, contact, coreerrors.NewNoUserFoundError(fields, true)
+		}
+		return user, contact, coreerrors.NewRepoQueryFailedError(err, true)
+	}
+	user = receiver.User.ToCoreUser()
+	contact = receiver.Contact[0].ToCoreContact()
+	contact.UserID = user.ID
+	return user, contact, nil
 }
 
 func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, errors.RichError) {

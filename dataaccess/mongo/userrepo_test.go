@@ -29,6 +29,9 @@ func testMongoUserRepo(t *testing.T, userRepo userRepo) {
 	t.Run("userRepo.GetUserByPrimaryContact", func(t *testing.T) {
 		_testGetUserByPrimaryContact(t, userRepo)
 	})
+	t.Run("userRepo.GetUserAndContactByPrimaryContact", func(t *testing.T) {
+		_testGetUserAndContactByPrimaryContact(t, userRepo)
+	})
 
 }
 
@@ -83,5 +86,22 @@ func _testGetUserByPrimaryContact(t *testing.T, userRepo userRepo) {
 	}
 	if retreivedUser.ID != initialTestUser.ID {
 		t.Error("expected retreivedUser and initialTestUser Id to match", retreivedUser.ID, initialTestUser.ID)
+	}
+}
+
+func _testGetUserAndContactByPrimaryContact(t *testing.T, userRepo userRepo) {
+	contactType, principal := core.CONTACT_TYPE_EMAIL, "InitialTestUser@email.com"
+	retreivedUser, retreivedContact, err := userRepo.GetUserAndContactByPrimaryContact(context.TODO(), contactType, principal)
+	if err != nil {
+		t.Error("failed to retreive user via primary contact info", contactType, principal, err)
+	}
+	if retreivedUser.ID != initialTestUser.ID {
+		t.Error("expected retreivedUser and initialTestUser Id to match", retreivedUser.ID, initialTestUser.ID)
+	}
+	if retreivedContact.Principal != principal {
+		t.Error("expected retreivedContact.Principal and the test principal to be the same", retreivedContact.Principal, principal)
+	}
+	if retreivedContact.UserID != retreivedUser.ID {
+		t.Error("expected user.ID and contact.userID to match", retreivedContact.UserID, retreivedUser.ID)
 	}
 }
