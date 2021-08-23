@@ -109,7 +109,7 @@
         "message": "component not implemented",
         "includeMap": false,
         "metaData": [
-            { "name": "compoenentType", "dataType": "string"},
+            { "name": "componentType", "dataType": "string"},
             { "name": "missingType", "dataType": "string"}
         ]
     },
@@ -120,6 +120,14 @@
         "metaData": [
             { "name": "assetId", "dataType": "string"},
             { "name": "error", "dataType": "error"}
+        ]
+    },
+    {
+        "code": "GenerateUUIDFailed",
+        "message": "failed to generate uuid",
+        "includeMap": false,
+        "metaData": [
+            { "name": "generationError", "dataType": "error"}
         ]
     }
 ]

@@ -4,6 +4,11 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/hex"
+	"strings"
+
+	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/richerror/errors"
+	"github.com/google/uuid"
 )
 
 func InterleaveStrings(s1, s2 string) string {
@@ -21,4 +26,16 @@ func SHA512(input string) (string, error) {
 	hash := sha512.Sum512([]byte(input))
 	hashString := hex.EncodeToString(hash[:])
 	return string(hashString), nil
+}
+
+func NewPasswordResetToken() (string, errors.RichError) {
+	var passwordResetToken string
+	for i := 0; i < 2; i++ {
+		uuid, err := uuid.NewRandom()
+		passwordResetToken += strings.ReplaceAll(uuid.String(), "-", "")
+		if err != nil {
+			return "", coreerrors.NewGenerateUUIDFailedError(err, true)
+		}
+	}
+	return passwordResetToken, nil
 }

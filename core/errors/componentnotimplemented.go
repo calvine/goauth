@@ -10,9 +10,9 @@ import (
 const ErrCodeComponentNotImplemented = "ComponentNotImplemented"
 
 // NewComponentNotImplementedError creates a new specific error
-func NewComponentNotImplementedError(compoenentType string, missingType string, includeStack bool) errors.RichError {
+func NewComponentNotImplementedError(componentType string, missingType string, includeStack bool) errors.RichError {
 	msg := "component not implemented"
-	err := errors.NewRichError(ErrCodeComponentNotImplemented, msg).AddMetaData("compoenentType", compoenentType).AddMetaData("missingType", missingType)
+	err := errors.NewRichError(ErrCodeComponentNotImplemented, msg).AddMetaData("componentType", componentType).AddMetaData("missingType", missingType)
 	if includeStack {
 		err = err.WithStack(1)
 	}
