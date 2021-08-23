@@ -28,22 +28,17 @@ func NewLoginService(auditLogRepo repo.AuditLogRepo, contactRepo repo.ContactRep
 }
 
 func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, principalType, password string, initiator string) (models.User, errors.RichError) {
-	user, err := ls.userRepo.GetUserByPrimaryContact(ctx, principalType, principal)
-	if err != nil {
-		return models.User{}, err
-	}
-	now := time.Now().UTC()
-	// is user locked out?
-	if user.LockedOutUntil.HasValue && user.LockedOutUntil.Value.After(now) {
-		return models.User{}, coreerrors.NewUserLockedOutError(user.ID, true)
-	}
-	// is contact confirmed?
-	contact, err := ls.contactRepo.GetPrimaryContactByUserId(ctx, user.ID)
+	user, contact, err := ls.userRepo.GetUserAndContactByPrimaryContact(ctx, principalType, principal)
 	if err != nil {
 		return models.User{}, err
 	}
 	if !contact.IsPrimary {
 		return models.User{}, coreerrors.NewLoginContactNotPrimaryError(contact.ID, contact.Principal, contact.Type, true)
+	}
+	now := time.Now().UTC()
+	// is user locked out?
+	if user.LockedOutUntil.HasValue && user.LockedOutUntil.Value.After(now) {
+		return models.User{}, coreerrors.NewUserLockedOutError(user.ID, true)
 	}
 	if !contact.ConfirmedDate.HasValue { // || contact.ConfirmedDate.Value.After(now)
 		return models.User{}, coreerrors.NewContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
