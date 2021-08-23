@@ -9,7 +9,6 @@ import (
 type User struct {
 	ID                             string                  `bson:"-"`
 	PasswordHash                   string                  `bson:"passwordHash"`
-	Salt                           string                  `bson:"salt"`
 	ConsecutiveFailedLoginAttempts int                     `bson:"consecutiveFailedLoginAttempts"`
 	LockedOutUntil                 nullable.NullableTime   `bson:"lockedOutUntil"`
 	LastLoginDate                  nullable.NullableTime   `bson:"lastLoginDate"`

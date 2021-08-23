@@ -12,7 +12,6 @@ import (
 var (
 	testUser1 = models.User{
 		PasswordHash: "passwordhash1",
-		Salt:         "salt1",
 	}
 )
 
@@ -48,9 +47,7 @@ func _testAddUser(t *testing.T, userRepo userRepo) {
 func _testUpdateUser(t *testing.T, userRepo userRepo) {
 	preUpdateDate := time.Now().UTC()
 	newPasswordHash := "another secure password hash"
-	newSalt := "change password = change salt"
 	testUser1.PasswordHash = newPasswordHash
-	testUser1.Salt = newSalt
 	err := userRepo.UpdateUser(context.TODO(), &testUser1, testUser1.ID)
 	if err != nil {
 		t.Error("failed to update user", err)
@@ -65,9 +62,6 @@ func _testUpdateUser(t *testing.T, userRepo userRepo) {
 	if retreivedUser.PasswordHash != newPasswordHash {
 		t.Error("password hash did not update.", retreivedUser.PasswordHash, newPasswordHash)
 	}
-	if retreivedUser.Salt != newSalt {
-		t.Error("salt did not update.", retreivedUser.Salt, newSalt)
-	}
 }
 
 func _testGetUserById(t *testing.T, userRepo userRepo) {
@@ -76,7 +70,7 @@ func _testGetUserById(t *testing.T, userRepo userRepo) {
 	if err != nil {
 		t.Error("error getting user with id", userId, err)
 	}
-	if retreivedUser.PasswordHash != initialTestUser.PasswordHash || retreivedUser.Salt != initialTestUser.Salt {
+	if retreivedUser.PasswordHash != initialTestUser.PasswordHash {
 		t.Error("retreivedUser should have same data as user with id tested", retreivedUser, initialTestUser)
 	}
 }

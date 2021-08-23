@@ -22,7 +22,6 @@ var (
 
 	initialTestUser = models.User{
 		PasswordHash:  "passwordhash2",
-		Salt:          "salt2",
 		LastLoginDate: nullable.NullableTime{HasValue: true, Value: time.Now().UTC()},
 	}
 

@@ -130,7 +130,6 @@ func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedBy
 	update := bson.M{
 		"$set": bson.M{
 			"passwordHash":                   repoUser.PasswordHash,
-			"salt":                           repoUser.Salt,
 			"consecutiveFailedLoginAttempts": repoUser.ConsecutiveFailedLoginAttempts,
 			"lockedOutUntil":                 repoUser.LockedOutUntil.GetPointerCopy(),
 			"lastLoginDate":                  repoUser.LastLoginDate.GetPointerCopy(),
