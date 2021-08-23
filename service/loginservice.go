@@ -105,9 +105,25 @@ func (ls loginService) StartPasswordResetByContact(ctx context.Context, principa
 }
 
 func (ls loginService) ResetPassword(ctx context.Context, passwordResetToken string, newPasswordHash string, initiator string) (bool, errors.RichError) {
-
+	if newPasswordHash == "" {
+		return false, coreerrors.NewNoNewPasswordHashProvidedError(true)
+	}
+	user, err := ls.userRepo.GetUserByPasswordResetToken(ctx, passwordResetToken)
+	if err != nil {
+		return false, err
+	}
+	now := time.Now().UTC()
+	if now.After(user.PasswordResetTokenExpiration.Value) {
+		return false, coreerrors.NewExpiredPasswordExpirationTokenError(passwordResetToken, user.PasswordResetTokenExpiration.Value, true)
+	}
+	err = ls.userRepo.UpdateUser(ctx, &user, initiator)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (ls loginService) ConfirmContact(ctx context.Context, confirmationCode string, initiator string) (bool, errors.RichError) {
-
+	// TODO: implement this
+	return false, nil
 }
