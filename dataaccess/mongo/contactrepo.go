@@ -4,12 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/calvine/goauth/core/errors"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/nullable"
-	mongoerrors "github.com/calvine/goauth/dataaccess/mongo/internal/errors"
 	repoModels "github.com/calvine/goauth/dataaccess/mongo/internal/models"
+	"github.com/calvine/richerror/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -42,7 +41,7 @@ func (ur userRepo) GetContactByContactId(ctx context.Context, contactId string) 
 	})
 	contactOid, err := primitive.ObjectIDFromHex(contactId)
 	if err != nil {
-		return emptyContact, mongoerrors.NewMongoFailedToParseObjectID(contactId, true)
+		return emptyContact, coreerrors.NewFailedToParseObjectIDError(contactId, err, true)
 	}
 	filter := bson.D{
 		{Key: "contacts.id", Value: contactOid},
@@ -72,7 +71,7 @@ func (ur userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string)
 	})
 	oid, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
-		return emptyContact, mongoerrors.NewMongoFailedToParseObjectID(userId, true)
+		return emptyContact, coreerrors.NewFailedToParseObjectIDError(userId, err, true)
 	}
 	filter := bson.M{
 		"$and": bson.A{
@@ -111,7 +110,7 @@ func (ur userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]mo
 	}
 	oid, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
-		return nil, mongoerrors.NewMongoFailedToParseObjectID(userId, true)
+		return nil, coreerrors.NewFailedToParseObjectIDError(userId, err, true)
 	}
 	filter := bson.M{"_id": oid}
 	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
@@ -167,7 +166,7 @@ func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, crea
 	contact.ID = primitive.NewObjectID().Hex()
 	oid, err := primitive.ObjectIDFromHex(contact.UserID)
 	if err != nil {
-		return mongoerrors.NewMongoFailedToParseObjectID(contact.UserID, true)
+		return coreerrors.NewFailedToParseObjectIDError(contact.UserID, err, true)
 	}
 	repoContact, convertErr := repoModels.CoreContact(*contact).ToRepoContact()
 	if err != nil {

@@ -3,15 +3,22 @@ package errors
 /* WARNING: This is GENERATED CODE Please do not edit. */
 
 import (
-	"github.com/calvine/goauth/core/errors/codes"
+	"github.com/calvine/richerror/errors"
 )
 
+// ErrCodeUserLockedOut attempted login by locked out user
+const ErrCodeUserLockedOut = "UserLockedOut"
+
 // NewUserLockedOutError creates a new specific error
-func NewUserLockedOutError(userID string, includeStack bool) RichError {
+func NewUserLockedOutError(userID string, includeStack bool) errors.RichError {
 	msg := "attempted login by locked out user"
-	err := NewRichError(codes.ErrCodeUserLockedOut, msg).AddMetaData("userID", userID)
+	err := errors.NewRichError(ErrCodeUserLockedOut, msg).AddMetaData("userID", userID)
 	if includeStack {
 		err = err.WithStack(1)
 	}
 	return err
+}
+
+func IsUserLockedOutError(err errors.ReadOnlyRichError) bool {
+	return err.GetErrorCode() == ErrCodeUserLockedOut
 }

@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/calvine/goauth/core/errors"
+	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
+	"github.com/calvine/richerror/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -23,7 +24,7 @@ func (rc RepoContact) ToCoreContact() models.Contact {
 func (cc CoreContact) ToRepoContact() (RepoContact, errors.RichError) {
 	oid, err := primitive.ObjectIDFromHex(cc.ID)
 	if err != nil {
-		return RepoContact{}, errors.NewFailedToParseObjectIDError(cc.ID, err, true)
+		return RepoContact{}, coreerrors.NewFailedToParseObjectIDError(cc.ID, err, true)
 	}
 	return RepoContact{
 		ObjectId:    oid,

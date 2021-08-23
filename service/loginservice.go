@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/calvine/goauth/core/errors"
+	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
+	"github.com/calvine/richerror/errors"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -34,7 +35,7 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, p
 	now := time.Now().UTC()
 	// is user locked out?
 	if user.LockedOutUntil.HasValue && user.LockedOutUntil.Value.After(now) {
-		return models.User{}, errors.NewUserLockedOutError(user.ID, true)
+		return models.User{}, coreerrors.NewUserLockedOutError(user.ID, true)
 	}
 	// is contact confirmed?
 	contact, err := ls.contactRepo.GetPrimaryContactByUserId(ctx, user.ID)
@@ -42,10 +43,10 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, p
 		return models.User{}, err
 	}
 	if !contact.IsPrimary {
-		return models.User{}, errors.NewLoginContactNotPrimaryError(contact.ID, contact.Principal, contact.Type, true)
+		return models.User{}, coreerrors.NewLoginContactNotPrimaryError(contact.ID, contact.Principal, contact.Type, true)
 	}
 	if !contact.ConfirmedDate.HasValue { // || contact.ConfirmedDate.Value.After(now)
-		return models.User{}, errors.NewContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
+		return models.User{}, coreerrors.NewContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
 	}
 	// check password
 	// hash, bcryptErr := bcrypt.GenerateFromPassword([]byte(password), 10)
@@ -59,9 +60,9 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, p
 			user.LockedOutUntil.Set(now.Add(time.Minute * 15))
 		}
 		_ = ls.userRepo.UpdateUser(ctx, &user, user.ID)
-		return models.User{}, errors.NewLoginFailedWrongPasswordError(user.ID, true)
+		return models.User{}, coreerrors.NewLoginFailedWrongPasswordError(user.ID, true)
 	} else if bcryptErr != nil {
-		return models.User{}, errors.NewBcryptPasswordHashErrorError(user.ID, bcryptErr, true)
+		return models.User{}, coreerrors.NewBcryptPasswordHashErrorError(user.ID, bcryptErr, true)
 	}
 	if user.ConsecutiveFailedLoginAttempts > 0 {
 		// reset consecutive failed login attempts because we have a successful login

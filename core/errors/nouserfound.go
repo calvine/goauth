@@ -3,15 +3,22 @@ package errors
 /* WARNING: This is GENERATED CODE Please do not edit. */
 
 import (
-	"github.com/calvine/goauth/core/errors/codes"
+	"github.com/calvine/richerror/errors"
 )
 
+// ErrCodeNoUserFound no user found for given query
+const ErrCodeNoUserFound = "NoUserFound"
+
 // NewNoUserFoundError creates a new specific error
-func NewNoUserFoundError(fields map[string]interface{}, includeStack bool) RichError {
+func NewNoUserFoundError(fields map[string]interface{}, includeStack bool) errors.RichError {
 	msg := "no user found for given query"
-	err := NewRichError(codes.ErrCodeNoUserFound, msg).WithMetaData(fields)
+	err := errors.NewRichError(ErrCodeNoUserFound, msg).WithMetaData(fields)
 	if includeStack {
 		err = err.WithStack(1)
 	}
 	return err
+}
+
+func IsNoUserFoundError(err errors.ReadOnlyRichError) bool {
+	return err.GetErrorCode() == ErrCodeNoUserFound
 }

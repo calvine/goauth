@@ -3,8 +3,8 @@ package repo
 import (
 	"context"
 
-	"github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
+	"github.com/calvine/richerror/errors"
 )
 
 type AuditLogRepo interface {

@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 
-	"github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
+	"github.com/calvine/richerror/errors"
 )
 
 // TODO: change all instances of error to RichError

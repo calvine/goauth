@@ -1,6 +1,9 @@
 package service
 
-import "github.com/calvine/goauth/core/errors"
+import (
+	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/richerror/errors"
+)
 
 const (
 	MockEmailService = "mock"
@@ -36,6 +39,6 @@ func NewEmailService(serviceType string, options interface{}) (EmailService, err
 		return mockEmailService{}, nil
 	// case SMTPEmailService: // TODO: implement this...
 	default:
-		return nil, errors.NewComponentNotImplementedError("email service", serviceType, true)
+		return nil, coreerrors.NewComponentNotImplementedError("email service", serviceType, true)
 	}
 }

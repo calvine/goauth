@@ -4,11 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/calvine/goauth/core/errors"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
-	mongoerrors "github.com/calvine/goauth/dataaccess/mongo/internal/errors"
 	repoModels "github.com/calvine/goauth/dataaccess/mongo/internal/models"
+	"github.com/calvine/richerror/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -104,12 +103,13 @@ func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdById s
 	user.AuditData.CreatedOnDate = time.Now().UTC()
 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).InsertOne(ctx, user, nil)
 	if err != nil {
-		return errors.NewRepoQueryFailedError(err, true)
+		return coreerrors.NewRepoQueryFailedError(err, true)
 	}
-	oid, ok := result.InsertedID.(primitive.ObjectID)
-	if !ok {
-		return mongoerrors.NewMongoFailedToParseObjectID(result.InsertedID, true)
-	}
+	oid := result.InsertedID.(primitive.ObjectID)
+	// oid, ok := result.InsertedID.(primitive.ObjectID)
+	// if !ok {
+	// 	return mongoerrors.NewMongoFailedToParseObjectID(result.InsertedID, true)
+	// }
 	user.ID = oid.Hex()
 	return nil
 }

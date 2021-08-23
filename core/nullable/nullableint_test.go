@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	goautherrors "github.com/calvine/goauth/core/errors"
-	"github.com/calvine/goauth/core/errors/codes"
+	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/richerror/errors"
 )
 
 func TestNullableIntGetPointerCopy(t *testing.T) {
@@ -58,7 +58,7 @@ func TestNullableIntScan(t *testing.T) {
 	}
 	testString := "abc"
 	err = ns.Scan(testString)
-	if err != nil && err.(goautherrors.RichError).GetErrorCode() != codes.ErrCodeWrongType {
+	if err != nil && err.(errors.RichError).GetErrorCode() != coreerrors.ErrCodeWrongType {
 		t.Error("Expected error to be of type WrongTypeError", err)
 	}
 	if ns.Value != 0 || ns.HasValue != false {
