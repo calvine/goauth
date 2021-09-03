@@ -41,3 +41,7 @@ type UserService interface {
 	// UpdateContact updates a contact for a user
 	UpdateContact(ctx context.Context, contact *models.Contact, initiator string) errors.RichError
 }
+
+type EmailService interface {
+	SendPlainTextEmail(to []string, subject, body string) errors.RichError
+}

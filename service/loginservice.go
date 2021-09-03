@@ -10,6 +10,7 @@ import (
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/core/services"
+	coreServices "github.com/calvine/goauth/core/services"
 	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/richerror/errors"
 	"golang.org/x/crypto/bcrypt"
@@ -18,11 +19,11 @@ import (
 type loginService struct {
 	auditLogRepo repo.AuditLogRepo
 	contactRepo  repo.ContactRepo
-	emailService EmailService
+	emailService coreServices.EmailService
 	userRepo     repo.UserRepo
 }
 
-func NewLoginService(auditLogRepo repo.AuditLogRepo, contactRepo repo.ContactRepo, emailService EmailService, userRepo repo.UserRepo) services.LoginService {
+func NewLoginService(auditLogRepo repo.AuditLogRepo, contactRepo repo.ContactRepo, emailService coreServices.EmailService, userRepo repo.UserRepo) services.LoginService {
 	return loginService{
 		auditLogRepo: auditLogRepo,
 		contactRepo:  contactRepo,
