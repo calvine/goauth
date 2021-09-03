@@ -124,6 +124,16 @@ func (ls loginService) ResetPassword(ctx context.Context, passwordResetToken str
 }
 
 func (ls loginService) ConfirmContact(ctx context.Context, confirmationCode string, initiator string) (bool, errors.RichError) {
-	// TODO: implement this
-	return false, nil
+	contact, err := ls.contactRepo.GetContactByConfirmationCode(ctx, confirmationCode)
+	if err != nil {
+		return false, err
+	}
+	now := time.Now().UTC()
+	contact.ConfirmationCode.Unset()
+	contact.ConfirmedDate.Set(now)
+	err = ls.contactRepo.UpdateContact(ctx, &contact, initiator)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }

@@ -5,6 +5,7 @@ import (
 )
 
 // TODO: Add validator for pre insert / update
+// TODO: determine if the confirmation code needs an expiration date? or use redis for these short lived tokens?
 // Contact is a model that represents a contact method for a user like phone or email.
 type Contact struct {
 	ID               string                  `bson:"-"`
