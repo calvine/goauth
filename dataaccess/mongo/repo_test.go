@@ -26,10 +26,9 @@ var (
 	}
 
 	initialTestContact = models.Contact{
-		ConfirmationCode: nullable.NullableString{HasValue: true, Value: "abc123"},
-		IsPrimary:        true,
-		Principal:        "InitialTestUser@email.com",
-		Type:             core.CONTACT_TYPE_EMAIL,
+		IsPrimary: true,
+		Principal: "InitialTestUser@email.com",
+		Type:      core.CONTACT_TYPE_EMAIL,
 	}
 )
 

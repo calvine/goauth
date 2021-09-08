@@ -11,6 +11,15 @@ type AuditLogRepo interface {
 	LogMessage(ctx context.Context, message models.AuditLog) errors.RichError
 }
 
+type TokenRepo interface {
+	// GetToken retreives a token from a store
+	GetToken(tokenValue string) (models.Token, errors.RichError)
+	// PutToken stores a token in a store
+	PutToken(token models.Token) errors.RichError
+	// DeleteToken deletes a token from a store
+	DeleteToken(tokenValue string) errors.RichError
+}
+
 // UserRepo is responsible for accessing user data from the database.
 type UserRepo interface {
 	// GetUserById gets a user by its id
@@ -23,8 +32,6 @@ type UserRepo interface {
 	GetUserByPrimaryContact(ctx context.Context, contactPrincipalType, contactPrincipal string) (models.User, errors.RichError)
 	// GetUserAndContactByPrimaryContact gets the user and the primary contact by their primary contact principal and contactType
 	GetUserAndContactByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError)
-	// Get a user record by its password reset token
-	GetUserByPasswordResetToken(ctx context.Context, passwordResetToken string) (models.User, errors.RichError)
 }
 
 type ContactRepo interface {
@@ -35,13 +42,13 @@ type ContactRepo interface {
 	// GetContactsByUserId get all of a users contacts by user id
 	GetContactsByUserId(ctx context.Context, userId string) ([]models.Contact, errors.RichError)
 	// GetContactByConfirmationCode get user contact by confirmation code
-	GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, errors.RichError)
+	// GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, errors.RichError)
 	// AddContact adds a user contact
 	AddContact(ctx context.Context, contact *models.Contact, createdById string) errors.RichError
 	// UpdateContact updates a users contact
 	UpdateContact(ctx context.Context, contact *models.Contact, modifiedById string) errors.RichError
 	// ConfirmContact sets a contact to confirmed based on the received confirmation code.
-	ConfirmContact(ctx context.Context, confirmationCode, modifiedById string) errors.RichError
+	// ConfirmContact(ctx context.Context, confirmationCode, modifiedById string) errors.RichError
 }
 
 type ProfileRepo interface {

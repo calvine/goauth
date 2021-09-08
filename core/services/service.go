@@ -16,8 +16,6 @@ type LoginService interface {
 	LoginWithPrimaryContact(ctx context.Context, principal, principalType, password string, initiator string) (models.User, errors.RichError)
 	// StartPasswordResetByContact sets a password reset token for the user with the corresponding principal and type that are confirmed.
 	StartPasswordResetByContact(ctx context.Context, principal, principalType string, initiator string) (string, errors.RichError)
-	// ConfirmContact takes a confirmation code and updates the users contact record to be confirmed.
-	ConfirmContact(ctx context.Context, confirmationCode string, initiator string) (bool, errors.RichError)
 	// ResetPassword resets a users password given a userId and new password hash and salt.
 	ResetPassword(ctx context.Context, passwordResetToken string, newPasswordHash string, initiator string) (bool, errors.RichError)
 }
@@ -40,8 +38,16 @@ type UserService interface {
 	AddContact(ctx context.Context, contact *models.Contact, initiator string) errors.RichError
 	// UpdateContact updates a contact for a user
 	UpdateContact(ctx context.Context, contact *models.Contact, initiator string) errors.RichError
+	// ConfirmContact takes a confirmation code and updates the users contact record to be confirmed.
+	ConfirmContact(ctx context.Context, confirmationCode string, initiator string) (bool, errors.RichError)
 }
 
 type EmailService interface {
 	SendPlainTextEmail(to []string, subject, body string) errors.RichError
+}
+
+type TokenService interface {
+	GetToken(tokenValue string, expectedTokenType models.TokenType) (models.Token, errors.RichError)
+	PutToken(token models.Token) errors.RichError
+	DeleteToken(tokenValue string) errors.RichError
 }

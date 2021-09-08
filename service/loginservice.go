@@ -9,8 +9,7 @@ import (
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
-	"github.com/calvine/goauth/core/services"
-	coreServices "github.com/calvine/goauth/core/services"
+	coreservices "github.com/calvine/goauth/core/services"
 	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/richerror/errors"
 	"golang.org/x/crypto/bcrypt"
@@ -19,16 +18,18 @@ import (
 type loginService struct {
 	auditLogRepo repo.AuditLogRepo
 	contactRepo  repo.ContactRepo
-	emailService coreServices.EmailService
+	emailService coreservices.EmailService
 	userRepo     repo.UserRepo
+	tokenService coreservices.TokenService
 }
 
-func NewLoginService(auditLogRepo repo.AuditLogRepo, contactRepo repo.ContactRepo, emailService coreServices.EmailService, userRepo repo.UserRepo) services.LoginService {
+func NewLoginService(auditLogRepo repo.AuditLogRepo, contactRepo repo.ContactRepo, userRepo repo.UserRepo, emailService coreservices.EmailService, tokenService coreservices.TokenService) coreservices.LoginService {
 	return loginService{
 		auditLogRepo: auditLogRepo,
 		contactRepo:  contactRepo,
 		emailService: emailService,
 		userRepo:     userRepo,
+		tokenService: tokenService,
 	}
 }
 
@@ -78,19 +79,17 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, p
 }
 
 func (ls loginService) StartPasswordResetByContact(ctx context.Context, principal, principalType string, initiator string) (string, errors.RichError) {
-	now := time.Now().UTC()
 	user, contact, err := ls.userRepo.GetUserAndContactByPrimaryContact(ctx, principalType, principal)
 	if err != nil {
 		return "", err
 	}
-	passwordResetToken, roErr := utilities.NewPasswordResetToken()
+	passwordResetToken, roErr := utilities.NewTokenString()
 	if roErr != nil {
 		return "", roErr
 	}
-	user.PasswordResetToken.Set(passwordResetToken)
 	// TODO: make password reset token expiration configurable.
-	user.PasswordResetTokenExpiration.Set(now.Add(time.Hour * 1))
-	err = ls.userRepo.UpdateUser(ctx, &user, initiator)
+	token := models.NewToken(passwordResetToken, user.ID, models.TokenTypePasswordReset, time.Minute*15)
+	err = ls.tokenService.PutToken(token)
 	if err != nil {
 		return "", err
 	}
@@ -109,30 +108,15 @@ func (ls loginService) ResetPassword(ctx context.Context, passwordResetToken str
 	if newPasswordHash == "" {
 		return false, coreerrors.NewNoNewPasswordHashProvidedError(true)
 	}
-	user, err := ls.userRepo.GetUserByPasswordResetToken(ctx, passwordResetToken)
+	token, err := ls.tokenService.GetToken(passwordResetToken, models.TokenTypePasswordReset)
 	if err != nil {
 		return false, err
 	}
-	now := time.Now().UTC()
-	if now.After(user.PasswordResetTokenExpiration.Value) {
-		return false, coreerrors.NewExpiredPasswordExpirationTokenError(passwordResetToken, user.PasswordResetTokenExpiration.Value, true)
+	user, err := ls.userRepo.GetUserById(ctx, token.TargetID)
+	if err != nil {
+		return false, err
 	}
 	err = ls.userRepo.UpdateUser(ctx, &user, initiator)
-	if err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
-func (ls loginService) ConfirmContact(ctx context.Context, confirmationCode string, initiator string) (bool, errors.RichError) {
-	contact, err := ls.contactRepo.GetContactByConfirmationCode(ctx, confirmationCode)
-	if err != nil {
-		return false, err
-	}
-	now := time.Now().UTC()
-	contact.ConfirmationCode.Unset()
-	contact.ConfirmedDate.Set(now)
-	err = ls.contactRepo.UpdateContact(ctx, &contact, initiator)
 	if err != nil {
 		return false, err
 	}

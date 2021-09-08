@@ -144,5 +144,20 @@
         "message": "no new password hash was provided",
         "includeMap": false,
         "metaData": []
+    },
+    {
+        "code": "InvalidToken",
+        "message": "expired or token was found with the given id.",
+        "includeMap": false,
+        "metaData": [
+            { "name": "id", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "MalfomedToken",
+        "message": "token is not valid",
+        "includeMap": true,
+        "metaData": []
     }
+    
 ]

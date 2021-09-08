@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/calvine/goauth/core/utilities"
+	"github.com/calvine/goauth/dataaccess/memory"
 	gamongo "github.com/calvine/goauth/dataaccess/mongo"
 	gahttp "github.com/calvine/goauth/http"
 	"github.com/calvine/goauth/service"
@@ -44,11 +45,14 @@ func run() error {
 	}
 	userRepo := gamongo.NewUserRepo(client)
 	auditRepo := gamongo.NewAuditLogRepo(client)
-	loginService := service.NewLoginService(auditRepo, userRepo, nil, userRepo)
+	tokenRepo := memory.NewLocalTokenRepo()
+
+	tokenService := service.NewTokenService(tokenRepo)
 	emailService, err := service.NewEmailService(service.MockEmailService, nil)
 	if err != nil {
 		return err
 	}
+	loginService := service.NewLoginService(auditRepo, userRepo, userRepo, emailService, tokenService)
 
 	httpStaticFS := http.FS(staticFS)
 	httpServer := gahttp.NewServer(loginService, emailService, &httpStaticFS, &templateFS)

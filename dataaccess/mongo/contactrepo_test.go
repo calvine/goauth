@@ -20,27 +20,24 @@ var (
 	}
 
 	newContact2 = models.Contact{
-		Principal:        "frank@app.space",
-		IsPrimary:        false,
-		Type:             core.CONTACT_TYPE_EMAIL,
-		ConfirmationCode: nullable.NullableString{HasValue: true, Value: "12345"},
-		ConfirmedDate:    nullable.NullableTime{},
+		Principal:     "frank@app.space",
+		IsPrimary:     false,
+		Type:          core.CONTACT_TYPE_EMAIL,
+		ConfirmedDate: nullable.NullableTime{},
 	}
 
 	newContact3 = models.Contact{
-		Principal:        "555-555-5555",
-		IsPrimary:        false,
-		Type:             core.CONTACT_TYPE_MOBILE,
-		ConfirmationCode: nullable.NullableString{HasValue: false},
-		ConfirmedDate:    nullable.NullableTime{HasValue: true, Value: time.Now().UTC()},
+		Principal:     "555-555-5555",
+		IsPrimary:     false,
+		Type:          core.CONTACT_TYPE_MOBILE,
+		ConfirmedDate: nullable.NullableTime{HasValue: true, Value: time.Now().UTC()},
 	}
 
 	newContact4 = models.Contact{
-		Principal:        "email@email.email",
-		IsPrimary:        false,
-		Type:             core.CONTACT_TYPE_MOBILE,
-		ConfirmationCode: nullable.NullableString{HasValue: true, Value: "54321"},
-		ConfirmedDate:    nullable.NullableTime{HasValue: false},
+		Principal:     "email@email.email",
+		IsPrimary:     false,
+		Type:          core.CONTACT_TYPE_MOBILE,
+		ConfirmedDate: nullable.NullableTime{HasValue: false},
 	}
 )
 
@@ -62,15 +59,15 @@ func testMongoContactRepo(t *testing.T, contactRepo repo.ContactRepo) {
 	t.Run("GetContactsByUserId", func(t *testing.T) {
 		_testGetContactsByUserId(t, contactRepo)
 	})
-	t.Run("GetContactByConfirmationCode", func(t *testing.T) {
-		_testGetContactByConfirmationCode(t, contactRepo)
-	})
+	// t.Run("GetContactByConfirmationCode", func(t *testing.T) {
+	// 	_testGetContactByConfirmationCode(t, contactRepo)
+	// })
 	t.Run("UpdateContact", func(t *testing.T) {
 		_testUpdateContact(t, contactRepo)
 	})
-	t.Run("ConfirmContact", func(t *testing.T) {
-		_testConfirmContact(t, contactRepo)
-	})
+	// t.Run("ConfirmContact", func(t *testing.T) {
+	// 	_testConfirmContact(t, contactRepo)
+	// })
 }
 
 func _testAddContact(t *testing.T, userRepo repo.ContactRepo) {
@@ -135,24 +132,24 @@ func _testGetContactsByUserId(t *testing.T, userRepo repo.ContactRepo) {
 	}
 }
 
-func _testGetContactByConfirmationCode(t *testing.T, userRepo repo.ContactRepo) {
-	confirmationCode := newContact2.ConfirmationCode.Value
-	expectedPrincipal := newContact2.Principal
-	expectedIsPrimary := newContact2.IsPrimary
-	contact, err := userRepo.GetContactByConfirmationCode(context.TODO(), confirmationCode)
-	if err != nil {
-		t.Error("failed to get contact by confirmation code", err)
-	}
-	if contact.Principal != expectedPrincipal {
-		t.Error("unexpected value of Principal", expectedPrincipal, contact.Principal)
-	}
-	if contact.IsPrimary != expectedIsPrimary {
-		t.Error("unexpected value of IsPrimary", expectedIsPrimary, contact.IsPrimary)
-	}
-	if contact.ConfirmationCode.Value != confirmationCode {
-		t.Error("expected retreived confirmation code to match passed in confirmation code.", confirmationCode, contact.ConfirmationCode.Value)
-	}
-}
+// func _testGetContactByConfirmationCode(t *testing.T, userRepo repo.ContactRepo) {
+// 	confirmationCode := newContact2.ConfirmationCode.Value
+// 	expectedPrincipal := newContact2.Principal
+// 	expectedIsPrimary := newContact2.IsPrimary
+// 	contact, err := userRepo.GetContactByConfirmationCode(context.TODO(), confirmationCode)
+// 	if err != nil {
+// 		t.Error("failed to get contact by confirmation code", err)
+// 	}
+// 	if contact.Principal != expectedPrincipal {
+// 		t.Error("unexpected value of Principal", expectedPrincipal, contact.Principal)
+// 	}
+// 	if contact.IsPrimary != expectedIsPrimary {
+// 		t.Error("unexpected value of IsPrimary", expectedIsPrimary, contact.IsPrimary)
+// 	}
+// 	if contact.ConfirmationCode.Value != confirmationCode {
+// 		t.Error("expected retreived confirmation code to match passed in confirmation code.", confirmationCode, contact.ConfirmationCode.Value)
+// 	}
+// }
 
 func _testUpdateContact(t *testing.T, userRepo repo.ContactRepo) {
 	modifiedByID := "test update contact"
@@ -181,30 +178,30 @@ func _testUpdateContact(t *testing.T, userRepo repo.ContactRepo) {
 	}
 }
 
-func _testConfirmContact(t *testing.T, contactRepo repo.ContactRepo) {
-	modifiedById := "test confirm contact"
-	preConfirmTime := time.Now().UTC()
-	time.Sleep(time.Millisecond * 5)
-	err := contactRepo.ConfirmContact(context.TODO(), newContact4.ConfirmationCode.Value, modifiedById)
-	if err != nil {
-		t.Error("failed to update contact", err)
-	}
-	updatedContact4, err := contactRepo.GetContactByContactId(context.TODO(), newContact4.ID)
-	if err != nil {
-		t.Error("failed to get instance of updated contact for comparison", err)
-	}
-	if updatedContact4.ConfirmationCode.HasValue {
-		t.Error("confirmed contact confirmation code should not have value", updatedContact4.ConfirmationCode.Value)
-	}
-	if !updatedContact4.ConfirmedDate.HasValue {
-		t.Error("confirmed contact confirmed date should have a value")
-	} else if updatedContact4.ConfirmedDate.Value.Before(preConfirmTime) {
-		t.Error("confirmed contact confirmed date should be after the pre confirm time", preConfirmTime.String(), updatedContact4.ConfirmedDate.Value.String())
-	}
-	if updatedContact4.AuditData.ModifiedByID.Value != modifiedById {
-		t.Error("confirmed contact modified by id should match modifiedById", modifiedById, updatedContact4.AuditData.ModifiedByID.Value)
-	}
-	if updatedContact4.AuditData.ModifiedOnDate.Value.Before(preConfirmTime) {
-		t.Error("confirmed contact modified on date should be after the pre confirm time", preConfirmTime.String(), updatedContact4.AuditData.ModifiedOnDate.Value.String())
-	}
-}
+// func _testConfirmContact(t *testing.T, contactRepo repo.ContactRepo) {
+// 	modifiedById := "test confirm contact"
+// 	preConfirmTime := time.Now().UTC()
+// 	time.Sleep(time.Millisecond * 5)
+// 	err := contactRepo.ConfirmContact(context.TODO(), newContact4.ConfirmationCode.Value, modifiedById)
+// 	if err != nil {
+// 		t.Error("failed to update contact", err)
+// 	}
+// 	updatedContact4, err := contactRepo.GetContactByContactId(context.TODO(), newContact4.ID)
+// 	if err != nil {
+// 		t.Error("failed to get instance of updated contact for comparison", err)
+// 	}
+// 	if updatedContact4.ConfirmationCode.HasValue {
+// 		t.Error("confirmed contact confirmation code should not have value", updatedContact4.ConfirmationCode.Value)
+// 	}
+// 	if !updatedContact4.ConfirmedDate.HasValue {
+// 		t.Error("confirmed contact confirmed date should have a value")
+// 	} else if updatedContact4.ConfirmedDate.Value.Before(preConfirmTime) {
+// 		t.Error("confirmed contact confirmed date should be after the pre confirm time", preConfirmTime.String(), updatedContact4.ConfirmedDate.Value.String())
+// 	}
+// 	if updatedContact4.AuditData.ModifiedByID.Value != modifiedById {
+// 		t.Error("confirmed contact modified by id should match modifiedById", modifiedById, updatedContact4.AuditData.ModifiedByID.Value)
+// 	}
+// 	if updatedContact4.AuditData.ModifiedOnDate.Value.Before(preConfirmTime) {
+// 		t.Error("confirmed contact modified on date should be after the pre confirm time", preConfirmTime.String(), updatedContact4.AuditData.ModifiedOnDate.Value.String())
+// 	}
+// }

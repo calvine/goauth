@@ -28,14 +28,14 @@ func SHA512(input string) (string, error) {
 	return string(hashString), nil
 }
 
-func NewPasswordResetToken() (string, errors.RichError) {
-	var passwordResetToken string
+func NewTokenString() (string, errors.RichError) {
+	var tokenString string
 	for i := 0; i < 2; i++ {
 		uuid, err := uuid.NewRandom()
-		passwordResetToken += strings.ReplaceAll(uuid.String(), "-", "")
+		tokenString += strings.ReplaceAll(uuid.String(), "-", "")
 		if err != nil {
 			return "", coreerrors.NewGenerateUUIDFailedError(err, true)
 		}
 	}
-	return passwordResetToken, nil
+	return tokenString, nil
 }

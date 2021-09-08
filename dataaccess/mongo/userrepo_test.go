@@ -7,23 +7,11 @@ import (
 
 	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/models"
-	"github.com/calvine/goauth/core/nullable"
 )
 
 var (
 	testUser1 = models.User{
 		PasswordHash: "passwordhash1",
-	}
-	// TODO: Finish implementing for get user my password reset token test.
-	testUser2 = models.User{
-		PasswordResetToken: nullable.NullableString{HasValue: true, Value: "passwordresettoken1"},
-		// non expired token
-		PasswordResetTokenExpiration: nullable.NullableTime{HasValue: true, Value: time.Now().Add(time.Minute * 15).UTC()},
-	}
-	testUser3 = models.User{
-		PasswordResetToken: nullable.NullableString{HasValue: true, Value: "passwordresettoken2"},
-		// expired token
-		PasswordResetTokenExpiration: nullable.NullableTime{HasValue: true, Value: time.Now().Add(time.Minute * -15)},
 	}
 )
 
@@ -44,9 +32,9 @@ func testMongoUserRepo(t *testing.T, userRepo userRepo) {
 	t.Run("userRepo.GetUserAndContactByPrimaryContact", func(t *testing.T) {
 		_testGetUserAndContactByPrimaryContact(t, userRepo)
 	})
-	t.Run("userRepo.GetUserByPasswordResetToken", func(t *testing.T) {
-		_testGetUserByPasswordResetToken(t, userRepo)
-	})
+	// t.Run("userRepo.GetUserByPasswordResetToken", func(t *testing.T) {
+	// 	_testGetUserByPasswordResetToken(t, userRepo)
+	// })
 }
 
 func _testAddUser(t *testing.T, userRepo userRepo) {
@@ -58,22 +46,6 @@ func _testAddUser(t *testing.T, userRepo userRepo) {
 	}
 	if testUser1.AuditData.CreatedByID != createdById {
 		t.Error("failed to set the test user 1 CreatedByID to the right value", testUser1.AuditData.CreatedByID, createdById)
-	}
-
-	err = userRepo.AddUser(context.TODO(), &testUser2, createdById)
-	if err != nil {
-		t.Error("failed to add user to database", err)
-	}
-	if testUser2.AuditData.CreatedByID != createdById {
-		t.Error("failed to set the test user 2 CreatedByID to the right value", testUser2.AuditData.CreatedByID, createdById)
-	}
-
-	err = userRepo.AddUser(context.TODO(), &testUser3, createdById)
-	if err != nil {
-		t.Error("failed to add user to database", err)
-	}
-	if testUser3.AuditData.CreatedByID != createdById {
-		t.Error("failed to set the test user 3 CreatedByID to the right value", testUser3.AuditData.CreatedByID, createdById)
 	}
 }
 
@@ -136,19 +108,19 @@ func _testGetUserAndContactByPrimaryContact(t *testing.T, userRepo userRepo) {
 	}
 }
 
-func _testGetUserByPasswordResetToken(t *testing.T, userRepo userRepo) {
-	retreivedUser, err := userRepo.GetUserByPasswordResetToken(context.TODO(), testUser2.PasswordResetToken.Value)
-	if err != nil {
-		t.Error("failed to retreive user via password reset token", testUser2.PasswordResetToken.Value, err)
-	}
-	if retreivedUser.ID != testUser2.ID {
-		t.Error("expected retreivedUser and testUser2 Id to match", retreivedUser.ID, testUser2.ID)
-	}
-	if retreivedUser.PasswordResetToken.Value != testUser2.PasswordResetToken.Value {
-		t.Error("expected retreivedUser.PasswordResetToken and testUser2.PasswordResetToken to be the same", retreivedUser.PasswordResetToken.Value, testUser2.PasswordResetToken.Value)
-	}
-	// NOTE: commented out for now because mongodb does not record micro seconds...
-	// if retreivedUser.PasswordResetTokenExpiration.Value != testUser2.PasswordResetTokenExpiration.Value {
-	// 	t.Error("expected retreivedUser.PasswordResetTokenExpiration and testUser2.PasswordResetTokenExpiration to match", retreivedUser.PasswordResetTokenExpiration.Value, testUser2.PasswordResetTokenExpiration.Value)
-	// }
-}
+// func _testGetUserByPasswordResetToken(t *testing.T, userRepo userRepo) {
+// 	retreivedUser, err := userRepo.GetUserByPasswordResetToken(context.TODO(), testUser2.PasswordResetToken.Value)
+// 	if err != nil {
+// 		t.Error("failed to retreive user via password reset token", testUser2.PasswordResetToken.Value, err)
+// 	}
+// 	if retreivedUser.ID != testUser2.ID {
+// 		t.Error("expected retreivedUser and testUser2 Id to match", retreivedUser.ID, testUser2.ID)
+// 	}
+// 	if retreivedUser.PasswordResetToken.Value != testUser2.PasswordResetToken.Value {
+// 		t.Error("expected retreivedUser.PasswordResetToken and testUser2.PasswordResetToken to be the same", retreivedUser.PasswordResetToken.Value, testUser2.PasswordResetToken.Value)
+// 	}
+// 	// NOTE: commented out for now because mongodb does not record micro seconds...
+// 	// if retreivedUser.PasswordResetTokenExpiration.Value != testUser2.PasswordResetTokenExpiration.Value {
+// 	// 	t.Error("expected retreivedUser.PasswordResetTokenExpiration and testUser2.PasswordResetTokenExpiration to match", retreivedUser.PasswordResetTokenExpiration.Value, testUser2.PasswordResetTokenExpiration.Value)
+// 	// }
+// }

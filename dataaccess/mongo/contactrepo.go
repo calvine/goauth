@@ -19,13 +19,12 @@ var (
 	emptyContact = models.Contact{}
 
 	ProjContactOnly = bson.M{
-		"id":               1,
-		"name":             1,
-		"principal":        1,
-		"type":             1,
-		"isPrimary":        1,
-		"confirmationCode": 1,
-		"confirmedDate":    1,
+		"id":            1,
+		"name":          1,
+		"principal":     1,
+		"type":          1,
+		"isPrimary":     1,
+		"confirmedDate": 1,
 	}
 )
 
@@ -131,34 +130,33 @@ func (ur userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]mo
 	return contacts, nil
 }
 
-// TODO: Figure out why decoding confirmation code is failing...
-func (ur userRepo) GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, errors.RichError) {
-	var receiver struct {
-		UserId  primitive.ObjectID       `bson:"_id"`
-		Contact []repoModels.RepoContact `bson:"contacts"`
-	}
-	options := options.FindOneOptions{
-		Projection: bson.D{
-			{Key: " _id", Value: 1},
-			{Key: "contacts.$", Value: 1},
-		},
-	}
-	filter := bson.M{
-		"contacts.confirmationCode": confirmationCode,
-	}
-	err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			fields := map[string]interface{}{
-				"contacts.confirmationCode": confirmationCode,
-			}
-			return emptyContact, coreerrors.NewNoContactFoundError(fields, true)
-		}
-		return emptyContact, coreerrors.NewRepoQueryFailedError(err, true)
-	}
-	receiver.Contact[0].UserID = receiver.UserId.Hex()
-	return receiver.Contact[0].ToCoreContact(), nil
-}
+// func (ur userRepo) GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, errors.RichError) {
+// 	var receiver struct {
+// 		UserId  primitive.ObjectID       `bson:"_id"`
+// 		Contact []repoModels.RepoContact `bson:"contacts"`
+// 	}
+// 	options := options.FindOneOptions{
+// 		Projection: bson.D{
+// 			{Key: " _id", Value: 1},
+// 			{Key: "contacts.$", Value: 1},
+// 		},
+// 	}
+// 	filter := bson.M{
+// 		"contacts.confirmationCode": confirmationCode,
+// 	}
+// 	err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
+// 	if err != nil {
+// 		if err == mongo.ErrNoDocuments {
+// 			fields := map[string]interface{}{
+// 				"contacts.confirmationCode": confirmationCode,
+// 			}
+// 			return emptyContact, coreerrors.NewNoContactFoundError(fields, true)
+// 		}
+// 		return emptyContact, coreerrors.NewRepoQueryFailedError(err, true)
+// 	}
+// 	receiver.Contact[0].UserID = receiver.UserId.Hex()
+// 	return receiver.Contact[0].ToCoreContact(), nil
+// }
 
 func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, createdById string) errors.RichError {
 	contact.AuditData.CreatedByID = createdById
@@ -180,7 +178,6 @@ func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, crea
 				{Key: "principal", Value: repoContact.CoreContact.Principal},
 				{Key: "type", Value: repoContact.CoreContact.Type},
 				{Key: "isPrimary", Value: repoContact.CoreContact.IsPrimary},
-				{Key: "confirmationCode", Value: repoContact.CoreContact.ConfirmationCode.GetPointerCopy()},
 				{Key: "confirmedDate", Value: repoContact.CoreContact.ConfirmedDate.GetPointerCopy()},
 				{Key: "createdById", Value: repoContact.CoreContact.AuditData.CreatedByID},
 				{Key: "createdOnDate", Value: repoContact.CoreContact.AuditData.CreatedOnDate},
@@ -227,7 +224,6 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 			{Key: "contacts.$.principal", Value: contact.Principal},
 			{Key: "contacts.$.type", Value: contact.Type},
 			{Key: "contacts.$.isPrimary", Value: contact.IsPrimary},
-			{Key: "contacts.$.confirmationCode", Value: contact.ConfirmationCode.GetPointerCopy()},
 			{Key: "contacts.$.confirmedDate", Value: contact.ConfirmedDate.GetPointerCopy()},
 			{Key: "contacts.$.modifiedById", Value: contact.AuditData.ModifiedByID.GetPointerCopy()},
 			{Key: "contacts.$.modifiedOnDate", Value: contact.AuditData.ModifiedOnDate.GetPointerCopy()},
@@ -247,28 +243,28 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 	return nil
 }
 
-func (ur userRepo) ConfirmContact(ctx context.Context, confirmationCode, modifiedById string) errors.RichError {
-	now := time.Now().UTC()
-	filter := bson.D{
-		{Key: "contacts.confirmationCode", Value: confirmationCode},
-	}
-	update := bson.D{
-		{Key: "$set", Value: bson.D{
-			{Key: "contacts.$.confirmationCode", Value: nil},
-			{Key: "contacts.$.confirmedDate", Value: now},
-			{Key: "contacts.$.modifiedById", Value: modifiedById},
-			{Key: "contacts.$.modifiedOnDate", Value: now},
-		}},
-	}
-	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(ctx, filter, update, nil)
-	if err != nil {
-		return coreerrors.NewRepoQueryFailedError(err, true)
-	}
-	if result.ModifiedCount == 0 {
-		fields := map[string]interface{}{
-			"contacts.confirmationCode": confirmationCode,
-		}
-		return coreerrors.NewNoContactFoundError(fields, true)
-	}
-	return nil
-}
+// func (ur userRepo) ConfirmContact(ctx context.Context, confirmationCode, modifiedById string) errors.RichError {
+// 	now := time.Now().UTC()
+// 	filter := bson.D{
+// 		{Key: "contacts.confirmationCode", Value: confirmationCode},
+// 	}
+// 	update := bson.D{
+// 		{Key: "$set", Value: bson.D{
+// 			{Key: "contacts.$.confirmationCode", Value: nil},
+// 			{Key: "contacts.$.confirmedDate", Value: now},
+// 			{Key: "contacts.$.modifiedById", Value: modifiedById},
+// 			{Key: "contacts.$.modifiedOnDate", Value: now},
+// 		}},
+// 	}
+// 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(ctx, filter, update, nil)
+// 	if err != nil {
+// 		return coreerrors.NewRepoQueryFailedError(err, true)
+// 	}
+// 	if result.ModifiedCount == 0 {
+// 		fields := map[string]interface{}{
+// 			"contacts.confirmationCode": confirmationCode,
+// 		}
+// 		return coreerrors.NewNoContactFoundError(fields, true)
+// 	}
+// 	return nil
+// }

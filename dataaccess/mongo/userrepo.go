@@ -21,8 +21,6 @@ var (
 		"consecutiveFailedLoginAttempts": 1,
 		"lockedOutUntil":                 1,
 		"lastLoginDate":                  1,
-		"passwordResetToken":             1,
-		"passwordResetTokenExpiration":   1,
 	}
 	ProjUserWithSpecificContact = bson.M{
 		"_id":                            1,
@@ -30,8 +28,6 @@ var (
 		"consecutiveFailedLoginAttempts": 1,
 		"lockedOutUntil":                 1,
 		"lastLoginDate":                  1,
-		"passwordResetToken":             1,
-		"passwordResetTokenExpiration":   1,
 		"contacts.$":                     1,
 	}
 )
@@ -184,8 +180,6 @@ func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedBy
 			"consecutiveFailedLoginAttempts": repoUser.ConsecutiveFailedLoginAttempts,
 			"lockedOutUntil":                 repoUser.LockedOutUntil.GetPointerCopy(),
 			"lastLoginDate":                  repoUser.LastLoginDate.GetPointerCopy(),
-			"passwordResetToken":             repoUser.CoreUser.PasswordResetToken.GetPointerCopy(),
-			"passwordResetTokenExpiration":   repoUser.CoreUser.PasswordResetTokenExpiration.GetPointerCopy(),
 			"modifiedById":                   repoUser.AuditData.ModifiedByID.GetPointerCopy(),
 			"modifiedOnDate":                 repoUser.AuditData.ModifiedOnDate.GetPointerCopy(),
 		},
@@ -201,28 +195,4 @@ func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedBy
 		return coreerrors.NewNoUserFoundError(fields, true)
 	}
 	return nil
-}
-
-func (ur userRepo) GetUserByPasswordResetToken(ctx context.Context, passwordResetToken string) (models.User, errors.RichError) {
-	var repoUser repoModels.RepoUser
-	options := options.FindOneOptions{
-		Projection: ProjUserOnly,
-	}
-	filter := bson.M{
-		"passwordResetToken": bson.M{
-			"$eq": passwordResetToken,
-		},
-	}
-	err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&repoUser)
-	user := repoUser.ToCoreUser()
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			fields := map[string]interface{}{
-				"passwordResetToken": passwordResetToken,
-			}
-			return user, coreerrors.NewNoUserFoundError(fields, true)
-		}
-		return user, coreerrors.NewRepoQueryFailedError(err, true)
-	}
-	return user, nil
 }
