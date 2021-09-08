@@ -158,6 +158,14 @@
         "message": "token is not valid",
         "includeMap": true,
         "metaData": []
+    },
+    {
+        "code": "TemplateRenderError",
+        "message": "An error occurred while rendering template",
+        "metaData": [
+            { "name": "template", "dataType": "string" },
+            { "name": "renderError", "dataType": "error" }
+        ]
     }
     
 ]

@@ -55,7 +55,7 @@ func run() error {
 	loginService := service.NewLoginService(auditRepo, userRepo, userRepo, emailService, tokenService)
 
 	httpStaticFS := http.FS(staticFS)
-	httpServer := gahttp.NewServer(loginService, emailService, &httpStaticFS, &templateFS)
+	httpServer := gahttp.NewServer(loginService, emailService, tokenService, &httpStaticFS, &templateFS)
 	httpServer.BuildRoutes()
 	address := utilities.GetEnv(ENV_HTTP_ADDRESS_STRING, DEFAULT_HTTP_PORT_STRING)
 	return http.ListenAndServe(address, &httpServer)

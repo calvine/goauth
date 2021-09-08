@@ -13,14 +13,15 @@ import (
 type server struct {
 	loginService services.LoginService
 	emailService services.EmailService
+	tokenService services.TokenService
 	staticFS     *http.FileSystem
 	templateFS   *embed.FS
 	Mux          *chi.Mux
 }
 
-func NewServer(loginService services.LoginService, emailService services.EmailService, staticFS *http.FileSystem, templateFS *embed.FS) server {
+func NewServer(loginService services.LoginService, emailService services.EmailService, tokenService services.TokenService, staticFS *http.FileSystem, templateFS *embed.FS) server {
 	mux := chi.NewRouter()
-	return server{loginService, emailService, staticFS, templateFS, mux}
+	return server{loginService, emailService, tokenService, staticFS, templateFS, mux}
 }
 
 func (hh *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
