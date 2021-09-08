@@ -48,5 +48,18 @@ func (s *server) handleLoginGet() http.HandlerFunc {
 }
 
 func (s *server) handleLoginPost() http.HandlerFunc {
-	return func(rw http.ResponseWriter, r *http.Request) {}
+	// var (
+	// 	once          sync.Once
+	// 	loginTemplate *template.Template
+	// 	templateErr   error
+	// 	templatePath  string = "http/templates/login.tmpl"
+	// )
+	type requestData struct {
+		CSRFToken string
+		Principal string
+		Password  string
+	}
+	return func(rw http.ResponseWriter, r *http.Request) {
+		// token, err := s.tokenService.GetToken()
+	}
 }
