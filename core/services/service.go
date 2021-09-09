@@ -47,7 +47,7 @@ type EmailService interface {
 }
 
 type TokenService interface {
-	GetToken(tokenValue string, expectedTokenType models.TokenType) (models.Token, errors.RichError)
-	PutToken(token models.Token) errors.RichError
-	DeleteToken(tokenValue string) errors.RichError
+	GetToken(ctx context.Context, tokenValue string, expectedTokenType models.TokenType) (models.Token, errors.RichError)
+	PutToken(ctx context.Context, token models.Token) errors.RichError
+	DeleteToken(ctx context.Context, tokenValue string) errors.RichError
 }

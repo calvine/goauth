@@ -10,7 +10,6 @@ import (
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
 	coreservices "github.com/calvine/goauth/core/services"
-	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/richerror/errors"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -83,32 +82,31 @@ func (ls loginService) StartPasswordResetByContact(ctx context.Context, principa
 	if err != nil {
 		return "", err
 	}
-	passwordResetToken, roErr := utilities.NewTokenString()
+	// TODO: make password reset token expiration configurable.
+	token, roErr := models.NewToken(user.ID, models.TokenTypePasswordReset, time.Minute*15)
 	if roErr != nil {
 		return "", roErr
 	}
-	// TODO: make password reset token expiration configurable.
-	token := models.NewToken(passwordResetToken, user.ID, models.TokenTypePasswordReset, time.Minute*15)
-	err = ls.tokenService.PutToken(token)
+	err = ls.tokenService.PutToken(ctx, token)
 	if err != nil {
 		return "", err
 	}
 	switch contact.Type {
 	case core.CONTACT_TYPE_EMAIL:
 		// TODO: create template for this...
-		body := fmt.Sprintf("A Password reset has been initiated. Your password reset token is: %s", passwordResetToken)
+		body := fmt.Sprintf("A Password reset has been initiated. Your password reset token is: %s", token.Value)
 		ls.emailService.SendPlainTextEmail([]string{contact.Principal}, "Password reset", body)
 	default:
 		return "", coreerrors.NewComponentNotImplementedError("notification system", fmt.Sprintf("%s notification service", contact.Type), true)
 	}
-	return passwordResetToken, nil
+	return token.Value, nil
 }
 
 func (ls loginService) ResetPassword(ctx context.Context, passwordResetToken string, newPasswordHash string, initiator string) (bool, errors.RichError) {
 	if newPasswordHash == "" {
 		return false, coreerrors.NewNoNewPasswordHashProvidedError(true)
 	}
-	token, err := ls.tokenService.GetToken(passwordResetToken, models.TokenTypePasswordReset)
+	token, err := ls.tokenService.GetToken(ctx, passwordResetToken, models.TokenTypePasswordReset)
 	if err != nil {
 		return false, err
 	}

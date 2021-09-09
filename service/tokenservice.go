@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -19,13 +20,13 @@ func NewTokenService(tokenRepo repo.TokenRepo) services.TokenService {
 	return &tokenService{tokenRepo}
 }
 
-func (ts tokenService) GetToken(tokenValue string, expectedTokenType models.TokenType) (models.Token, errors.RichError) {
+func (ts tokenService) GetToken(ctx context.Context, tokenValue string, expectedTokenType models.TokenType) (models.Token, errors.RichError) {
 	token, err := ts.tokenRepo.GetToken(tokenValue)
 	if err != nil {
 		return token, err
 	}
 	now := time.Now().UTC()
-	if token.Expiration.After(now) {
+	if now.After(token.Expiration) {
 		return models.Token{}, coreerrors.NewInvalidTokenError(tokenValue, true)
 	} else if token.TokenType != expectedTokenType {
 		// TODO: Audit log this
@@ -34,7 +35,7 @@ func (ts tokenService) GetToken(tokenValue string, expectedTokenType models.Toke
 	return token, nil
 }
 
-func (ts tokenService) PutToken(token models.Token) errors.RichError {
+func (ts tokenService) PutToken(ctx context.Context, token models.Token) errors.RichError {
 	tokenErrorsMap := make(map[string]interface{})
 	if token.Value == "" {
 		// token value must be populated
@@ -42,7 +43,7 @@ func (ts tokenService) PutToken(token models.Token) errors.RichError {
 	} else if token.TokenType == models.TokenTypeInvalid {
 		// cannot add invalid token
 		tokenErrorsMap["value"] = "token type is invalid"
-	} else if token.Expiration.After(time.Now().UTC()) {
+	} else if token.Expiration.Before(time.Now().UTC()) {
 		// cannot save a token that is already expired
 		tokenErrorsMap["expiration"] = fmt.Sprintf("token is expired: %s", token.Expiration.String())
 	}
@@ -53,7 +54,7 @@ func (ts tokenService) PutToken(token models.Token) errors.RichError {
 	return err
 }
 
-func (ts tokenService) DeleteToken(tokenValue string) errors.RichError {
+func (ts tokenService) DeleteToken(ctx context.Context, tokenValue string) errors.RichError {
 	err := ts.tokenRepo.DeleteToken(tokenValue)
 	return err
 }

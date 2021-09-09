@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/calvine/goauth/core"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
-	"github.com/calvine/goauth/core/utilities"
 )
 
 func (s *server) handleLoginGet() http.HandlerFunc {
@@ -31,18 +31,25 @@ func (s *server) handleLoginGet() http.HandlerFunc {
 		})
 		if templateErr != nil {
 			http.Error(rw, templateErr.Error(), http.StatusInternalServerError)
-		}
-		tokenString, err := utilities.NewTokenString()
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		// TODO: make CSRF token life span configurable
-		token := models.NewToken(tokenString, "", models.TokenTypeCSRF, time.Minute*10)
-		s.tokenService.PutToken(token)
+		ctx := r.Context()
+		token, err := models.NewToken("", models.TokenTypeCSRF, time.Minute*10)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = s.tokenService.PutToken(ctx, token)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		templateRenderError := loginTemplate.Execute(rw, requestData{token.Value})
 		if templateRenderError != nil {
 			err = coreerrors.NewTemplateRenderErrorError(templatePath, templateRenderError, true)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
 		}
 	}
 }
@@ -56,10 +63,28 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 	// )
 	type requestData struct {
 		CSRFToken string
-		Principal string
+		Email     string
 		Password  string
 	}
 	return func(rw http.ResponseWriter, r *http.Request) {
-		// token, err := s.tokenService.GetToken()
+		data := requestData{}
+		ctx := r.Context()
+		data.CSRFToken = r.FormValue("csrf_token")
+		data.Email = r.FormValue("email")
+		data.Password = r.FormValue("password")
+
+		_, err := s.tokenService.GetToken(ctx, data.CSRFToken, models.TokenTypeCSRF)
+		if err != nil {
+			http.Error(rw, err.GetErrorMessage(), http.StatusBadRequest)
+			return
+		}
+
+		_, err = s.loginService.LoginWithPrimaryContact(ctx, data.Email, core.CONTACT_TYPE_EMAIL, data.Password, "login post handler")
+		if err != nil {
+			http.Error(rw, err.GetErrorMessage(), http.StatusUnauthorized)
+			return
+		}
+		rw.Header().Add("test-header", "JWT")
+		http.Redirect(rw, r, "/static/hooray.html", http.StatusFound)
 	}
 }

@@ -58,5 +58,6 @@ func run() error {
 	httpServer := gahttp.NewServer(loginService, emailService, tokenService, &httpStaticFS, &templateFS)
 	httpServer.BuildRoutes()
 	address := utilities.GetEnv(ENV_HTTP_ADDRESS_STRING, DEFAULT_HTTP_PORT_STRING)
+	fmt.Printf("running http services on: %s", address)
 	return http.ListenAndServe(address, &httpServer)
 }

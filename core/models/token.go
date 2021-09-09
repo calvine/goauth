@@ -1,6 +1,11 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/calvine/goauth/core/utilities"
+	"github.com/calvine/richerror/errors"
+)
 
 // go:generate stringer -type=TokenType
 type TokenType int
@@ -26,13 +31,18 @@ type Token struct {
 	MetaData map[string]string
 }
 
-func NewToken(value, targetID string, tokenType TokenType, validFor time.Duration) Token {
+func NewToken(targetID string, tokenType TokenType, validFor time.Duration) (Token, errors.RichError) {
+	var token Token
+	value, err := utilities.NewTokenString()
+	if err != nil {
+		return token, err
+	}
 	return Token{
 		Value:      value,
 		TargetID:   targetID,
 		TokenType:  tokenType,
 		Expiration: time.Now().Add(validFor),
-	}
+	}, nil
 }
 
 func (t Token) WithMetaData(metaData map[string]string) Token {
