@@ -78,7 +78,10 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 			http.Error(rw, err.GetErrorMessage(), http.StatusBadRequest)
 			return
 		}
-
+		err = s.tokenService.DeleteToken(ctx, data.CSRFToken)
+		if err != nil {
+			// uh of the token was not deleted! need to log this...
+		}
 		_, err = s.loginService.LoginWithPrimaryContact(ctx, data.Email, core.CONTACT_TYPE_EMAIL, data.Password, "login post handler")
 		if err != nil {
 			http.Error(rw, err.GetErrorMessage(), http.StatusUnauthorized)

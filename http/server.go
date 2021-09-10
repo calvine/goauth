@@ -50,6 +50,19 @@ func (hh *server) BuildRoutes() {
 			r.Post("/{passwordResetToken}", hh.handlePasswordResetPost())
 		})
 	})
+	hh.Mux.Route("/user", func(r chi.Router) {
+		r.Get("/register", hh.handleRegisterGet())
+		r.Post("/register", hh.handlePasswordResetPost())
+
+		r.Get("/confirmcontact/{confirmationToken}", hh.handleConfirmContactGet())
+	})
+	hh.Mux.Route("/app", func(r chi.Router) {
+		r.Get("/manage", nil)
+		r.Post("/manage", nil)
+
+		r.Get("/manage/{appID}", nil)
+		r.Post("/manage/{appID}", nil)
+	})
 	fs := http.FileServer(*hh.staticFS)
 	// static files
 	hh.Mux.Handle("/static/*", fs)
