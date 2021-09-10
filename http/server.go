@@ -52,7 +52,7 @@ func (hh *server) BuildRoutes() {
 	})
 	hh.Mux.Route("/user", func(r chi.Router) {
 		r.Get("/register", hh.handleRegisterGet())
-		r.Post("/register", hh.handlePasswordResetPost())
+		r.Post("/register", hh.handleRegisterPost())
 
 		r.Get("/confirmcontact/{confirmationToken}", hh.handleConfirmContactGet())
 	})
