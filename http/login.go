@@ -91,3 +91,29 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 		http.Redirect(rw, r, "/static/hooray.html", http.StatusFound)
 	}
 }
+
+// func (s *server) handleAuthGet() http.HandlerFunc {
+// 	var (
+// 		once          sync.Once
+// 		loginTemplate *template.Template
+// 		templateErr   error
+// 		templatePath  string = "http/templates/login.tmpl"
+// 	)
+// 	type requestData struct {
+// 		clientID      string
+// 		codeChallenge string // PKCE
+// 		redirectURI   string
+// 		responseType  string
+// 		scope         string
+// 		state         string
+// 	}
+// 	return func(rw http.ResponseWriter, r *http.Request) {
+// 		once.Do(func() {
+// 			templateFileData, err := s.templateFS.ReadFile(templatePath)
+// 			templateErr = err
+// 			if templateErr == nil {
+// 				loginTemplate, templateErr = template.New("loginPage").Parse(string(templateFileData))
+// 			}
+// 		})
+// 	}
+// }

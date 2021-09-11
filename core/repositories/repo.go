@@ -72,3 +72,17 @@ type AddressRepo interface {
 	// UpdateAddress updates a users address
 	UpdateAddress(ctx context.Context, address *models.Address, modifiedById string) errors.RichError
 }
+
+type AppRepo interface {
+	GetAppById(ctx context.Context, id string) (models.App, errors.RichError)
+	GetAppByOwnerId(ctx context.Context, ownerID string) (models.App, errors.RichError)
+	GetAppAndScopesByCallbackId(ctx context.Context, callbackID string) (models.App, []models.Scope, errors.RichError)
+	AddApp(ctx context.Context, app *models.App, createdBy string) errors.RichError
+	UpdateApp(ctx context.Context, app *models.App, modifiedBy string) errors.RichError
+	DeleteApp(ctx context.Context, app *models.App, deletedBy string) errors.RichError
+
+	GetScopesByAppId(ctx context.Context) ([]models.Scope, errors.RichError)
+	AddScope(ctx context.Context, scope *models.Scope, createdBy string) errors.RichError
+	UpdateScope(ctx context.Context, scope *models.Scope, modifiedBy string) errors.RichError
+	DeleteScope(ctx context.Context, scope *models.Scope, deletedBy string) errors.RichError
+}
