@@ -11,6 +11,8 @@ import (
 	"github.com/calvine/goauth/core/models"
 )
 
+const loginCookieName = "x-goauth-session"
+
 func (s *server) handleLoginGet() http.HandlerFunc {
 	var (
 		once          sync.Once
@@ -115,5 +117,19 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 // 				loginTemplate, templateErr = template.New("loginPage").Parse(string(templateFileData))
 // 			}
 // 		})
+// 		cookie, err := r.Cookie(loginCookieName)
+// 		if err == http.ErrNoCookie {
+// 			// handle not logged in
+// 		}
+
+// 		http.SetCookie(rw, &http.Cookie{
+// 			Name:     loginCookieName,
+// 			Value:    "session token here",
+// 			Expires:  time.Now().Add(time.Hour * 24 * 7),
+// 			SameSite: http.SameSiteLaxMode,
+// 			Secure:   true,
+// 			HttpOnly: true,
+// 		})
+
 // 	}
 // }
