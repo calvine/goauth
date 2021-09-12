@@ -5,4 +5,5 @@ type Scope struct {
 	ApplicationID string `bson:"-"`
 	Name          string `bson:"name"`
 	Description   string `bson:"description"`
+	auditable
 }

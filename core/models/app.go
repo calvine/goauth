@@ -8,4 +8,5 @@ type App struct {
 	CallbackURI  string `bson:"callbackUri"`
 	IsDisabled   bool   `bson:"isDisabled"`
 	LogoURI      string `bson:"logoUri"`
+	auditable
 }
