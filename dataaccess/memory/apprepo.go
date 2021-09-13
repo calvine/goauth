@@ -9,6 +9,7 @@ import (
 	"github.com/calvine/goauth/core/nullable"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/richerror/errors"
+	"github.com/google/uuid"
 )
 
 type appRepo struct {
@@ -65,6 +66,9 @@ func (ar appRepo) GetAppAndScopesByClientIDAndCallbackURI(ctx context.Context, c
 func (ar appRepo) AddApp(ctx context.Context, app *models.App, createdBy string) errors.RichError {
 	app.AuditData.CreatedByID = createdBy
 	app.AuditData.CreatedOnDate = time.Now().UTC()
+	if app.ID == "" {
+		app.ID = uuid.Must(uuid.NewRandom()).String()
+	}
 	(*ar.apps)[app.ID] = *app
 	return nil
 }
@@ -95,6 +99,9 @@ func (ar appRepo) AddScope(ctx context.Context, scope *models.Scope, createdBy s
 	appID := scope.ApplicationID
 	scope.AuditData.CreatedByID = createdBy
 	scope.AuditData.CreatedOnDate = time.Now().UTC()
+	if scope.ID == "" {
+		scope.ID = uuid.Must(uuid.NewRandom()).String()
+	}
 	scopes, ok := (*ar.appScopes)[appID]
 	if !ok {
 		scopes = make([]models.Scope, 0, 1)

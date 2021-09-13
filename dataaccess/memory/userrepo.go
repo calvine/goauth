@@ -9,6 +9,7 @@ import (
 	"github.com/calvine/goauth/core/nullable"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/richerror/errors"
+	"github.com/google/uuid"
 )
 
 type userRepo struct {
@@ -41,6 +42,9 @@ func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, err
 func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdById string) errors.RichError {
 	user.AuditData.CreatedByID = createdById
 	user.AuditData.CreatedOnDate = time.Now().UTC()
+	if user.ID == "" {
+		user.ID = uuid.Must(uuid.NewRandom()).String()
+	}
 	(*ur.users)[user.ID] = *user
 	return nil
 }
