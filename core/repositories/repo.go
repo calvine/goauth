@@ -37,7 +37,7 @@ type UserRepo interface {
 
 type ContactRepo interface {
 	// GetContactByContactId gets a contact by its id
-	GetContactByContactId(ctx context.Context, contactId string) (models.Contact, errors.RichError)
+	GetContactById(ctx context.Context, id string) (models.Contact, errors.RichError)
 	// GetPrimaryContactByUserId gets a users primary contact by user id
 	GetPrimaryContactByUserId(ctx context.Context, userId string) (models.Contact, errors.RichError)
 	// GetContactsByUserId get all of a users contacts by user id

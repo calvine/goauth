@@ -97,7 +97,7 @@ func _testAddContact(t *testing.T, userRepo repo.ContactRepo) {
 }
 
 func _testGetContactById(t *testing.T, userRepo repo.ContactRepo) {
-	_, err := userRepo.GetContactByContactId(context.TODO(), newContact1.ID)
+	_, err := userRepo.GetContactById(context.TODO(), newContact1.ID)
 	if err != nil {
 		t.Error("failed to get contact by given id", newContact1.ID, err)
 	}

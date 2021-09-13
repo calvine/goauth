@@ -28,7 +28,7 @@ var (
 	}
 )
 
-func (ur userRepo) GetContactByContactId(ctx context.Context, contactId string) (models.Contact, errors.RichError) {
+func (ur userRepo) GetContactById(ctx context.Context, id string) (models.Contact, errors.RichError) {
 	var receiver struct {
 		UserId  primitive.ObjectID       `bson:"_id"`
 		Contact []repoModels.RepoContact `bson:"contacts"`
@@ -38,9 +38,9 @@ func (ur userRepo) GetContactByContactId(ctx context.Context, contactId string) 
 		{Key: "_id", Value: 1},
 		{Key: "contacts.$", Value: 1},
 	})
-	contactOid, err := primitive.ObjectIDFromHex(contactId)
+	contactOid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return emptyContact, coreerrors.NewFailedToParseObjectIDError(contactId, err, true)
+		return emptyContact, coreerrors.NewFailedToParseObjectIDError(id, err, true)
 	}
 	filter := bson.D{
 		{Key: "contacts.id", Value: contactOid},
@@ -49,7 +49,7 @@ func (ur userRepo) GetContactByContactId(ctx context.Context, contactId string) 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			fields := map[string]interface{}{
-				"contact.id": contactId,
+				"contact.id": id,
 			}
 			return emptyContact, coreerrors.NewNoContactFoundError(fields, true)
 		}
