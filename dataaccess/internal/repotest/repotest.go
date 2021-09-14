@@ -2,6 +2,7 @@ package repotest
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -37,16 +38,16 @@ type RepoTestHarnessInput struct {
 
 func RunReposTestHarness(t *testing.T, implementationName string, input RepoTestHarnessInput) {
 
+	setupTestHarnessData(t, input)
 	if input.SetupTestDataSource != nil {
 		input.SetupTestDataSource(t, input)
 	}
-	setupTestHarnessData(t, input)
 	if input.CleanupTestDataSource != nil {
 		defer input.CleanupTestDataSource(t, input)
 	}
 
 	// functionality tests
-	t.Run("userRepo", func(t *testing.T) {
+	t.Run(fmt.Sprintf("%s - userRepo", implementationName), func(t *testing.T) {
 		if input.UserRepo != nil {
 			testUserRepo(t, *input.UserRepo)
 		} else {
@@ -54,7 +55,7 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 		}
 	})
 
-	t.Run("contactRepo", func(t *testing.T) {
+	t.Run(fmt.Sprintf("%s - contactRepo", implementationName), func(t *testing.T) {
 		if input.ContactRepo != nil {
 			testContactRepo(t, *input.ContactRepo)
 		} else {
@@ -62,7 +63,7 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 		}
 	})
 
-	t.Run("addressRepo", func(t *testing.T) {
+	t.Run(fmt.Sprintf("%s - addressRepo", implementationName), func(t *testing.T) {
 		if input.AddressRepo != nil {
 			// testAddressRepo(t, *input.AddressRepo)
 		} else {
@@ -70,7 +71,7 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 		}
 	})
 
-	t.Run("profileRepo", func(t *testing.T) {
+	t.Run(fmt.Sprintf("%s - profileRepo", implementationName), func(t *testing.T) {
 		if input.ProfileRepo != nil {
 			// testProfileRepo(t, *input.ProfileRepo)
 		} else {
@@ -78,15 +79,15 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 		}
 	})
 
-	t.Run("tokenRepo", func(t *testing.T) {
+	t.Run(fmt.Sprintf("%s - tokenRepo", implementationName), func(t *testing.T) {
 		if input.TokenRepo != nil {
-			// testTokenRepo(t, *input.TokenRepo)
+			testTokenRepo(t, *input.TokenRepo)
 		} else {
 			t.Skipf("no implementation for %s provided for tokenRepo", implementationName)
 		}
 	})
 
-	t.Run("auditLogRepo", func(t *testing.T) {
+	t.Run(fmt.Sprintf("%s - auditLogRepo", implementationName), func(t *testing.T) {
 		if input.AuditLogRepo != nil {
 			// testAuditLogRepo(t, *input.AuditLogRepo)
 		} else {

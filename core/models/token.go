@@ -7,7 +7,7 @@ import (
 	"github.com/calvine/richerror/errors"
 )
 
-// go:generate stringer -type=TokenType
+//go:generate stringer -type=TokenType -output=token_type_string.go
 type TokenType int
 
 const (
@@ -15,6 +15,7 @@ const (
 	TokenTypeCSRF
 	TokenTypeConfirmContact
 	TokenTypePasswordReset
+	TokenTypeSession
 )
 
 // Token is a temporary item that can be used as a shared secret like a password reset token or a confirm contact token. They can be tide to a target entity like a user to ensure they are consumed by the proper targets.
@@ -45,15 +46,17 @@ func NewToken(targetID string, tokenType TokenType, validFor time.Duration) (Tok
 	}, nil
 }
 
-func (t Token) WithMetaData(metaData map[string]string) Token {
+func (t *Token) WithMetaData(metaData map[string]string) {
 	t.MetaData = metaData
-	return t
 }
 
-func (t Token) AddMetaData(key, value string) Token {
+func (t *Token) AddMetaData(key, value string) {
 	if t.MetaData == nil {
 		t.MetaData = make(map[string]string, 0)
 	}
 	t.MetaData[key] = value
-	return t
+}
+
+func (t Token) IsExpired() bool {
+	return t.Expiration.Before(time.Now())
 }

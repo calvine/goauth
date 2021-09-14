@@ -11,7 +11,7 @@ type localTokenRepo struct {
 	tokenMap map[string]models.Token
 }
 
-func NewLocalTokenRepo() repo.TokenRepo {
+func NewMemoryTokenRepo() repo.TokenRepo {
 	tokenMap := make(map[string]models.Token)
 	return &localTokenRepo{tokenMap}
 }

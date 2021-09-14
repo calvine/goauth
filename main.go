@@ -45,7 +45,7 @@ func run() error {
 	}
 	userRepo := gamongo.NewUserRepo(client)
 	auditRepo := gamongo.NewAuditLogRepo(client)
-	tokenRepo := memory.NewLocalTokenRepo()
+	tokenRepo := memory.NewMemoryTokenRepo()
 
 	tokenService := service.NewTokenService(tokenRepo)
 	emailService, err := service.NewEmailService(service.MockEmailService, nil)
