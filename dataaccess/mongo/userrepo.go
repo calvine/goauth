@@ -49,7 +49,7 @@ func NewUserRepoWithNames(client *mongo.Client, dbName, collectionName string) u
 	return userRepo{client, dbName, collectionName}
 }
 
-func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, errors.RichError) {
+func (ur userRepo) GetUserByID(ctx context.Context, id string) (models.User, errors.RichError) {
 	var repoUser repoModels.RepoUser
 	options := options.FindOneOptions{
 		Projection: ProjUserOnly,
@@ -145,8 +145,8 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, con
 	return user, nil
 }
 
-func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdById string) errors.RichError {
-	user.AuditData.CreatedByID = createdById
+func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdByID string) errors.RichError {
+	user.AuditData.CreatedByID = createdByID
 	user.AuditData.CreatedOnDate = time.Now().UTC()
 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).InsertOne(ctx, user, nil)
 	if err != nil {
@@ -161,8 +161,8 @@ func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdById s
 	return nil
 }
 
-func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedById string) errors.RichError {
-	user.AuditData.ModifiedByID.Set(modifiedById)
+func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedByID string) errors.RichError {
+	user.AuditData.ModifiedByID.Set(modifiedByID)
 	user.AuditData.ModifiedOnDate.Set(time.Now().UTC())
 	repoUser, err := repoModels.CoreUser(*user).ToRepoUser()
 	if err != nil {
@@ -170,7 +170,7 @@ func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedBy
 	}
 	filter := bson.M{
 		"_id": bson.M{
-			"$eq": repoUser.ObjectId,
+			"$eq": repoUser.ObjectID,
 		},
 	}
 

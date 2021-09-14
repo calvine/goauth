@@ -25,7 +25,7 @@ func NewMemoryContactRepo() repo.ContactRepo {
 	}
 }
 
-func (cr contactRepo) GetContactById(ctx context.Context, id string) (models.Contact, errors.RichError) {
+func (cr contactRepo) GetContactByID(ctx context.Context, id string) (models.Contact, errors.RichError) {
 	contact, ok := (*cr.contacts)[id]
 	if !ok {
 		fields := map[string]interface{}{"id": id}
@@ -34,11 +34,11 @@ func (cr contactRepo) GetContactById(ctx context.Context, id string) (models.Con
 	return contact, nil
 }
 
-func (cr contactRepo) GetPrimaryContactByUserId(ctx context.Context, userId string) (models.Contact, errors.RichError) {
+func (cr contactRepo) GetPrimaryContactByUserID(ctx context.Context, userID string) (models.Contact, errors.RichError) {
 	var contact models.Contact
 	contactFound := false
 	for _, c := range *cr.contacts {
-		if c.UserID == userId && c.IsPrimary {
+		if c.UserID == userID && c.IsPrimary {
 			contact = c
 			contactFound = true
 			break
@@ -46,7 +46,7 @@ func (cr contactRepo) GetPrimaryContactByUserId(ctx context.Context, userId stri
 	}
 	if !contactFound {
 		fields := map[string]interface{}{
-			"UserID":    userId,
+			"UserID":    userID,
 			"IsPrimary": true,
 		}
 		return contact, coreerrors.NewNoContactFoundError(fields, true)
@@ -54,24 +54,24 @@ func (cr contactRepo) GetPrimaryContactByUserId(ctx context.Context, userId stri
 	return contact, nil
 }
 
-func (cr contactRepo) GetContactsByUserId(ctx context.Context, userId string) ([]models.Contact, errors.RichError) {
+func (cr contactRepo) GetContactsByUserID(ctx context.Context, userID string) ([]models.Contact, errors.RichError) {
 	contacts := make([]models.Contact, 0)
 	for _, c := range *cr.contacts {
-		if c.UserID == userId {
+		if c.UserID == userID {
 			contacts = append(contacts, c)
 		}
 	}
 	if len(contacts) == 0 {
 		fields := map[string]interface{}{
-			"UserID": userId,
+			"UserID": userID,
 		}
 		return nil, coreerrors.NewNoContactFoundError(fields, true)
 	}
 	return contacts, nil
 }
 
-func (cr contactRepo) AddContact(ctx context.Context, contact *models.Contact, createdById string) errors.RichError {
-	contact.AuditData.CreatedByID = createdById
+func (cr contactRepo) AddContact(ctx context.Context, contact *models.Contact, createdByID string) errors.RichError {
+	contact.AuditData.CreatedByID = createdByID
 	contact.AuditData.CreatedOnDate = time.Now().UTC()
 	if contact.ID == "" {
 		contact.ID = uuid.Must(uuid.NewRandom()).String()
@@ -80,8 +80,8 @@ func (cr contactRepo) AddContact(ctx context.Context, contact *models.Contact, c
 	return nil
 }
 
-func (cr contactRepo) UpdateContact(ctx context.Context, contact *models.Contact, modifiedById string) errors.RichError {
-	contact.AuditData.ModifiedByID = nullable.NullableString{HasValue: true, Value: modifiedById}
+func (cr contactRepo) UpdateContact(ctx context.Context, contact *models.Contact, modifiedByID string) errors.RichError {
+	contact.AuditData.ModifiedByID = nullable.NullableString{HasValue: true, Value: modifiedByID}
 	contact.AuditData.ModifiedOnDate = nullable.NullableTime{HasValue: true, Value: time.Now().UTC()}
 	(*cr.contacts)[contact.ID] = *contact
 	return nil

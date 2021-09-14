@@ -10,12 +10,12 @@ import (
 type CoreUser models.User
 
 type RepoUser struct {
-	ObjectId primitive.ObjectID `bson:"_id"`
+	ObjectID primitive.ObjectID `bson:"_id"`
 	CoreUser `bson:",inline"`
 }
 
 func (ru RepoUser) ToCoreUser() models.User {
-	oidString := ru.ObjectId.Hex()
+	oidString := ru.ObjectID.Hex()
 	ru.CoreUser.ID = oidString
 
 	return models.User(ru.CoreUser)
@@ -27,12 +27,12 @@ func (cu CoreUser) ToRepoUser() (RepoUser, errors.RichError) {
 		return RepoUser{}, coreerrors.NewFailedToParseObjectIDError(cu.ID, err, true)
 	}
 	return RepoUser{
-		ObjectId: oid,
+		ObjectID: oid,
 		CoreUser: cu,
 	}, nil
 }
 
-func (cu CoreUser) ToRepoUserWithoutId() RepoUser {
+func (cu CoreUser) ToRepoUserWithoutID() RepoUser {
 	return RepoUser{
 		CoreUser: cu,
 	}

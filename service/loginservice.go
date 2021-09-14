@@ -110,7 +110,7 @@ func (ls loginService) ResetPassword(ctx context.Context, passwordResetToken str
 	if err != nil {
 		return false, err
 	}
-	user, err := ls.userRepo.GetUserById(ctx, token.TargetID)
+	user, err := ls.userRepo.GetUserByID(ctx, token.TargetID)
 	if err != nil {
 		return false, err
 	}

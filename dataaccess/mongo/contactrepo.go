@@ -28,9 +28,9 @@ var (
 	}
 )
 
-func (ur userRepo) GetContactById(ctx context.Context, id string) (models.Contact, errors.RichError) {
+func (ur userRepo) GetContactByID(ctx context.Context, id string) (models.Contact, errors.RichError) {
 	var receiver struct {
-		UserId  primitive.ObjectID       `bson:"_id"`
+		UserID  primitive.ObjectID       `bson:"_id"`
 		Contact []repoModels.RepoContact `bson:"contacts"`
 	}
 	options := options.FindOneOptions{}
@@ -55,11 +55,11 @@ func (ur userRepo) GetContactById(ctx context.Context, id string) (models.Contac
 		}
 		return emptyContact, coreerrors.NewRepoQueryFailedError(err, true)
 	}
-	receiver.Contact[0].UserID = receiver.UserId.Hex()
+	receiver.Contact[0].UserID = receiver.UserID.Hex()
 	return receiver.Contact[0].ToCoreContact(), nil
 }
 
-func (ur userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string) (models.Contact, errors.RichError) {
+func (ur userRepo) GetPrimaryContactByUserID(ctx context.Context, userID string) (models.Contact, errors.RichError) {
 	var receiver struct {
 		Contacts []repoModels.RepoContact `bson:"contacts"`
 	}
@@ -68,9 +68,9 @@ func (ur userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string)
 		{Key: "_id", Value: 0},
 		{Key: "contacts.$", Value: 1},
 	})
-	oid, err := primitive.ObjectIDFromHex(userId)
+	oid, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		return emptyContact, coreerrors.NewFailedToParseObjectIDError(userId, err, true)
+		return emptyContact, coreerrors.NewFailedToParseObjectIDError(userID, err, true)
 	}
 	filter := bson.M{
 		"$and": bson.A{
@@ -82,7 +82,7 @@ func (ur userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			fields := map[string]interface{}{
-				"_id":                userId,
+				"_id":                userID,
 				"contacts.isPrimary": true,
 			}
 			return emptyContact, coreerrors.NewNoContactFoundError(fields, true)
@@ -91,13 +91,13 @@ func (ur userRepo) GetPrimaryContactByUserId(ctx context.Context, userId string)
 	}
 	// TODO: need to make sure business logic exists to ensure that there is only 1 primary contact...
 	contact := receiver.Contacts[0].ToCoreContact()
-	contact.UserID = userId
+	contact.UserID = userID
 	return contact, nil
 }
 
 // TODO: finish implementing
 
-func (ur userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]models.Contact, errors.RichError) {
+func (ur userRepo) GetContactsByUserID(ctx context.Context, userID string) ([]models.Contact, errors.RichError) {
 	var receiver struct {
 		Contacts []repoModels.RepoContact `bson:"contacts"`
 	}
@@ -107,16 +107,16 @@ func (ur userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]mo
 			{Key: "contacts", Value: 1},
 		},
 	}
-	oid, err := primitive.ObjectIDFromHex(userId)
+	oid, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		return nil, coreerrors.NewFailedToParseObjectIDError(userId, err, true)
+		return nil, coreerrors.NewFailedToParseObjectIDError(userID, err, true)
 	}
 	filter := bson.M{"_id": oid}
 	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			fields := map[string]interface{}{
-				"_id": userId,
+				"_id": userID,
 			}
 			return nil, coreerrors.NewNoContactFoundError(fields, true)
 		}
@@ -124,7 +124,7 @@ func (ur userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]mo
 	}
 	contacts := make([]models.Contact, len(receiver.Contacts))
 	for index, contact := range receiver.Contacts {
-		contact.UserID = userId
+		contact.UserID = userID
 		contacts[index] = contact.ToCoreContact()
 	}
 	return contacts, nil
@@ -132,7 +132,7 @@ func (ur userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]mo
 
 // func (ur userRepo) GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, errors.RichError) {
 // 	var receiver struct {
-// 		UserId  primitive.ObjectID       `bson:"_id"`
+// 		UserID  primitive.ObjectID       `bson:"_id"`
 // 		Contact []repoModels.RepoContact `bson:"contacts"`
 // 	}
 // 	options := options.FindOneOptions{
@@ -154,12 +154,12 @@ func (ur userRepo) GetContactsByUserId(ctx context.Context, userId string) ([]mo
 // 		}
 // 		return emptyContact, coreerrors.NewRepoQueryFailedError(err, true)
 // 	}
-// 	receiver.Contact[0].UserID = receiver.UserId.Hex()
+// 	receiver.Contact[0].UserID = receiver.UserID.Hex()
 // 	return receiver.Contact[0].ToCoreContact(), nil
 // }
 
-func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, createdById string) errors.RichError {
-	contact.AuditData.CreatedByID = createdById
+func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, createdByID string) errors.RichError {
+	contact.AuditData.CreatedByID = createdByID
 	contact.AuditData.CreatedOnDate = time.Now().UTC()
 	contact.ID = primitive.NewObjectID().Hex()
 	oid, err := primitive.ObjectIDFromHex(contact.UserID)
@@ -173,7 +173,7 @@ func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, crea
 	update := bson.M{
 		"$push": bson.M{
 			"contacts": bson.D{
-				{Key: "id", Value: repoContact.ObjectId},
+				{Key: "id", Value: repoContact.ObjectID},
 				{Key: "name", Value: repoContact.CoreContact.Name.GetPointerCopy()},
 				{Key: "principal", Value: repoContact.CoreContact.Principal},
 				{Key: "type", Value: repoContact.CoreContact.Type},
@@ -199,9 +199,9 @@ func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, crea
 	return nil
 }
 
-func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, modifiedById string) errors.RichError {
+func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, modifiedByID string) errors.RichError {
 	contact.AuditData.ModifiedByID = nullable.NullableString{}
-	contact.AuditData.ModifiedByID.Set(modifiedById)
+	contact.AuditData.ModifiedByID.Set(modifiedByID)
 	contact.AuditData.ModifiedOnDate = nullable.NullableTime{}
 	contact.AuditData.ModifiedOnDate.Set(time.Now().UTC())
 	contactID, err := primitive.ObjectIDFromHex(contact.ID)
@@ -243,7 +243,7 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 	return nil
 }
 
-// func (ur userRepo) ConfirmContact(ctx context.Context, confirmationCode, modifiedById string) errors.RichError {
+// func (ur userRepo) ConfirmContact(ctx context.Context, confirmationCode, modifiedByID string) errors.RichError {
 // 	now := time.Now().UTC()
 // 	filter := bson.D{
 // 		{Key: "contacts.confirmationCode", Value: confirmationCode},
@@ -252,7 +252,7 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 // 		{Key: "$set", Value: bson.D{
 // 			{Key: "contacts.$.confirmationCode", Value: nil},
 // 			{Key: "contacts.$.confirmedDate", Value: now},
-// 			{Key: "contacts.$.modifiedById", Value: modifiedById},
+// 			{Key: "contacts.$.modifiedById", Value: modifiedByID},
 // 			{Key: "contacts.$.modifiedOnDate", Value: now},
 // 		}},
 // 	}

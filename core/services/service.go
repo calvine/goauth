@@ -16,7 +16,7 @@ type LoginService interface {
 	LoginWithPrimaryContact(ctx context.Context, principal, principalType, password string, initiator string) (models.User, errors.RichError)
 	// StartPasswordResetByContact sets a password reset token for the user with the corresponding principal and type that are confirmed.
 	StartPasswordResetByContact(ctx context.Context, principal, principalType string, initiator string) (string, errors.RichError)
-	// ResetPassword resets a users password given a userId and new password hash and salt.
+	// ResetPassword resets a users password given a password reset token and new password hash and salt.
 	ResetPassword(ctx context.Context, passwordResetToken string, newPasswordHash string, initiator string) (bool, errors.RichError)
 }
 
@@ -29,11 +29,11 @@ type UserService interface {
 	// UpdateUser updates a use record in the database
 	UpdateUser(ctx context.Context, user *models.User, initiator string) errors.RichError
 	// GetUserPrimaryContact gets a users primary contact
-	GetUserPrimaryContact(ctx context.Context, userId string, initiator string) (models.Contact, errors.RichError)
+	GetUserPrimaryContact(ctx context.Context, userID string, initiator string) (models.Contact, errors.RichError)
 	// GetUsersContacts gets all of a users contacts
-	GetUsersContacts(ctx context.Context, userId string, initiator string) ([]models.Contact, errors.RichError)
+	GetUsersContacts(ctx context.Context, userID string, initiator string) ([]models.Contact, errors.RichError)
 	// GetUsersConfirmedContacts gets all of a users confirmed contacts
-	GetUsersConfirmedContacts(ctx context.Context, userId string, initiator string) ([]models.Contact, errors.RichError)
+	GetUsersConfirmedContacts(ctx context.Context, userID string, initiator string) ([]models.Contact, errors.RichError)
 	// AddContact adds a contact to a user
 	AddContact(ctx context.Context, contact *models.Contact, initiator string) errors.RichError
 	// UpdateContact updates a contact for a user

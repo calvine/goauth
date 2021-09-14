@@ -50,14 +50,14 @@ func testContactRepo(t *testing.T, contactRepo repo.ContactRepo) {
 	t.Run("AddContact", func(t *testing.T) {
 		_testAddContact(t, contactRepo)
 	})
-	t.Run("GetContactById", func(t *testing.T) {
-		_testGetContactById(t, contactRepo)
+	t.Run("GetContactByID", func(t *testing.T) {
+		_testGetContactByID(t, contactRepo)
 	})
-	t.Run("GetPrimaryContactByUserId", func(t *testing.T) {
-		_testGetPrimaryContactByUserId(t, contactRepo)
+	t.Run("GetPrimaryContactByUserID", func(t *testing.T) {
+		_testGetPrimaryContactByUserID(t, contactRepo)
 	})
-	t.Run("GetContactsByUserId", func(t *testing.T) {
-		_testGetContactsByUserId(t, contactRepo)
+	t.Run("GetContactsByUserID", func(t *testing.T) {
+		_testGetContactsByUserID(t, contactRepo)
 	})
 	// t.Run("GetContactByConfirmationCode", func(t *testing.T) {
 	// 	_testGetContactByConfirmationCode(t, contactRepo)
@@ -96,21 +96,21 @@ func _testAddContact(t *testing.T, userRepo repo.ContactRepo) {
 	}
 }
 
-func _testGetContactById(t *testing.T, userRepo repo.ContactRepo) {
-	_, err := userRepo.GetContactById(context.TODO(), newContact1.ID)
+func _testGetContactByID(t *testing.T, userRepo repo.ContactRepo) {
+	_, err := userRepo.GetContactByID(context.TODO(), newContact1.ID)
 	if err != nil {
 		t.Error("failed to get contact by given id", newContact1.ID, err)
 	}
 }
 
-func _testGetPrimaryContactByUserId(t *testing.T, userRepo repo.ContactRepo) {
-	userId := testUser1.ID
-	contact, err := userRepo.GetPrimaryContactByUserId(context.TODO(), userId)
+func _testGetPrimaryContactByUserID(t *testing.T, userRepo repo.ContactRepo) {
+	userID := testUser1.ID
+	contact, err := userRepo.GetPrimaryContactByUserID(context.TODO(), userID)
 	if err != nil {
-		t.Error("failed to get primary contact for user", userId, err)
+		t.Error("failed to get primary contact for user", userID, err)
 	}
 	if contact.UserID != testUser1.ID {
-		t.Error("expected contact.UserId and testUser1.Id to match", testUser1.ID, contact.UserID)
+		t.Error("expected contact.UserID and testUser1.ID to match", testUser1.ID, contact.UserID)
 	}
 	if !contact.IsPrimary {
 		t.Error("expected contact.IsPriamay to be true")
@@ -121,11 +121,11 @@ func _testGetPrimaryContactByUserId(t *testing.T, userRepo repo.ContactRepo) {
 
 }
 
-func _testGetContactsByUserId(t *testing.T, userRepo repo.ContactRepo) {
-	userId := testUser1.ID
-	contacts, err := userRepo.GetContactsByUserId(context.TODO(), userId)
+func _testGetContactsByUserID(t *testing.T, userRepo repo.ContactRepo) {
+	userID := testUser1.ID
+	contacts, err := userRepo.GetContactsByUserID(context.TODO(), userID)
 	if err != nil {
-		t.Error("failed to get contacts by user id", userId, err)
+		t.Error("failed to get contacts by user id", userID, err)
 	}
 	if len(contacts) != 4 {
 		t.Error("wrong number of contacts returned", 3, len(contacts))

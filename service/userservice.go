@@ -11,7 +11,7 @@ package service
 // 	if err != nil {
 // 		return false, err
 // 	}
-// 	contact, err := ls.contactRepo.GetContactByContactId(ctx, token.TargetID)
+// 	contact, err := ls.contactRepo.GetContactByContactID(ctx, token.TargetID)
 // 	if err != nil {
 // 		return false, err
 // 	}

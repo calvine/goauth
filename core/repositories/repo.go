@@ -23,12 +23,12 @@ type TokenRepo interface {
 
 // UserRepo is responsible for accessing user data from the database.
 type UserRepo interface {
-	// GetUserById gets a user by its id
-	GetUserById(ctx context.Context, id string) (models.User, errors.RichError)
+	// GetUserByID gets a user by its id
+	GetUserByID(ctx context.Context, id string) (models.User, errors.RichError)
 	// AddUser adds a user record
-	AddUser(ctx context.Context, user *models.User, createdById string) errors.RichError
+	AddUser(ctx context.Context, user *models.User, createdByID string) errors.RichError
 	// UpdateUser updates a user record
-	UpdateUser(ctx context.Context, user *models.User, modifiedById string) errors.RichError
+	UpdateUser(ctx context.Context, user *models.User, modifiedByID string) errors.RichError
 	// GetUserByPrimaryContact gets the user by their primary contact
 	GetUserByPrimaryContact(ctx context.Context, contactPrincipalType, contactPrincipal string) (models.User, errors.RichError)
 	// GetUserAndContactByPrimaryContact gets the user and the primary contact by their primary contact principal and contactType
@@ -36,42 +36,42 @@ type UserRepo interface {
 }
 
 type ContactRepo interface {
-	// GetContactByContactId gets a contact by its id
-	GetContactById(ctx context.Context, id string) (models.Contact, errors.RichError)
-	// GetPrimaryContactByUserId gets a users primary contact by user id
-	GetPrimaryContactByUserId(ctx context.Context, userId string) (models.Contact, errors.RichError)
-	// GetContactsByUserId get all of a users contacts by user id
-	GetContactsByUserId(ctx context.Context, userId string) ([]models.Contact, errors.RichError)
+	// GetContactByContactID gets a contact by its id
+	GetContactByID(ctx context.Context, id string) (models.Contact, errors.RichError)
+	// GetPrimaryContactByUserID gets a users primary contact by user id
+	GetPrimaryContactByUserID(ctx context.Context, userID string) (models.Contact, errors.RichError)
+	// GetContactsByUserID get all of a users contacts by user id
+	GetContactsByUserID(ctx context.Context, userID string) ([]models.Contact, errors.RichError)
 	// GetContactByConfirmationCode get user contact by confirmation code
 	// GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, errors.RichError)
 	// AddContact adds a user contact
-	AddContact(ctx context.Context, contact *models.Contact, createdById string) errors.RichError
+	AddContact(ctx context.Context, contact *models.Contact, createdByID string) errors.RichError
 	// UpdateContact updates a users contact
-	UpdateContact(ctx context.Context, contact *models.Contact, modifiedById string) errors.RichError
+	UpdateContact(ctx context.Context, contact *models.Contact, modifiedByID string) errors.RichError
 	// ConfirmContact sets a contact to confirmed based on the received confirmation code.
-	// ConfirmContact(ctx context.Context, confirmationCode, modifiedById string) errors.RichError
+	// ConfirmContact(ctx context.Context, confirmationCode, modifiedByID string) errors.RichError
 }
 
 type ProfileRepo interface {
-	// GetProfileByUserId gets a users profile data by user id
-	GetProfileByUserId(ctx context.Context, userId string) (models.Profile, errors.RichError)
+	// GetProfileByUserID gets a users profile data by user id
+	GetProfileByUserID(ctx context.Context, userID string) (models.Profile, errors.RichError)
 	// AddProfile adds a users profile data
-	AddProfile(ctx context.Context, profile *models.Profile, createdById string) errors.RichError
+	AddProfile(ctx context.Context, profile *models.Profile, createdByID string) errors.RichError
 	// UpdateUserProfile updates a users profile data
-	UpdateUserProfile(ctx context.Context, profile *models.Profile, modifiedById string) errors.RichError
+	UpdateUserProfile(ctx context.Context, profile *models.Profile, modifiedByID string) errors.RichError
 }
 
 type AddressRepo interface {
-	// GetAddressById gets an address by id
-	GetAddressById(ctx context.Context, id string) (models.Address, errors.RichError)
-	// GetPrimaryAddressByUserId gets the prinmary address of a user by the user id
-	GetPrimaryAddressByUserId(ctx context.Context, userId string) (models.Address, errors.RichError)
-	// GetAddressesByUserId gets address of the user by Id
-	GetAddressesByUserId(ctx context.Context, userId string) ([]models.Address, errors.RichError)
+	// GetAddressByID gets an address by id
+	GetAddressByID(ctx context.Context, id string) (models.Address, errors.RichError)
+	// GetPrimaryAddressByUserID gets the prinmary address of a user by the user id
+	GetPrimaryAddressByUserID(ctx context.Context, userID string) (models.Address, errors.RichError)
+	// GetAddressesByUserID gets address of the user by id
+	GetAddressesByUserID(ctx context.Context, userID string) ([]models.Address, errors.RichError)
 	// AddAddress adds a user address
-	AddAddress(ctx context.Context, address *models.Address, createdById string) errors.RichError
+	AddAddress(ctx context.Context, address *models.Address, createdByID string) errors.RichError
 	// UpdateAddress updates a users address
-	UpdateAddress(ctx context.Context, address *models.Address, modifiedById string) errors.RichError
+	UpdateAddress(ctx context.Context, address *models.Address, modifiedByID string) errors.RichError
 }
 
 type AppRepo interface {

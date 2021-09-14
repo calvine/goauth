@@ -8,12 +8,12 @@ import (
 type CoreAddress models.Address
 
 type RepoAddress struct {
-	ObjectId    primitive.ObjectID `bson:"id"`
+	ObjectID    primitive.ObjectID `bson:"id"`
 	CoreAddress `bson:",inline"`
 }
 
 func (ra RepoAddress) ToCoreAddress() models.Address {
-	oidString := ra.ObjectId.Hex()
+	oidString := ra.ObjectID.Hex()
 	ra.CoreAddress.ID = oidString
 
 	return models.Address(ra.CoreAddress)
@@ -25,12 +25,12 @@ func (ca CoreAddress) ToRepoAddress() (RepoAddress, error) {
 		return RepoAddress{}, err
 	}
 	return RepoAddress{
-		ObjectId:    oid,
+		ObjectID:    oid,
 		CoreAddress: ca,
 	}, nil
 }
 
-func (ca CoreAddress) ToRepoAddressWithoutId() RepoAddress {
+func (ca CoreAddress) ToRepoAddressWithoutID() RepoAddress {
 	return RepoAddress{
 		CoreAddress: ca,
 	}

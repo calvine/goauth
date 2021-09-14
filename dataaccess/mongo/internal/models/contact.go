@@ -10,12 +10,12 @@ import (
 type CoreContact models.Contact
 
 type RepoContact struct {
-	ObjectId    primitive.ObjectID `bson:"id"`
+	ObjectID    primitive.ObjectID `bson:"id"`
 	CoreContact `bson:",inline"`
 }
 
 func (rc RepoContact) ToCoreContact() models.Contact {
-	oidString := rc.ObjectId.Hex()
+	oidString := rc.ObjectID.Hex()
 	rc.CoreContact.ID = oidString
 
 	return models.Contact(rc.CoreContact)
@@ -27,12 +27,12 @@ func (cc CoreContact) ToRepoContact() (RepoContact, errors.RichError) {
 		return RepoContact{}, coreerrors.NewFailedToParseObjectIDError(cc.ID, err, true)
 	}
 	return RepoContact{
-		ObjectId:    oid,
+		ObjectID:    oid,
 		CoreContact: cc,
 	}, nil
 }
 
-func (cc CoreContact) ToRepoContactWithoutId() RepoContact {
+func (cc CoreContact) ToRepoContactWithoutID() RepoContact {
 	return RepoContact{
 		CoreContact: cc,
 	}

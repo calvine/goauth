@@ -97,15 +97,15 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 }
 
 func setupTestHarnessData(t *testing.T, input RepoTestHarnessInput) {
-	createdById := "test setup"
+	createdByID := "test setup"
 	// add a test user
-	err := (*input.UserRepo).AddUser(context.TODO(), &initialTestUser, createdById)
+	err := (*input.UserRepo).AddUser(context.TODO(), &initialTestUser, createdByID)
 	if err != nil {
 		t.Error("setup failed to add user to database", err)
 	}
 	initialTestContact.UserID = initialTestUser.ID
 	// add a test contact for the test user.
-	err = (*input.ContactRepo).AddContact(context.TODO(), &initialTestContact, createdById)
+	err = (*input.ContactRepo).AddContact(context.TODO(), &initialTestContact, createdByID)
 	if err != nil {
 		t.Error("setup failed to add contact to database", err)
 	}

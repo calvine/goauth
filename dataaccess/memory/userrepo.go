@@ -30,7 +30,7 @@ func NewMemoryUserRepo() repo.UserRepo {
 	}
 }
 
-func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, errors.RichError) {
+func (ur userRepo) GetUserByID(ctx context.Context, id string) (models.User, errors.RichError) {
 	user, ok := (*ur.users)[id]
 	if !ok {
 		fields := map[string]interface{}{"id": id}
@@ -39,8 +39,8 @@ func (ur userRepo) GetUserById(ctx context.Context, id string) (models.User, err
 	return user, nil
 }
 
-func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdById string) errors.RichError {
-	user.AuditData.CreatedByID = createdById
+func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdByID string) errors.RichError {
+	user.AuditData.CreatedByID = createdByID
 	user.AuditData.CreatedOnDate = time.Now().UTC()
 	if user.ID == "" {
 		user.ID = uuid.Must(uuid.NewRandom()).String()
@@ -49,8 +49,8 @@ func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdById s
 	return nil
 }
 
-func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedById string) errors.RichError {
-	user.AuditData.ModifiedByID = nullable.NullableString{HasValue: true, Value: modifiedById}
+func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedByID string) errors.RichError {
+	user.AuditData.ModifiedByID = nullable.NullableString{HasValue: true, Value: modifiedByID}
 	user.AuditData.ModifiedOnDate = nullable.NullableTime{HasValue: true, Value: time.Now().UTC()}
 	(*ur.users)[user.ID] = *user
 	return nil

@@ -51,10 +51,9 @@ func TestMongoRepos(t *testing.T) {
 			}
 		}
 		testHarnessInput := repotest.RepoTestHarnessInput{
-			UserRepo:              &userRepo,
-			ContactRepo:           &contactRepo,
-			CleanupTestDataSource: cleanUpDataSource,
-			SetupTestDataSource:   cleanUpDataSource,
+			UserRepo:            &userRepo,
+			ContactRepo:         &contactRepo,
+			SetupTestDataSource: cleanUpDataSource,
 		}
 		repotest.RunReposTestHarness(t, "mongodb", testHarnessInput)
 	} else {
