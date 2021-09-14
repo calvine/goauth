@@ -3,35 +3,14 @@ package mongo
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
-	"time"
 
-	"github.com/calvine/goauth/core"
-	"github.com/calvine/goauth/core/models"
-	"github.com/calvine/goauth/core/normalization"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/dataaccess/internal/repotest"
 
-	"github.com/calvine/goauth/core/nullable"
 	"github.com/calvine/goauth/core/utilities"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-)
-
-var (
-	testUserRepo userRepo
-
-	initialTestUser = models.User{
-		PasswordHash:  "passwordhash2",
-		LastLoginDate: nullable.NullableTime{HasValue: true, Value: time.Now().UTC()},
-	}
-
-	initialTestContact = models.Contact{
-		IsPrimary: true,
-		Principal: "InitialTestUser@email.com",
-		Type:      core.CONTACT_TYPE_EMAIL,
-	}
 )
 
 const (
@@ -46,9 +25,9 @@ var (
 )
 
 func TestMongoRepos(t *testing.T) {
-	value, exists := os.LookupEnv(ENV_RUN_MONGO_TESTS)
-	shouldRun, _ := normalization.ReadBoolValue(value, true)
-	if exists && shouldRun {
+	// value, exists := os.LookupEnv(ENV_RUN_MONGO_TESTS)
+	// shouldRun, _ := normalization.ReadBoolValue(value, true)
+	if true {
 		// setup code for mongo user repo tests.
 		connectionString := utilities.GetEnv(ENV_MONGO_TEST_CONNECTION_STRING, DEFAULT_TEST_MONGO_CONNECTION_STRING)
 		client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(connectionString))
@@ -60,7 +39,7 @@ func TestMongoRepos(t *testing.T) {
 		if err != nil {
 			t.Error("failed to ping mongo server before test", err)
 		}
-		testUserRepo = NewUserRepoWithNames(client, "test_goauth", USER_COLLECTION)
+		testUserRepo := NewUserRepoWithNames(client, "test_goauth", USER_COLLECTION)
 		var userRepo repo.UserRepo = testUserRepo
 		var contactRepo repo.ContactRepo = testUserRepo
 		cleanUpDataSource := func(t *testing.T, _ repotest.RepoTestHarnessInput) {
