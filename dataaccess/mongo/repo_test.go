@@ -10,6 +10,8 @@ import (
 	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/normalization"
+	repo "github.com/calvine/goauth/core/repositories"
+	"github.com/calvine/goauth/dataaccess/internal/repotest"
 
 	"github.com/calvine/goauth/core/nullable"
 	"github.com/calvine/goauth/core/utilities"
@@ -59,39 +61,22 @@ func TestMongoRepos(t *testing.T) {
 			t.Error("failed to ping mongo server before test", err)
 		}
 		testUserRepo = NewUserRepoWithNames(client, "test_goauth", USER_COLLECTION)
-		// cleanup previous test data if it exists
-		cleanupTestDatabase(testUserRepo)
-		// set up initial data for testing
-		setupTestData(t, testUserRepo)
-
-		// functionality tests
-		t.Run("userRepo", func(t *testing.T) {
-			testMongoUserRepo(t, testUserRepo)
-		})
-
-		t.Run("contactRepo", func(t *testing.T) {
-			testMongoContactRepo(t, testUserRepo)
-		})
+		var userRepo repo.UserRepo = testUserRepo
+		var contactRepo repo.ContactRepo = testUserRepo
+		cleanUpDataSource := func(t *testing.T, _ repotest.RepoTestHarnessInput) {
+			err := testUserRepo.mongoClient.Database(testUserRepo.dbName).Collection(testUserRepo.collectionName).Drop(context.TODO())
+			if err != nil {
+				t.Error("failed to cleanup database", err)
+			}
+		}
+		testHarnessInput := repotest.RepoTestHarnessInput{
+			UserRepo:              &userRepo,
+			ContactRepo:           &contactRepo,
+			CleanupTestDataSource: cleanUpDataSource,
+			SetupTestDataSource:   cleanUpDataSource,
+		}
+		repotest.RunReposTestHarness(t, "mongodb", testHarnessInput)
 	} else {
 		t.Skip(SKIP_MONGO_TESTS_MESSAGE)
-	}
-}
-
-func cleanupTestDatabase(userRepo userRepo) error {
-	return userRepo.mongoClient.Database(testUserRepo.dbName).Collection(testUserRepo.collectionName).Drop(context.TODO())
-}
-
-func setupTestData(t *testing.T, userRepo userRepo) {
-	createdById := "test setup"
-	// add a test user
-	err := userRepo.AddUser(context.TODO(), &initialTestUser, createdById)
-	if err != nil {
-		t.Error("setup failed to add user to database", err)
-	}
-	initialTestContact.UserID = initialTestUser.ID
-	// add a test contact for the test user.
-	err = userRepo.AddContact(context.TODO(), &initialTestContact, createdById)
-	if err != nil {
-		t.Error("setup failed to add contact to database", err)
 	}
 }
