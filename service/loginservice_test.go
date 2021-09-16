@@ -289,7 +289,6 @@ func __testAccountLockoutRelease(t *testing.T, loginService services.LoginServic
 }
 
 func _testStartPasswordResetByContact(t *testing.T, loginService services.LoginService) {
-	t.Error("test not implemented")
 	// successful password reset request
 	t.Run("StartPasswordResetSuccess", func(t *testing.T) {
 		__testStartPasswordResetSuccess(t, loginService)
