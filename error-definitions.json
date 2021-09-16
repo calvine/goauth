@@ -153,15 +153,6 @@
         ]
     },
     {
-        "code": "ExpiredPasswordExpirationToken",
-        "message": "password expiration token has expired",
-        "includeMap": false,
-        "metaData": [
-            { "name": "passwordResetToken", "dataType": "string"},
-            { "name": "passwordResetTokenExpiration", "dataType": "time.Time"}
-        ]
-    },
-    {
         "code": "NoNewPasswordHashProvided",
         "message": "no new password hash was provided",
         "includeMap": false,
@@ -169,10 +160,30 @@
     },
     {
         "code": "InvalidToken",
-        "message": "expired or token was found with the given id.",
+        "message": "expired or invalid token was found with the given id.",
         "includeMap": false,
         "metaData": [
             { "name": "id", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "WrongTokenType",
+        "message": "token type does not match expected token type",
+        "includeMap": false,
+        "metaData": [
+            { "name": "id", "dataType": "string" },
+            { "name": "tokenType", "dataType": "string" },
+            { "name": "expectedTokenType", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "ExpiredToken",
+        "message": "token has expired",
+        "includeMap": false,
+        "metaData": [
+            { "name": "id", "dataType": "string" },
+            { "name": "tokenType", "dataType": "string" },
+            { "name": "expiredOn", "dataType": "time.Time" }
         ]
     },
     {

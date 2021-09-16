@@ -141,21 +141,22 @@ func (ls loginService) StartPasswordResetByContact(ctx context.Context, principa
 	return token.Value, nil
 }
 
-func (ls loginService) ResetPassword(ctx context.Context, passwordResetToken string, newPasswordHash string, initiator string) (bool, errors.RichError) {
+func (ls loginService) ResetPassword(ctx context.Context, passwordResetToken string, newPasswordHash string, initiator string) errors.RichError {
 	if newPasswordHash == "" {
-		return false, coreerrors.NewNoNewPasswordHashProvidedError(true)
+		return coreerrors.NewNoNewPasswordHashProvidedError(true)
 	}
 	token, err := ls.tokenService.GetToken(ctx, passwordResetToken, models.TokenTypePasswordReset)
 	if err != nil {
-		return false, err
+		return err
 	}
 	user, err := ls.userRepo.GetUserByID(ctx, token.TargetID)
 	if err != nil {
-		return false, err
+		return err
 	}
+	user.PasswordHash = newPasswordHash
 	err = ls.userRepo.UpdateUser(ctx, &user, initiator)
 	if err != nil {
-		return false, err
+		return err
 	}
-	return true, nil
+	return nil
 }

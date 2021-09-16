@@ -27,10 +27,11 @@ func (ts tokenService) GetToken(ctx context.Context, tokenValue string, expected
 	}
 	now := time.Now().UTC()
 	if now.After(token.Expiration) {
-		return models.Token{}, coreerrors.NewInvalidTokenError(tokenValue, true)
+		// TODO: do we want to delete the token incase the native store does not support auto delete on TTL like redis?
+		return models.Token{}, coreerrors.NewExpiredTokenError(tokenValue, token.TokenType.String(), token.Expiration, true)
 	} else if token.TokenType != expectedTokenType {
 		// TODO: Audit log this
-		return models.Token{}, coreerrors.NewInvalidTokenError(tokenValue, true)
+		return models.Token{}, coreerrors.NewWrongTokenTypeError(token.Value, token.TokenType.String(), expectedTokenType.String(), true)
 	}
 	return token, nil
 }
