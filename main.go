@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/goauth/dataaccess/memory"
@@ -52,7 +53,16 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	loginService := service.NewLoginService(auditRepo, userRepo, userRepo, emailService, tokenService)
+	loginServiceOptions := service.LoginServiceOptions{
+		AuditLogRepo:           auditRepo,
+		UserRepo:               userRepo,
+		ContactRepo:            userRepo,
+		EmailService:           emailService,
+		TokenService:           tokenService,
+		MaxFailedLoginAttempts: 10,
+		AccountLockoutDuration: time.Minute * 15,
+	}
+	loginService := service.NewLoginService(loginServiceOptions)
 
 	httpStaticFS := http.FS(staticFS)
 	httpServer := gahttp.NewServer(loginService, emailService, tokenService, &httpStaticFS, &templateFS)

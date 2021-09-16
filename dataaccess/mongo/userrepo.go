@@ -73,7 +73,7 @@ func (ur userRepo) GetUserByID(ctx context.Context, id string) (models.User, err
 	return user, nil
 }
 
-func (ur userRepo) GetUserAndContactByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
+func (ur userRepo) GetUserAndContactByContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
 	var receiver struct {
 		User    repoModels.RepoUser      `bson:",inline"`
 		Contact []repoModels.RepoContact `bson:"contacts"`
@@ -88,7 +88,6 @@ func (ur userRepo) GetUserAndContactByPrimaryContact(ctx context.Context, contac
 		"contacts": bson.D{
 			{
 				Key: "$elemMatch", Value: bson.D{
-					{Key: "isPrimary", Value: true},
 					{Key: "type", Value: contactType},
 					{Key: "principal", Value: contactPrincipal},
 				},
@@ -99,7 +98,6 @@ func (ur userRepo) GetUserAndContactByPrimaryContact(ctx context.Context, contac
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			fields := map[string]interface{}{
-				"contacts.isPrimary": true,
 				"contacts.type":      contactType,
 				"contacts.principal": contactPrincipal,
 			}

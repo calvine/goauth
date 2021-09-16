@@ -10,61 +10,90 @@ import (
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
 	coreservices "github.com/calvine/goauth/core/services"
+	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/richerror/errors"
-	"golang.org/x/crypto/bcrypt"
+)
+
+const (
+	defaultAccountLockoutDuration time.Duration = time.Minute * 15
+	defaultMaxFailedLoginAttempts int           = 10
 )
 
 type loginService struct {
-	auditLogRepo repo.AuditLogRepo
-	contactRepo  repo.ContactRepo
-	emailService coreservices.EmailService
-	userRepo     repo.UserRepo
-	tokenService coreservices.TokenService
+	auditLogRepo           repo.AuditLogRepo
+	contactRepo            repo.ContactRepo
+	emailService           coreservices.EmailService
+	userRepo               repo.UserRepo
+	tokenService           coreservices.TokenService
+	maxFailedLoginAttempts int
+	accountLockoutDuration time.Duration
 }
 
-func NewLoginService(auditLogRepo repo.AuditLogRepo, contactRepo repo.ContactRepo, userRepo repo.UserRepo, emailService coreservices.EmailService, tokenService coreservices.TokenService) coreservices.LoginService {
+type LoginServiceOptions struct {
+	AuditLogRepo           repo.AuditLogRepo
+	ContactRepo            repo.ContactRepo
+	EmailService           coreservices.EmailService
+	UserRepo               repo.UserRepo
+	TokenService           coreservices.TokenService
+	MaxFailedLoginAttempts int
+	AccountLockoutDuration time.Duration
+}
+
+func NewLoginService(options LoginServiceOptions) coreservices.LoginService {
+	if options.MaxFailedLoginAttempts <= 0 {
+		options.MaxFailedLoginAttempts = defaultMaxFailedLoginAttempts
+	}
+	if options.AccountLockoutDuration <= 0 {
+		options.AccountLockoutDuration = defaultAccountLockoutDuration
+	}
 	return loginService{
-		auditLogRepo: auditLogRepo,
-		contactRepo:  contactRepo,
-		emailService: emailService,
-		userRepo:     userRepo,
-		tokenService: tokenService,
+		auditLogRepo:           options.AuditLogRepo,
+		contactRepo:            options.ContactRepo,
+		emailService:           options.EmailService,
+		userRepo:               options.UserRepo,
+		tokenService:           options.TokenService,
+		maxFailedLoginAttempts: options.MaxFailedLoginAttempts,
+		accountLockoutDuration: options.AccountLockoutDuration,
 	}
 }
 
 //TODO: Add audit logging
 
 func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, principalType, password string, initiator string) (models.User, errors.RichError) {
-	user, contact, err := ls.userRepo.GetUserAndContactByPrimaryContact(ctx, principalType, principal)
+	user, contact, err := ls.userRepo.GetUserAndContactByContact(ctx, principalType, principal)
 	if err != nil {
 		return models.User{}, err
 	}
-	if !contact.IsPrimary {
-		return models.User{}, coreerrors.NewLoginContactNotPrimaryError(contact.ID, contact.Principal, contact.Type, true)
-	}
 	now := time.Now().UTC()
 	// is user locked out?
-	if user.LockedOutUntil.HasValue && user.LockedOutUntil.Value.After(now) {
+	if user.LockedOutUntil.HasValue && now.Before(user.LockedOutUntil.Value) {
 		return models.User{}, coreerrors.NewUserLockedOutError(user.ID, true)
+	}
+	if !contact.IsPrimary {
+		return models.User{}, coreerrors.NewLoginContactNotPrimaryError(contact.ID, contact.Principal, contact.Type, true)
 	}
 	if !contact.ConfirmedDate.HasValue { // || contact.ConfirmedDate.Value.After(now)
 		return models.User{}, coreerrors.NewContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
 	}
 	// check password
 	// hash, bcryptErr := bcrypt.GenerateFromPassword([]byte(password), 10)
-	bcryptErr := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
-	if bcryptErr == bcrypt.ErrMismatchedHashAndPassword {
+	passwordMatch, err := utilities.BcryptCompareStringAndHash(user.PasswordHash, password, user.ID)
+	if err != nil {
+		return models.User{}, err
+	}
+	if !passwordMatch {
 		user.ConsecutiveFailedLoginAttempts += 1
-		// TODO: make max ConsecutiveFailedLoginAttempts configurable
-		if user.ConsecutiveFailedLoginAttempts >= 10 {
+
+		if user.ConsecutiveFailedLoginAttempts >= ls.maxFailedLoginAttempts {
 			user.ConsecutiveFailedLoginAttempts = 0
-			// TODO: make lockout time configurable
-			user.LockedOutUntil.Set(now.Add(time.Minute * 15))
+			user.LockedOutUntil.Set(now.Add(ls.accountLockoutDuration))
 		}
-		_ = ls.userRepo.UpdateUser(ctx, &user, user.ID)
+		err = ls.userRepo.UpdateUser(ctx, &user, user.ID)
+		if err != nil {
+			// TODO: log this error better!
+			fmt.Printf("failed to lock out user %s: %s", user.ID, err.Error())
+		}
 		return models.User{}, coreerrors.NewLoginFailedWrongPasswordError(user.ID, true)
-	} else if bcryptErr != nil {
-		return models.User{}, coreerrors.NewBcryptPasswordHashErrorError(user.ID, bcryptErr, true)
 	}
 	if user.ConsecutiveFailedLoginAttempts > 0 {
 		// reset consecutive failed login attempts because we have a successful login
@@ -74,11 +103,18 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, p
 			return models.User{}, err
 		}
 	}
+	user.LastLoginDate.Set(now)
+	user.ConsecutiveFailedLoginAttempts = 0
+	user.LockedOutUntil.Unset()
+	err = ls.userRepo.UpdateUser(ctx, &user, user.ID)
+	if err != nil {
+		return models.User{}, err
+	}
 	return user, nil
 }
 
 func (ls loginService) StartPasswordResetByContact(ctx context.Context, principal, principalType string, initiator string) (string, errors.RichError) {
-	user, contact, err := ls.userRepo.GetUserAndContactByPrimaryContact(ctx, principalType, principal)
+	user, contact, err := ls.userRepo.GetUserAndContactByContact(ctx, principalType, principal)
 	if err != nil {
 		return "", err
 	}

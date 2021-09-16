@@ -90,14 +90,13 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactPrincipal
 	return user, nil
 }
 
-func (ur userRepo) GetUserAndContactByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
+func (ur userRepo) GetUserAndContactByContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
 	var user models.User
 	var contact models.Contact
 	contactFound := false
 	for _, c := range *ur.contacts {
 		if c.Principal == contactPrincipal &&
-			c.Type == contactType &&
-			c.IsPrimary {
+			c.Type == contactType {
 			contact = c
 			contactFound = true
 			break
@@ -105,7 +104,6 @@ func (ur userRepo) GetUserAndContactByPrimaryContact(ctx context.Context, contac
 	}
 	if !contactFound {
 		fields := map[string]interface{}{
-			"contacts.isPrimary": true,
 			"contacts.type":      contactType,
 			"contacts.principal": contactPrincipal,
 		}
@@ -115,7 +113,6 @@ func (ur userRepo) GetUserAndContactByPrimaryContact(ctx context.Context, contac
 	if !ok {
 		// this should not be able to happen...
 		fields := map[string]interface{}{
-			"contacts.isPrimary": true,
 			"contacts.type":      contactType,
 			"contacts.principal": contactPrincipal,
 		}

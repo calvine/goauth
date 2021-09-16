@@ -94,7 +94,7 @@ func _testGetUserByPrimaryContact(t *testing.T, userRepo repo.UserRepo) {
 
 func _testGetUserAndContactByPrimaryContact(t *testing.T, userRepo repo.UserRepo) {
 	contactType, principal := core.CONTACT_TYPE_EMAIL, "InitialTestUser@email.com"
-	retreivedUser, retreivedContact, err := userRepo.GetUserAndContactByPrimaryContact(context.TODO(), contactType, principal)
+	retreivedUser, retreivedContact, err := userRepo.GetUserAndContactByContact(context.TODO(), contactType, principal)
 	if err != nil {
 		t.Error("failed to retreive user via primary contact info", contactType, principal, err)
 	}

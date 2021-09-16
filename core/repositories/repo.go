@@ -31,8 +31,8 @@ type UserRepo interface {
 	UpdateUser(ctx context.Context, user *models.User, modifiedByID string) errors.RichError
 	// GetUserByPrimaryContact gets the user by their primary contact
 	GetUserByPrimaryContact(ctx context.Context, contactPrincipalType, contactPrincipal string) (models.User, errors.RichError)
-	// GetUserAndContactByPrimaryContact gets the user and the primary contact by their primary contact principal and contactType
-	GetUserAndContactByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError)
+	// GetUserAndContactByContact gets the user and the primary contact by their primary contact principal and contactType
+	GetUserAndContactByContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError)
 }
 
 type ContactRepo interface {
