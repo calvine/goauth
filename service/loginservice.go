@@ -118,10 +118,13 @@ func (ls loginService) StartPasswordResetByContact(ctx context.Context, principa
 	if err != nil {
 		return "", err
 	}
+	if !contact.IsPrimary {
+		return "", coreerrors.NewPasswordResetContactNotPrimaryError(contact.ID, contact.Principal, contact.Type, true)
+	}
 	// TODO: make password reset token expiration configurable.
-	token, roErr := models.NewToken(user.ID, models.TokenTypePasswordReset, time.Minute*15)
-	if roErr != nil {
-		return "", roErr
+	token, err := models.NewToken(user.ID, models.TokenTypePasswordReset, time.Minute*15)
+	if err != nil {
+		return "", err
 	}
 	err = ls.tokenService.PutToken(ctx, token)
 	if err != nil {

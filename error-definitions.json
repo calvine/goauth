@@ -65,7 +65,17 @@
     },
     {
         "code": "LoginContactNotPrimary",
-        "message": "contact user for login is not a primary contact",
+        "message": "contact for login is not a primary contact",
+        "includeMap": false,
+        "metaData": [
+            { "name": "contactId", "dataType": "string"},
+            { "name": "principal", "dataType": "string"},
+            { "name": "principalType", "dataType": "string"}
+        ]
+    },
+    {
+        "code": "PasswordResetContactNotPrimary",
+        "message": "contact for password reset is not a primary contact",
         "includeMap": false,
         "metaData": [
             { "name": "contactId", "dataType": "string"},

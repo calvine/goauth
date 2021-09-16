@@ -42,7 +42,7 @@ func (ts tokenService) PutToken(ctx context.Context, token models.Token) errors.
 		tokenErrorsMap["value"] = "token valus is empty"
 	} else if token.TokenType == models.TokenTypeInvalid {
 		// cannot add invalid token
-		tokenErrorsMap["value"] = "token type is invalid"
+		tokenErrorsMap["tokenType"] = "token type is invalid"
 	} else if token.Expiration.Before(time.Now().UTC()) {
 		// cannot save a token that is already expired
 		tokenErrorsMap["expiration"] = fmt.Sprintf("token is expired: %s", token.Expiration.String())

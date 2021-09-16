@@ -290,6 +290,38 @@ func __testAccountLockoutRelease(t *testing.T, loginService services.LoginServic
 
 func _testStartPasswordResetByContact(t *testing.T, loginService services.LoginService) {
 	t.Error("test not implemented")
+	// successful password reset request
+	t.Run("StartPasswordResetSuccess", func(t *testing.T) {
+		__testStartPasswordResetSuccess(t, loginService)
+	})
+
+	// failed password reset with non primary contact
+	t.Run("StartPasswordResetFailedNotPrimaryContact", func(t *testing.T) {
+		__testStartPasswordResetFailedNotPrimaryContact(t, loginService)
+	})
+}
+
+func __testStartPasswordResetSuccess(t *testing.T, loginService services.LoginService) {
+	tokenValue, err := loginService.StartPasswordResetByContact(context.TODO(), confirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, loginServiceTestCreatedBy)
+	if err != nil {
+		t.Errorf("received error when attempting to start valid password reset: %s", err.Error())
+	}
+	if tokenValue == "" {
+		t.Error("token value should not be an empty string")
+	}
+}
+
+func __testStartPasswordResetFailedNotPrimaryContact(t *testing.T, loginService services.LoginService) {
+	tokenValue, err := loginService.StartPasswordResetByContact(context.TODO(), confirmedSecondaryEmail, core.CONTACT_TYPE_EMAIL, loginServiceTestCreatedBy)
+	if err == nil {
+		t.Error("expected error due to non primary contact being used for password reset")
+	}
+	if err.GetErrorCode() != errors.ErrCodePasswordResetContactNotPrimary {
+		t.Errorf("expected password reset contact not primary error but got %s: %s", err.GetErrorCode(), err.Error())
+	}
+	if tokenValue != "" {
+		t.Errorf("token value should be empty because the password reset initiation should have failed: %s", tokenValue)
+	}
 }
 
 func _testResetPassword(t *testing.T, loginService services.LoginService) {
