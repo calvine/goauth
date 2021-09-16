@@ -38,13 +38,13 @@ type RepoTestHarnessInput struct {
 
 func RunReposTestHarness(t *testing.T, implementationName string, input RepoTestHarnessInput) {
 
-	setupTestHarnessData(t, input)
 	if input.SetupTestDataSource != nil {
 		input.SetupTestDataSource(t, input)
 	}
 	if input.CleanupTestDataSource != nil {
 		defer input.CleanupTestDataSource(t, input)
 	}
+	setupTestHarnessData(t, input)
 
 	// functionality tests
 	t.Run(fmt.Sprintf("%s - userRepo", implementationName), func(t *testing.T) {
