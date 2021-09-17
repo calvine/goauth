@@ -43,6 +43,8 @@ const (
 	unconfirmedUserPassword    = "tp2"
 	otherConfirmedUserPassword = "testpass3"
 
+	newPasswordPostReset = "anewpasswordhash123"
+
 	lockoutAfterFailedLoginAttempts = 10
 
 	lockoutDuration time.Duration = time.Millisecond * 500
@@ -53,16 +55,16 @@ const (
 func TestLoginService(t *testing.T) {
 	loginService := buildLoginService(t)
 
-	t.Run("LoginWithPrimaryContact", func(t *testing.T) {
-		_testLoginWithPrimaryContact(t, loginService)
-	})
-
 	t.Run("StartPasswordResetByContact", func(t *testing.T) {
 		_testStartPasswordResetByContact(t, loginService)
 	})
 
 	t.Run("ResetPassword", func(t *testing.T) {
 		_testResetPassword(t, loginService)
+	})
+
+	t.Run("LoginWithPrimaryContact", func(t *testing.T) {
+		_testLoginWithPrimaryContact(t, loginService)
 	})
 }
 
@@ -175,7 +177,7 @@ func buildLoginService(t *testing.T) services.LoginService {
 	userRepo := memory.NewMemoryUserRepo()
 	contactRepo := memory.NewMemoryContactRepo()
 	tokenRepo := memory.NewMemoryTokenRepo()
-	emailService, _ := NewEmailService(MockEmailService, nil)
+	emailService, _ := NewEmailService(NoOpEmailService, nil)
 	tokenService := NewTokenService(tokenRepo)
 
 	setupTestData(t, userRepo, contactRepo, tokenService)
@@ -191,6 +193,98 @@ func buildLoginService(t *testing.T) services.LoginService {
 	}
 
 	return NewLoginService(options)
+}
+
+func _testStartPasswordResetByContact(t *testing.T, loginService services.LoginService) {
+	// successful start password reset request
+	t.Run("Success", func(t *testing.T) {
+		__testStartPasswordResetSuccess(t, loginService)
+	})
+
+	// failed start password reset with non primary contact
+	t.Run("Failed not primary contact", func(t *testing.T) {
+		__testStartPasswordResetFailedNotPrimaryContact(t, loginService)
+	})
+}
+
+func __testStartPasswordResetSuccess(t *testing.T, loginService services.LoginService) {
+	tokenValue, err := loginService.StartPasswordResetByContact(context.TODO(), confirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, loginServiceTestCreatedBy)
+	if err != nil {
+		t.Errorf("received error when attempting to start valid password reset: %s", err.Error())
+	}
+	if tokenValue == "" {
+		t.Error("token value should not be an empty string")
+	}
+	testPasswordResetToken = tokenValue
+}
+
+func __testStartPasswordResetFailedNotPrimaryContact(t *testing.T, loginService services.LoginService) {
+	tokenValue, err := loginService.StartPasswordResetByContact(context.TODO(), confirmedSecondaryEmail, core.CONTACT_TYPE_EMAIL, loginServiceTestCreatedBy)
+	if err == nil {
+		t.Error("expected error due to non primary contact being used for password reset")
+	}
+	if err.GetErrorCode() != errors.ErrCodePasswordResetContactNotPrimary {
+		t.Errorf("expected password reset contact not primary error but got %s: %s", err.GetErrorCode(), err.Error())
+	}
+	if tokenValue != "" {
+		t.Errorf("token value should be empty because the password reset initiation should have failed: %s", tokenValue)
+	}
+}
+
+func _testResetPassword(t *testing.T, loginService services.LoginService) {
+	// password reset successful
+	t.Run("Success", func(t *testing.T) {
+		__testPasswordResetSuccess(t, loginService)
+	})
+
+	// password reset failure invalid token
+	t.Run("Failure invalid token", func(t *testing.T) {
+		__testPasswordResetFailureInvalidToken(t, loginService)
+	})
+
+	// password reset failure empty password hash
+	t.Run("Failure empty password hash", func(t *testing.T) {
+		__testPasswordResetFailureEmptyPasswordHash(t, loginService)
+	})
+
+	// password reset failure non password reset token presented
+	t.Run("Failure wrong token type", func(t *testing.T) {
+		__testPasswordResetFailureWrongTokenType(t, loginService)
+	})
+}
+
+func __testPasswordResetSuccess(t *testing.T, loginService services.LoginService) {
+	err := loginService.ResetPassword(context.TODO(), testPasswordResetToken, newPasswordPostReset, loginServiceTestCreatedBy)
+	if err != nil {
+		t.Errorf("expected password reset to succeed bug got an an error %s: %s", err.GetErrorCode(), err.Error())
+	}
+}
+
+func __testPasswordResetFailureInvalidToken(t *testing.T, loginService services.LoginService) {
+	err := loginService.ResetPassword(context.TODO(), "made up token that is not real", "new password hash 2", loginServiceTestCreatedBy)
+	if err == nil {
+		t.Errorf("expected password reset to fail because the token provided is not a real token")
+	}
+}
+
+func __testPasswordResetFailureEmptyPasswordHash(t *testing.T, loginService services.LoginService) {
+	err := loginService.ResetPassword(context.TODO(), "made up token that is not real", "", loginServiceTestCreatedBy)
+	if err == nil {
+		t.Errorf("expected password reset to fail because the token provided is not a real token")
+	}
+	if err.GetErrorCode() != errors.ErrCodeNoNewPasswordHashProvided {
+		t.Errorf("expected no new password hash error but got %s: %s", err.GetErrorCode(), err.Error())
+	}
+}
+
+func __testPasswordResetFailureWrongTokenType(t *testing.T, loginService services.LoginService) {
+	err := loginService.ResetPassword(context.TODO(), nonPasswordResetToken.Value, "new password hash 3", loginServiceTestCreatedBy)
+	if err == nil {
+		t.Errorf("expected password reset to fail because the token provided is not a password reset token")
+	}
+	if err.GetErrorCode() != errors.ErrCodeWrongTokenType {
+		t.Errorf("expected no new password hash error but got %s: %s", err.GetErrorCode(), err.Error())
+	}
 }
 
 func _testLoginWithPrimaryContact(t *testing.T, loginService services.LoginService) {
@@ -226,7 +320,7 @@ func _testLoginWithPrimaryContact(t *testing.T, loginService services.LoginServi
 }
 
 func __testSuccessfullEmailLogin(t *testing.T, loginService services.LoginService) {
-	user, err := loginService.LoginWithPrimaryContact(context.TODO(), confirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, confirmedUserPassword, loginServiceTestCreatedBy)
+	user, err := loginService.LoginWithPrimaryContact(context.TODO(), confirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, newPasswordPostReset, loginServiceTestCreatedBy)
 	if err != nil {
 		t.Errorf("confirmed user login with primary contact email should be successfull: %s", err.Error())
 	}
@@ -298,97 +392,5 @@ func __testAccountLockoutRelease(t *testing.T, loginService services.LoginServic
 	}
 	if user.LockedOutUntil.HasValue {
 		t.Errorf("expected user locked out until to be unset but got : %s", user.LockedOutUntil.Value.String())
-	}
-}
-
-func _testStartPasswordResetByContact(t *testing.T, loginService services.LoginService) {
-	// successful start password reset request
-	t.Run("Success", func(t *testing.T) {
-		__testStartPasswordResetSuccess(t, loginService)
-	})
-
-	// failed start password reset with non primary contact
-	t.Run("Failed not primary contact", func(t *testing.T) {
-		__testStartPasswordResetFailedNotPrimaryContact(t, loginService)
-	})
-}
-
-func __testStartPasswordResetSuccess(t *testing.T, loginService services.LoginService) {
-	tokenValue, err := loginService.StartPasswordResetByContact(context.TODO(), confirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, loginServiceTestCreatedBy)
-	if err != nil {
-		t.Errorf("received error when attempting to start valid password reset: %s", err.Error())
-	}
-	if tokenValue == "" {
-		t.Error("token value should not be an empty string")
-	}
-	testPasswordResetToken = tokenValue
-}
-
-func __testStartPasswordResetFailedNotPrimaryContact(t *testing.T, loginService services.LoginService) {
-	tokenValue, err := loginService.StartPasswordResetByContact(context.TODO(), confirmedSecondaryEmail, core.CONTACT_TYPE_EMAIL, loginServiceTestCreatedBy)
-	if err == nil {
-		t.Error("expected error due to non primary contact being used for password reset")
-	}
-	if err.GetErrorCode() != errors.ErrCodePasswordResetContactNotPrimary {
-		t.Errorf("expected password reset contact not primary error but got %s: %s", err.GetErrorCode(), err.Error())
-	}
-	if tokenValue != "" {
-		t.Errorf("token value should be empty because the password reset initiation should have failed: %s", tokenValue)
-	}
-}
-
-func _testResetPassword(t *testing.T, loginService services.LoginService) {
-	// password reset successful
-	t.Run("Success", func(t *testing.T) {
-		__testPasswordResetSuccess(t, loginService)
-	})
-
-	// password reset failure invalid token
-	t.Run("Failure invalid token", func(t *testing.T) {
-		__testPasswordResetFailureInvalidToken(t, loginService)
-	})
-
-	// password reset failure empty password hash
-	t.Run("Failure empty password hash", func(t *testing.T) {
-		__testPasswordResetFailureEmptyPasswordHash(t, loginService)
-	})
-
-	// password reset failure non password reset token presented
-	t.Run("Failure wrong token type", func(t *testing.T) {
-		__testPasswordResetFailureWrongTokenType(t, loginService)
-	})
-}
-
-func __testPasswordResetSuccess(t *testing.T, loginService services.LoginService) {
-	err := loginService.ResetPassword(context.TODO(), testPasswordResetToken, "new password hash", loginServiceTestCreatedBy)
-	if err != nil {
-		t.Errorf("expected password reset to succeed bug got an an error %s: %s", err.GetErrorCode(), err.Error())
-	}
-}
-
-func __testPasswordResetFailureInvalidToken(t *testing.T, loginService services.LoginService) {
-	err := loginService.ResetPassword(context.TODO(), "made up token that is not real", "new password hash 2", loginServiceTestCreatedBy)
-	if err == nil {
-		t.Errorf("expected password reset to fail because the token provided is not a real token")
-	}
-}
-
-func __testPasswordResetFailureEmptyPasswordHash(t *testing.T, loginService services.LoginService) {
-	err := loginService.ResetPassword(context.TODO(), "made up token that is not real", "", loginServiceTestCreatedBy)
-	if err == nil {
-		t.Errorf("expected password reset to fail because the token provided is not a real token")
-	}
-	if err.GetErrorCode() != errors.ErrCodeNoNewPasswordHashProvided {
-		t.Errorf("expected no new password hash error but got %s: %s", err.GetErrorCode(), err.Error())
-	}
-}
-
-func __testPasswordResetFailureWrongTokenType(t *testing.T, loginService services.LoginService) {
-	err := loginService.ResetPassword(context.TODO(), nonPasswordResetToken.Value, "anewpasswordhash123", loginServiceTestCreatedBy)
-	if err == nil {
-		t.Errorf("expected password reset to fail because the token provided is not a password reset token")
-	}
-	if err.GetErrorCode() != errors.ErrCodeWrongTokenType {
-		t.Errorf("expected no new password hash error but got %s: %s", err.GetErrorCode(), err.Error())
 	}
 }

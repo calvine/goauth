@@ -17,7 +17,7 @@ type LoginService interface {
 	// StartPasswordResetByContact sets a password reset token for the user with the corresponding principal and type that are confirmed.
 	StartPasswordResetByContact(ctx context.Context, principal, principalType string, initiator string) (string, errors.RichError)
 	// ResetPassword resets a users password given a password reset token and new password hash and salt.
-	ResetPassword(ctx context.Context, passwordResetToken string, newPasswordHash string, initiator string) errors.RichError
+	ResetPassword(ctx context.Context, passwordResetToken string, newPassword string, initiator string) errors.RichError
 }
 
 // UserService is a service that facilitates access to user related data.

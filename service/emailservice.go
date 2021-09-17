@@ -10,6 +10,7 @@ import (
 
 const (
 	MockEmailService = "mock"
+	NoOpEmailService = "noop"
 	SMTPEmailService = "smtp"
 )
 
@@ -17,10 +18,18 @@ func NewEmailService(serviceType string, options interface{}) (coreServices.Emai
 	switch serviceType {
 	case MockEmailService:
 		return mockEmailService{}, nil
+	case NoOpEmailService:
+		return noopEmailService{}, nil
 	// case SMTPEmailService: // TODO: implement this...
 	default:
 		return nil, coreerrors.NewComponentNotImplementedError("email service", serviceType, true)
 	}
+}
+
+type noopEmailService struct{}
+
+func (ne noopEmailService) SendPlainTextEmail(to []string, subject, body string) errors.RichError {
+	return nil
 }
 
 type mockEmailService struct{}

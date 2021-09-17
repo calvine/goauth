@@ -12,6 +12,7 @@ import (
 	coreservices "github.com/calvine/goauth/core/services"
 	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/richerror/errors"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -141,15 +142,20 @@ func (ls loginService) StartPasswordResetByContact(ctx context.Context, principa
 	return token.Value, nil
 }
 
-func (ls loginService) ResetPassword(ctx context.Context, passwordResetToken string, newPasswordHash string, initiator string) errors.RichError {
-	if newPasswordHash == "" {
+func (ls loginService) ResetPassword(ctx context.Context, passwordResetToken string, newPassword string, initiator string) errors.RichError {
+	if newPassword == "" {
 		return coreerrors.NewNoNewPasswordHashProvidedError(true)
 	}
+	// TODO: add password validation logic
 	token, err := ls.tokenService.GetToken(ctx, passwordResetToken, models.TokenTypePasswordReset)
 	if err != nil {
 		return err
 	}
 	user, err := ls.userRepo.GetUserByID(ctx, token.TargetID)
+	if err != nil {
+		return err
+	}
+	newPasswordHash, err := utilities.BcryptHashString(newPassword, bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
