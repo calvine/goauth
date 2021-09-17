@@ -26,7 +26,7 @@ var (
 	unconfirmedPrimaryContact    models.Contact
 	otherConfirmedPrimaryContact models.Contact
 
-	passwordResetToken string
+	testPasswordResetToken string
 
 	nonPasswordResetToken models.Token
 )
@@ -303,12 +303,12 @@ func __testAccountLockoutRelease(t *testing.T, loginService services.LoginServic
 
 func _testStartPasswordResetByContact(t *testing.T, loginService services.LoginService) {
 	// successful start password reset request
-	t.Run("StartPasswordResetSuccess", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		__testStartPasswordResetSuccess(t, loginService)
 	})
 
 	// failed start password reset with non primary contact
-	t.Run("StartPasswordResetFailedNotPrimaryContact", func(t *testing.T) {
+	t.Run("Failed not primary contact", func(t *testing.T) {
 		__testStartPasswordResetFailedNotPrimaryContact(t, loginService)
 	})
 }
@@ -321,7 +321,7 @@ func __testStartPasswordResetSuccess(t *testing.T, loginService services.LoginSe
 	if tokenValue == "" {
 		t.Error("token value should not be an empty string")
 	}
-	passwordResetToken = tokenValue
+	testPasswordResetToken = tokenValue
 }
 
 func __testStartPasswordResetFailedNotPrimaryContact(t *testing.T, loginService services.LoginService) {
@@ -339,28 +339,28 @@ func __testStartPasswordResetFailedNotPrimaryContact(t *testing.T, loginService 
 
 func _testResetPassword(t *testing.T, loginService services.LoginService) {
 	// password reset successful
-	t.Run("PasswordResetSuccess", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		__testPasswordResetSuccess(t, loginService)
 	})
 
 	// password reset failure invalid token
-	t.Run("PasswordResetFailureInvalidToken", func(t *testing.T) {
+	t.Run("Failure invalid token", func(t *testing.T) {
 		__testPasswordResetFailureInvalidToken(t, loginService)
 	})
 
 	// password reset failure empty password hash
-	t.Run("PasswordResetFailureEmptyPasswordHash", func(t *testing.T) {
+	t.Run("Failure empty password hash", func(t *testing.T) {
 		__testPasswordResetFailureEmptyPasswordHash(t, loginService)
 	})
 
 	// password reset failure non password reset token presented
-	t.Run("PasswordResetFailureWrongTokenType", func(t *testing.T) {
+	t.Run("Failure wrong token type", func(t *testing.T) {
 		__testPasswordResetFailureWrongTokenType(t, loginService)
 	})
 }
 
 func __testPasswordResetSuccess(t *testing.T, loginService services.LoginService) {
-	err := loginService.ResetPassword(context.TODO(), passwordResetToken, "new password hash", loginServiceTestCreatedBy)
+	err := loginService.ResetPassword(context.TODO(), testPasswordResetToken, "new password hash", loginServiceTestCreatedBy)
 	if err != nil {
 		t.Errorf("expected password reset to succeed bug got an an error %s: %s", err.GetErrorCode(), err.Error())
 	}
