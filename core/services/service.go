@@ -42,6 +42,10 @@ type UserService interface {
 	ConfirmContact(ctx context.Context, confirmationCode string, initiator string) (bool, errors.RichError)
 }
 
+type AppService interface {
+	// TODO: define this
+}
+
 type EmailService interface {
 	SendPlainTextEmail(to []string, subject, body string) errors.RichError
 }
