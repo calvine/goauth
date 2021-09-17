@@ -15,7 +15,7 @@ type LoginService interface {
 	// The principal should only work when it has been confirmed
 	LoginWithPrimaryContact(ctx context.Context, principal, principalType, password string, initiator string) (models.User, errors.RichError)
 	// StartPasswordResetByContact sets a password reset token for the user with the corresponding principal and type that are confirmed.
-	StartPasswordResetByContact(ctx context.Context, principal, principalType string, initiator string) (string, errors.RichError)
+	StartPasswordResetByPrimaryContact(ctx context.Context, principal, principalType string, initiator string) (string, errors.RichError)
 	// ResetPassword resets a users password given a password reset token and new password hash and salt.
 	ResetPassword(ctx context.Context, passwordResetToken string, newPassword string, initiator string) errors.RichError
 }

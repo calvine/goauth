@@ -55,8 +55,8 @@ const (
 func TestLoginService(t *testing.T) {
 	loginService := buildLoginService(t)
 
-	t.Run("StartPasswordResetByContact", func(t *testing.T) {
-		_testStartPasswordResetByContact(t, loginService)
+	t.Run("StartPasswordResetByPrimaryContact", func(t *testing.T) {
+		_testStartPasswordResetByPrimaryContact(t, loginService)
 	})
 
 	t.Run("ResetPassword", func(t *testing.T) {
@@ -195,7 +195,7 @@ func buildLoginService(t *testing.T) services.LoginService {
 	return NewLoginService(options)
 }
 
-func _testStartPasswordResetByContact(t *testing.T, loginService services.LoginService) {
+func _testStartPasswordResetByPrimaryContact(t *testing.T, loginService services.LoginService) {
 	// successful start password reset request
 	t.Run("Success", func(t *testing.T) {
 		__testStartPasswordResetSuccess(t, loginService)
@@ -208,7 +208,7 @@ func _testStartPasswordResetByContact(t *testing.T, loginService services.LoginS
 }
 
 func __testStartPasswordResetSuccess(t *testing.T, loginService services.LoginService) {
-	tokenValue, err := loginService.StartPasswordResetByContact(context.TODO(), confirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, loginServiceTestCreatedBy)
+	tokenValue, err := loginService.StartPasswordResetByPrimaryContact(context.TODO(), confirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, loginServiceTestCreatedBy)
 	if err != nil {
 		t.Errorf("received error when attempting to start valid password reset: %s", err.Error())
 	}
@@ -219,7 +219,7 @@ func __testStartPasswordResetSuccess(t *testing.T, loginService services.LoginSe
 }
 
 func __testStartPasswordResetFailedNotPrimaryContact(t *testing.T, loginService services.LoginService) {
-	tokenValue, err := loginService.StartPasswordResetByContact(context.TODO(), confirmedSecondaryEmail, core.CONTACT_TYPE_EMAIL, loginServiceTestCreatedBy)
+	tokenValue, err := loginService.StartPasswordResetByPrimaryContact(context.TODO(), confirmedSecondaryEmail, core.CONTACT_TYPE_EMAIL, loginServiceTestCreatedBy)
 	if err == nil {
 		t.Error("expected error due to non primary contact being used for password reset")
 	}

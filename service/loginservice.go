@@ -114,7 +114,7 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, p
 	return user, nil
 }
 
-func (ls loginService) StartPasswordResetByContact(ctx context.Context, principal, principalType string, initiator string) (string, errors.RichError) {
+func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, principal, principalType string, initiator string) (string, errors.RichError) {
 	user, contact, err := ls.userRepo.GetUserAndContactByContact(ctx, principalType, principal)
 	if err != nil {
 		return "", err
