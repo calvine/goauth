@@ -4,10 +4,11 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/calvine/goauth/core/errors"
+	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/richerror/errors"
 )
 
-func NormalizeStringValue(value interface{}) (string, error) {
+func NormalizeStringValue(value interface{}) (string, errors.RichError) {
 	switch svt := value.(type) {
 	case *string:
 		stringValue := reflect.ValueOf(svt).Elem().Interface()
@@ -18,6 +19,6 @@ func NormalizeStringValue(value interface{}) (string, error) {
 		sValue := string(svt)
 		return strings.ToUpper(sValue), nil
 	default:
-		return "", errors.NewInvalidTypeError(reflect.TypeOf(value).String(), true)
+		return "", coreerrors.NewInvalidTypeError(reflect.TypeOf(value).String(), true)
 	}
 }

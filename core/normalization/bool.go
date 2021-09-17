@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	coreErrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/richerror/errors"
 )
 
 var (
@@ -40,7 +41,7 @@ var (
 // So T / F or 1 / 0 or TRUE / FALSE or true / false will all be parsed into the appropriate boolean value.
 // Also int uint and float values will be converted where 1 is true and 0 is false
 // All strings are run through strings.ToUpper first
-func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
+func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, errors.RichError) {
 	switch cv := v.(type) {
 	case *string:
 		if cv == nil {
@@ -109,7 +110,7 @@ func ReadBoolValue(v interface{}, defaultToFalse bool) (bool, error) {
 	return false, coreErrors.NewInvalidTypeError(reflect.TypeOf(v).String(), true)
 }
 
-func stringToBool(value string, defaultToFalse bool) (bool, error) {
+func stringToBool(value string, defaultToFalse bool) (bool, errors.RichError) {
 	normalizedString, err := NormalizeStringValue(value)
 	if err != nil {
 		return false, err
@@ -124,7 +125,7 @@ func stringToBool(value string, defaultToFalse bool) (bool, error) {
 	return false, coreErrors.NewInvalidValueError(value, true)
 }
 
-func intToBool(value interface{}, defaultToFalse bool) (bool, error) {
+func intToBool(value interface{}, defaultToFalse bool) (bool, errors.RichError) {
 	intValue, err := NormalizeIntValue(value)
 	if err != nil {
 		return false, err
@@ -139,7 +140,7 @@ func intToBool(value interface{}, defaultToFalse bool) (bool, error) {
 	return false, coreErrors.NewInvalidValueError(value, true)
 }
 
-func uintToBool(value interface{}, defaultToFalse bool) (bool, error) {
+func uintToBool(value interface{}, defaultToFalse bool) (bool, errors.RichError) {
 	uintValue, err := NormalizeUintValue(value)
 	if err != nil {
 		return false, err
@@ -154,7 +155,7 @@ func uintToBool(value interface{}, defaultToFalse bool) (bool, error) {
 	return false, coreErrors.NewInvalidValueError(value, true)
 }
 
-func floatToBool(value interface{}, defaultToFalse bool) (bool, error) {
+func floatToBool(value interface{}, defaultToFalse bool) (bool, errors.RichError) {
 	floatValue, err := NormalizeFloatValue(value)
 	if err != nil {
 		return false, err

@@ -3,10 +3,11 @@ package normalization
 import (
 	"reflect"
 
-	"github.com/calvine/goauth/core/errors"
+	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/richerror/errors"
 )
 
-func NormalizeIntValue(intValue interface{}) (int64, error) {
+func NormalizeIntValue(intValue interface{}) (int64, errors.RichError) {
 	switch ivt := intValue.(type) {
 	case *int8, *int16, *int, *int32, *int64:
 		intValue := reflect.ValueOf(ivt).Elem().Interface()
@@ -22,6 +23,6 @@ func NormalizeIntValue(intValue interface{}) (int64, error) {
 	case int64:
 		return ivt, nil
 	default:
-		return 0, errors.NewInvalidTypeError(reflect.TypeOf(intValue).String(), true)
+		return 0, coreerrors.NewInvalidTypeError(reflect.TypeOf(intValue).String(), true)
 	}
 }
