@@ -45,6 +45,7 @@ type UserService interface {
 type AppService interface {
 	GetAppByID(ctx context.Context, id string, initiator string) (models.App, errors.RichError)
 	GetAppByClientID(ctx context.Context, clientID string, initiator string) (models.App, errors.RichError)
+	GetAppAndScopesByClientID(ctx context.Context, clientID string, initiator string) (models.App, []models.Scope, errors.RichError)
 	AddApp(ctx context.Context, app *models.App, initiator string) errors.RichError
 	UpdateApp(ctx context.Context, app *models.App, initiator string) errors.RichError
 	DeleteApp(ctx context.Context, app *models.App, initiator string) errors.RichError

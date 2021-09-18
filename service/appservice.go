@@ -30,6 +30,10 @@ func (as appService) GetAppByClientID(ctx context.Context, clientID string, init
 	return models.App{}, coreerrors.NewNotImplementedError(true)
 }
 
+func (as appService) GetAppAndScopesByClientID(ctx context.Context, clientID string, initiator string) (models.App, []models.Scope, errors.RichError) {
+	return models.App{}, nil, nil
+}
+
 func (as appService) AddApp(ctx context.Context, app *models.App, initiator string) errors.RichError {
 	return coreerrors.NewNotImplementedError(true)
 }

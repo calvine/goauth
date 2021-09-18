@@ -68,7 +68,7 @@ func TestLoginService(t *testing.T) {
 	})
 }
 
-func setupTestData(t *testing.T, userRepo repo.UserRepo, contactRepo repo.ContactRepo, tokenService services.TokenService) {
+func setupLoginServiceTestData(t *testing.T, userRepo repo.UserRepo, contactRepo repo.ContactRepo, tokenService services.TokenService) {
 	passHash, err := utilities.BcryptHashString(confirmedUserPassword, bcrypt.DefaultCost)
 	if err != nil {
 		t.Errorf("failed to create test password hash: %s", err.Error())
@@ -180,7 +180,7 @@ func buildLoginService(t *testing.T) services.LoginService {
 	emailService, _ := NewEmailService(NoOpEmailService, nil)
 	tokenService := NewTokenService(tokenRepo)
 
-	setupTestData(t, userRepo, contactRepo, tokenService)
+	setupLoginServiceTestData(t, userRepo, contactRepo, tokenService)
 
 	options := LoginServiceOptions{
 		AuditLogRepo:           auditLogRepo,
