@@ -81,9 +81,29 @@ func (ar appRepo) UpdateApp(ctx context.Context, app *models.App, modifiedBy str
 }
 
 func (ar appRepo) DeleteApp(ctx context.Context, app *models.App, deletedBy string) errors.RichError {
+	_, ok := (*ar.apps)[app.ID]
+	if !ok {
+		fields := map[string]interface{}{"id": app.ID}
+		return coreerrors.NewNoAppFoundError(fields, true)
+	}
 	delete(*ar.apps, app.ID)
 	delete(*ar.appScopes, app.ID)
 	return nil
+}
+
+func (ar appRepo) GetScopeByIDAndAppID(ctx context.Context, id, appID string) (models.Scope, errors.RichError) {
+	scopes, ok := (*ar.appScopes)[appID]
+	if !ok {
+		fields := map[string]interface{}{"appID": appID, "id": id}
+		return models.Scope{}, coreerrors.NewNoScopeFoundError(fields, true)
+	}
+	for _, scope := range scopes {
+		if scope.ID == id {
+			return scope, nil
+		}
+	}
+	fields := map[string]interface{}{"appID": appID, "id": id}
+	return models.Scope{}, coreerrors.NewNoScopeFoundError(fields, true)
 }
 
 func (ar appRepo) GetScopesByAppID(ctx context.Context, appID string) ([]models.Scope, errors.RichError) {
@@ -138,6 +158,7 @@ func (ar appRepo) DeleteScope(ctx context.Context, scope *models.Scope, deletedB
 		fields := map[string]interface{}{"appID": appID}
 		return coreerrors.NewNoScopeFoundError(fields, true)
 	}
+	scopeFound := false
 	for i, s := range scopes {
 		if s.ID == scopeID {
 			// remove specific item from slice DOES NOT PRESERVE ORDER....
@@ -147,7 +168,13 @@ func (ar appRepo) DeleteScope(ctx context.Context, scope *models.Scope, deletedB
 			scopes = append(scopes[:i], scopes[i+1:]...)
 			scope = nil
 			(*ar.appScopes)[appID] = scopes
+			scopeFound = true
+			break
 		}
+	}
+	if !scopeFound {
+		fields := map[string]interface{}{"appID": appID}
+		return coreerrors.NewNoScopeFoundError(fields, true)
 	}
 	return nil
 }

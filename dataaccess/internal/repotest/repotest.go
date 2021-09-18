@@ -10,6 +10,7 @@ import (
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/nullable"
 	repo "github.com/calvine/goauth/core/repositories"
+	"github.com/calvine/richerror/errors"
 )
 
 var (
@@ -19,7 +20,19 @@ var (
 
 	initialTestApp models.App
 
+	initialTestApp2 models.App
+
+	initialTestAppClientSecret string
+
+	initialTestApp2ClientSecret string
+
 	initialTestAppScopes []models.Scope
+
+	// initialTestApp2Scopes []models.Scope
+)
+
+const (
+	numScopes = 10
 )
 
 type RepoTestHarnessInput struct {
@@ -103,15 +116,16 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 }
 
 func setupTestHarnessData(t *testing.T, input RepoTestHarnessInput) {
+	var err errors.RichError
 	createdByID := "test setup"
 	// create test user
 	initialTestUser = models.NewUser()
 	initialTestUser.PasswordHash = "passwordhash2"
 	initialTestUser.LastLoginDate = nullable.NullableTime{HasValue: true, Value: time.Now().UTC()}
 	// add a test user
-	err := (*input.UserRepo).AddUser(context.TODO(), &initialTestUser, createdByID)
+	err = (*input.UserRepo).AddUser(context.TODO(), &initialTestUser, createdByID)
 	if err != nil {
-		t.Error("setup failed to add user to database", err)
+		t.Errorf("setup failed to add user to database: %s", err.Error())
 	}
 
 	// create test contact
@@ -119,14 +133,48 @@ func setupTestHarnessData(t *testing.T, input RepoTestHarnessInput) {
 	// add a test contact for the test user.
 	err = (*input.ContactRepo).AddContact(context.TODO(), &initialTestContact, createdByID)
 	if err != nil {
-		t.Error("setup failed to add contact to database", err)
+		t.Errorf("setup failed to add contact to database: %s", err.Error())
 	}
 
-	// create test app
+	if input.AppRepo != nil {
+		// create test apps
+		initialTestApp, initialTestAppClientSecret, err = models.NewApp(initialTestUser.ID, "test app 1", "https://my.app/callback", "https://my.app/assets/logo.png")
+		if err != nil {
+			t.Errorf("setup failed to create app: %s", err.Error())
+		}
+		initialTestApp2, initialTestAppClientSecret, err = models.NewApp(initialTestUser.ID, "test app 1", "https://my.app/callback", "https://my.app/assets/logo.png")
+		if err != nil {
+			t.Errorf("setup failed to create app: %s", err.Error())
+		}
+		// add test apps
+		err = (*input.AppRepo).AddApp(context.TODO(), &initialTestApp, createdByID)
+		if err != nil {
+			t.Errorf("setup failed to add app to database: %s", err.Error())
+		}
+		err = (*input.AppRepo).AddApp(context.TODO(), &initialTestApp2, createdByID)
+		if err != nil {
+			t.Errorf("setup failed to add app to database: %s", err.Error())
+		}
+		// create test scopes
+		initialTestAppScopes = make([]models.Scope, 0, numScopes)
+		// initialTestApp2Scopes = make([]models.Scope, 0, numScopes)
+		// add scopes to test app
+		for i := 1; i <= numScopes; i++ {
+			scope := models.NewScope(initialTestApp.ID, fmt.Sprintf("app_scope_%d", i), fmt.Sprintf("permissions associated with app_scope_%d", i))
+			err = (*input.AppRepo).AddScope(context.TODO(), &scope, createdByID)
+			if err != nil {
+				t.Errorf("setup failed to add scope %d to database: %s", i, err.Error())
+			}
+			initialTestAppScopes = append(initialTestAppScopes, scope)
 
-	// add a test app
+			// scopes will be added to initialTestApp2 in the add scope test on the app repo tests.
 
-	// create test scopes
-
-	// add scopes to test app
+			// scope2 := models.NewScope(initialTestApp2.ID, fmt.Sprintf("other_app_scope_%d", i), fmt.Sprintf("permissions associated with other_app_scope_%d", i))
+			// err = (*input.AppRepo).AddScope(context.TODO(), &scope2, createdByID)
+			// if err != nil {
+			// 	t.Errorf("setup failed to add other app scope %d to database: %s", i, err.Error())
+			// }
+			// initialTestApp2Scopes = append(initialTestApp2Scopes, scope2)
+		}
+	}
 }
