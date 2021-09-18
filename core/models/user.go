@@ -16,3 +16,7 @@ type User struct {
 	// PasswordResetTokenExpiration   nullable.NullableTime   `bson:"passwordResetTokenExpiration"`
 	AuditData auditable `bson:",inline"`
 }
+
+func NewUser() User {
+	return User{}
+}

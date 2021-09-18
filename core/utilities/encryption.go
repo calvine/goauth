@@ -16,21 +16,36 @@ func InterleaveStrings(s1, s2 string) string {
 	return s1 + s2
 }
 
-func SHA256(input string) (string, error) {
+func SHA256(input string) string {
 	hash := sha256.Sum256([]byte(input))
 	hashString := hex.EncodeToString(hash[:])
-	return string(hashString), nil
+	return string(hashString)
 }
 
-func SHA512(input string) (string, error) {
+func SHA512(input string) string {
 	hash := sha512.Sum512([]byte(input))
 	hashString := hex.EncodeToString(hash[:])
-	return string(hashString), nil
+	return string(hashString)
 }
 
 func NewTokenString() (string, errors.RichError) {
 	var tokenString string
 	for i := 0; i < 2; i++ {
+		uuid, err := uuid.NewRandom()
+		tokenString += strings.ReplaceAll(uuid.String(), "-", "")
+		if err != nil {
+			return "", coreerrors.NewGenerateUUIDFailedError(err, true)
+		}
+	}
+	return tokenString, nil
+}
+
+func NewVariableLengthTokenString(numGuids int) (string, errors.RichError) {
+	var tokenString string
+	if numGuids <= 0 {
+		numGuids = 2
+	}
+	for i := 0; i < numGuids; i++ {
 		uuid, err := uuid.NewRandom()
 		tokenString += strings.ReplaceAll(uuid.String(), "-", "")
 		if err != nil {

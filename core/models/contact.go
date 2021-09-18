@@ -18,3 +18,14 @@ type Contact struct {
 	ConfirmedDate nullable.NullableTime `bson:"confirmedDate"`
 	AuditData     auditable             `bson:",inline"`
 }
+
+func NewContact(userID, name, principal, contactType string, isPrimary bool) Contact {
+	nameIsPopulated := name != ""
+	return Contact{
+		UserID:    userID,
+		Name:      nullable.NullableString{HasValue: nameIsPopulated, Value: name},
+		Principal: principal,
+		Type:      contactType,
+		IsPrimary: isPrimary,
+	}
+}

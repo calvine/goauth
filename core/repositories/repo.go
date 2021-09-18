@@ -77,7 +77,7 @@ type AddressRepo interface {
 type AppRepo interface {
 	GetAppByID(ctx context.Context, id string) (models.App, errors.RichError)
 	GetAppsByOwnerID(ctx context.Context, ownerID string) ([]models.App, errors.RichError)
-	GetAppAndScopesByClientIDAndCallbackURI(ctx context.Context, clientID, callbackURI string) (models.App, []models.Scope, errors.RichError)
+	GetAppAndScopesByClientID(ctx context.Context, clientID string) (models.App, []models.Scope, errors.RichError)
 	AddApp(ctx context.Context, app *models.App, createdBy string) errors.RichError
 	UpdateApp(ctx context.Context, app *models.App, modifiedBy string) errors.RichError
 	DeleteApp(ctx context.Context, app *models.App, deletedBy string) errors.RichError

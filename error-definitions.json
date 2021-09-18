@@ -1,5 +1,11 @@
 [
     {
+        "code": "NotImplemented",
+        "message": "functionality is not implemented",
+        "includeMap": false,
+        "metaData": []
+    },
+    {
         "code": "InvalidType",
         "message": "invalid type encountered",
         "includeMap": false,

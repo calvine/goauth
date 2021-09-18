@@ -13,16 +13,13 @@ import (
 )
 
 var (
-	initialTestUser = models.User{
-		PasswordHash:  "passwordhash2",
-		LastLoginDate: nullable.NullableTime{HasValue: true, Value: time.Now().UTC()},
-	}
+	initialTestUser models.User
 
-	initialTestContact = models.Contact{
-		IsPrimary: true,
-		Principal: "InitialTestUser@email.com",
-		Type:      core.CONTACT_TYPE_EMAIL,
-	}
+	initialTestContact models.Contact
+
+	initialTestApp models.App
+
+	initialTestAppScopes []models.Scope
 )
 
 type RepoTestHarnessInput struct {
@@ -30,6 +27,7 @@ type RepoTestHarnessInput struct {
 	ContactRepo           *repo.ContactRepo
 	AddressRepo           *repo.AddressRepo
 	ProfileRepo           *repo.ProfileRepo
+	AppRepo               *repo.AppRepo
 	TokenRepo             *repo.TokenRepo
 	AuditLogRepo          *repo.AuditLogRepo
 	SetupTestDataSource   func(t *testing.T, input RepoTestHarnessInput)
@@ -65,7 +63,7 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 
 	t.Run(fmt.Sprintf("%s - addressRepo", implementationName), func(t *testing.T) {
 		if input.AddressRepo != nil {
-			// testAddressRepo(t, *input.AddressRepo)
+			testAddressRepo(t, *input.AddressRepo)
 		} else {
 			t.Skipf("no implementation for %s provided for addressRepo", implementationName)
 		}
@@ -73,9 +71,17 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 
 	t.Run(fmt.Sprintf("%s - profileRepo", implementationName), func(t *testing.T) {
 		if input.ProfileRepo != nil {
-			// testProfileRepo(t, *input.ProfileRepo)
+			testProfileRepo(t, *input.ProfileRepo)
 		} else {
 			t.Skipf("no implementation for %s provided for profileRepo", implementationName)
+		}
+	})
+
+	t.Run(fmt.Sprintf("%s - appRepo", implementationName), func(t *testing.T) {
+		if input.AppRepo != nil {
+			testAppRepo(t, *input.AppRepo)
+		} else {
+			t.Skipf("no implementation for %s provided for appRepo", implementationName)
 		}
 	})
 
@@ -89,7 +95,7 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 
 	t.Run(fmt.Sprintf("%s - auditLogRepo", implementationName), func(t *testing.T) {
 		if input.AuditLogRepo != nil {
-			// testAuditLogRepo(t, *input.AuditLogRepo)
+			testAuditLogRepo(t, *input.AuditLogRepo)
 		} else {
 			t.Skipf("no implementation for %s provided for auditLogRepo", implementationName)
 		}
@@ -98,15 +104,29 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 
 func setupTestHarnessData(t *testing.T, input RepoTestHarnessInput) {
 	createdByID := "test setup"
+	// create test user
+	initialTestUser = models.NewUser()
+	initialTestUser.PasswordHash = "passwordhash2"
+	initialTestUser.LastLoginDate = nullable.NullableTime{HasValue: true, Value: time.Now().UTC()}
 	// add a test user
 	err := (*input.UserRepo).AddUser(context.TODO(), &initialTestUser, createdByID)
 	if err != nil {
 		t.Error("setup failed to add user to database", err)
 	}
-	initialTestContact.UserID = initialTestUser.ID
+
+	// create test contact
+	initialTestContact = models.NewContact(initialTestUser.ID, "", "InitialTestUser@email.com", core.CONTACT_TYPE_EMAIL, true)
 	// add a test contact for the test user.
 	err = (*input.ContactRepo).AddContact(context.TODO(), &initialTestContact, createdByID)
 	if err != nil {
 		t.Error("setup failed to add contact to database", err)
 	}
+
+	// create test app
+
+	// add a test app
+
+	// create test scopes
+
+	// add scopes to test app
 }

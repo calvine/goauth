@@ -18,24 +18,21 @@ var (
 
 func testUserRepo(t *testing.T, userRepo repo.UserRepo) {
 	// functionality tests
-	t.Run("userRepo.AddUser", func(t *testing.T) {
+	t.Run("AddUser", func(t *testing.T) {
 		_testAddUser(t, userRepo)
 	})
-	t.Run("userRepo.UpdateUser", func(t *testing.T) {
+	t.Run("UpdateUser", func(t *testing.T) {
 		_testUpdateUser(t, userRepo)
 	})
-	t.Run("userRepo.GetUserByID", func(t *testing.T) {
+	t.Run("GetUserByID", func(t *testing.T) {
 		_testGetUserByID(t, userRepo)
 	})
-	t.Run("userRepo.GetUserByPrimaryContact", func(t *testing.T) {
+	t.Run("GetUserByPrimaryContact", func(t *testing.T) {
 		_testGetUserByPrimaryContact(t, userRepo)
 	})
-	t.Run("userRepo.GetUserAndContactByContact", func(t *testing.T) {
+	t.Run("GetUserAndContactByContact", func(t *testing.T) {
 		_testGetUserAndContactByContact(t, userRepo)
 	})
-	// t.Run("userRepo.GetUserByPasswordResetToken", func(t *testing.T) {
-	// 	_testGetUserByPasswordResetToken(t, userRepo)
-	// })
 }
 
 func _testAddUser(t *testing.T, userRepo repo.UserRepo) {

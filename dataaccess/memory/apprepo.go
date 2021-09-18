@@ -49,17 +49,17 @@ func (ar appRepo) GetAppsByOwnerID(ctx context.Context, ownerID string) ([]model
 	return apps, nil
 }
 
-func (ar appRepo) GetAppAndScopesByClientIDAndCallbackURI(ctx context.Context, clientID, callbackURI string) (models.App, []models.Scope, errors.RichError) {
+func (ar appRepo) GetAppAndScopesByClientID(ctx context.Context, clientID string) (models.App, []models.Scope, errors.RichError) {
 	var app models.App
 	var scopes []models.Scope
 	for _, a := range *ar.apps {
-		if a.ClientID == clientID && a.CallbackURI == callbackURI {
+		if a.ClientID == clientID {
 			app = a
 			scopes = (*ar.appScopes)[a.ID]
 			return app, scopes, nil
 		}
 	}
-	fields := map[string]interface{}{"clientID": clientID, "callbackURI": callbackURI}
+	fields := map[string]interface{}{"clientID": clientID}
 	return app, scopes, coreerrors.NewNoAppFoundError(fields, true)
 }
 
@@ -96,7 +96,7 @@ func (ar appRepo) GetScopesByAppID(ctx context.Context, appID string) ([]models.
 }
 
 func (ar appRepo) AddScope(ctx context.Context, scope *models.Scope, createdBy string) errors.RichError {
-	appID := scope.ApplicationID
+	appID := scope.AppID
 	scope.AuditData.CreatedByID = createdBy
 	scope.AuditData.CreatedOnDate = time.Now().UTC()
 	if scope.ID == "" {
@@ -112,7 +112,7 @@ func (ar appRepo) AddScope(ctx context.Context, scope *models.Scope, createdBy s
 }
 
 func (ar appRepo) UpdateScope(ctx context.Context, scope *models.Scope, modifiedBy string) errors.RichError {
-	appID := scope.ApplicationID
+	appID := scope.AppID
 	scopeID := scope.ID
 	scopes, ok := (*ar.appScopes)[appID]
 	if !ok {
@@ -131,7 +131,7 @@ func (ar appRepo) UpdateScope(ctx context.Context, scope *models.Scope, modified
 }
 
 func (ar appRepo) DeleteScope(ctx context.Context, scope *models.Scope, deletedBy string) errors.RichError {
-	appID := scope.ApplicationID
+	appID := scope.AppID
 	scopeID := scope.ID
 	scopes, ok := (*ar.appScopes)[appID]
 	if !ok {

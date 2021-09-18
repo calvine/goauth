@@ -23,13 +23,13 @@ const (
 
 func testTokenRepo(t *testing.T, tokenRepo repo.TokenRepo) {
 	_makeTokens(t)
-	t.Run("tokenRepo.PutToken", func(t *testing.T) {
+	t.Run("PutToken", func(t *testing.T) {
 		_testPutToken(t, tokenRepo)
 	})
-	t.Run("tokenRepo.DeleteToken", func(t *testing.T) {
+	t.Run("DeleteToken", func(t *testing.T) {
 		_testDeleteToken(t, tokenRepo)
 	})
-	t.Run("tokenRepo.GetToken", func(t *testing.T) {
+	t.Run("GetToken", func(t *testing.T) {
 		_testGetToken(t, tokenRepo)
 	})
 }

@@ -36,10 +36,7 @@ func TestSHA256(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		output, err := SHA256(test.Input)
-		if err != nil {
-			t.Error("failed to hash input", test.Input, err)
-		}
+		output := SHA256(test.Input)
 		if output != test.ExpectedOutput {
 			t.Error("hash did not match expected value", test.ExpectedOutput, output)
 		}
@@ -77,10 +74,7 @@ func TestSHA512(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		output, err := SHA512(test.Input)
-		if err != nil {
-			t.Error("failed to hash input", test.Input, err)
-		}
+		output := SHA512(test.Input)
 		if output != test.ExpectedOutput {
 			t.Error("hash did not match expected value", test.ExpectedOutput, output)
 		}

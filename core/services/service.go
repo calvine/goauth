@@ -43,7 +43,17 @@ type UserService interface {
 }
 
 type AppService interface {
-	// TODO: define this
+	GetAppByID(ctx context.Context, id string, initiator string) (models.App, errors.RichError)
+	GetAppByClientID(ctx context.Context, clientID string, initiator string) (models.App, errors.RichError)
+	AddApp(ctx context.Context, app *models.App, initiator string) errors.RichError
+	UpdateApp(ctx context.Context, app *models.App, initiator string) errors.RichError
+	DeleteApp(ctx context.Context, app *models.App, initiator string) errors.RichError
+	GetScopeByID(ctx context.Context, id string, initiator string) (models.Scope, errors.RichError)
+	GetScopesByAppID(ctx context.Context, appID string, initiator string) ([]models.Scope, errors.RichError)
+	GetScopesByClientID(ctx context.Context, clientID string, initiator string) ([]models.Scope, errors.RichError)
+	AddScopesToApp(ctx context.Context, scopes []*models.Scope, initiator string) errors.RichError
+	UpdateScope(ctx context.Context, scope *models.Scope, initiator string) errors.RichError
+	DeleteScope(ctx context.Context, scope *models.Scope, initiator string) errors.RichError
 }
 
 type EmailService interface {
