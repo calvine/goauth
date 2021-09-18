@@ -13,6 +13,8 @@ import (
 	"github.com/calvine/richerror/errors"
 )
 
+// TODO: improve repo tests to cover fail conditions, confirm data is manipulated properly in the underlying data store.
+
 var (
 	initialTestUser models.User
 
@@ -22,9 +24,9 @@ var (
 
 	initialTestApp2 models.App
 
-	initialTestAppClientSecret string
+	// initialTestAppClientSecret string
 
-	initialTestApp2ClientSecret string
+	// initialTestApp2ClientSecret string
 
 	initialTestAppScopes []models.Scope
 
@@ -138,11 +140,11 @@ func setupTestHarnessData(t *testing.T, input RepoTestHarnessInput) {
 
 	if input.AppRepo != nil {
 		// create test apps
-		initialTestApp, initialTestAppClientSecret, err = models.NewApp(initialTestUser.ID, "test app 1", "https://my.app/callback", "https://my.app/assets/logo.png")
+		initialTestApp, _, err = models.NewApp(initialTestUser.ID, "test app 1", "https://my.app/callback", "https://my.app/assets/logo.png")
 		if err != nil {
 			t.Errorf("setup failed to create app: %s", err.Error())
 		}
-		initialTestApp2, initialTestAppClientSecret, err = models.NewApp(initialTestUser.ID, "test app 1", "https://my.app/callback", "https://my.app/assets/logo.png")
+		initialTestApp2, _, err = models.NewApp(initialTestUser.ID, "test app 1", "https://my.app/callback", "https://my.app/assets/logo.png")
 		if err != nil {
 			t.Errorf("setup failed to create app: %s", err.Error())
 		}
