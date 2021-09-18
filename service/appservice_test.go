@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"testing"
 
+	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/core/services"
+	"github.com/calvine/goauth/core/testutilities"
 	"github.com/calvine/goauth/dataaccess/memory"
 	"github.com/calvine/richerror/errors"
 )
@@ -156,9 +158,75 @@ func TestAppService(t *testing.T) {
 
 func _testGetAppsByOwnerID(t *testing.T, appService services.AppService) {
 	t.Error("test not implemented")
-	// success
-
-	// failure no apps found
+	testCases := []struct {
+		baseData       testutilities.BaseTestCase
+		ownerID        string
+		expectedOutput []models.App
+	}{
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     false,
+				ExpectedErrorCode: "",
+				Name:              "success",
+			},
+			ownerID:        testAppOne_One.OwnerID,
+			expectedOutput: []models.App{testAppOne_One, testAppOne_Two, testAppOne_Three},
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeNoAppFound,
+				Name:              "failure no apps found",
+			},
+			ownerID:        "not a valid owner id",
+			expectedOutput: nil,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.baseData.Name, func(t *testing.T) {
+			apps, err := appService.GetAppsByOwnerID(context.TODO(), tt.ownerID, createdByAppService)
+			testutilities.PerformErrorCheck(t, tt.baseData, err)
+			numAppsReturned := len(apps)
+			expectedNumApps := len(tt.expectedOutput)
+			if numAppsReturned != expectedNumApps {
+				t.Errorf("number of expected apps returned did not match how many were returned: got: %d - expected: %d", numAppsReturned, expectedNumApps)
+			}
+			for _, app := range apps {
+				found := false
+				var matchingApp models.App
+				for _, expectedApp := range tt.expectedOutput {
+					if expectedApp.ID == app.ID {
+						matchingApp = expectedApp
+						found = true
+					}
+				}
+				if !found {
+					t.Errorf("failed to find app with id: %s", app.ID)
+				}
+				if matchingApp.ClientID != app.ClientID {
+					t.Errorf("expected app client id does not match what we got: got: %s - expected: %s", app.ClientID, matchingApp.ClientID)
+				}
+				if matchingApp.ClientSecretHash != app.ClientSecretHash {
+					t.Errorf("expected app client secret hash does not match what we got: got: %s - expected: %s", app.ClientSecretHash, matchingApp.ClientSecretHash)
+				}
+				if matchingApp.Name != app.Name {
+					t.Errorf("expected app name does not match what we got: got: %s - expected: %s", app.Name, matchingApp.Name)
+				}
+				if matchingApp.OwnerID != app.OwnerID {
+					t.Errorf("expected app owner id does not match what we got: got: %s - expected: %s", app.OwnerID, matchingApp.OwnerID)
+				}
+				if matchingApp.IsDisabled != app.IsDisabled {
+					t.Errorf("expected app is disabled flag does not match what we got: got: %t - expected: %t", app.IsDisabled, matchingApp.IsDisabled)
+				}
+				if matchingApp.CallbackURI != app.CallbackURI {
+					t.Errorf("expected app callback uri does not match what we got: got: %s - expected: %s", app.CallbackURI, matchingApp.CallbackURI)
+				}
+				if matchingApp.LogoURI != app.LogoURI {
+					t.Errorf("expected app logo uri does not match what we got: got: %s - expected: %s", app.LogoURI, matchingApp.LogoURI)
+				}
+			}
+		})
+	}
 }
 
 func _testGetAppByID(t *testing.T, appService services.AppService) {
