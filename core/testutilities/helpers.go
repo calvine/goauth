@@ -129,12 +129,10 @@ func innerEquals(thing1, thing2 interface{}, currentPath string, result *equalit
 				innerEquals(t1FieldValue.Interface(), t2FieldValue.Interface(), path, result)
 			}
 		}
-		break
 	case reflect.Ptr:
 		dereferencedT1 := t1Value.Elem().Interface()
 		dereferencedT2 := t2Value.Elem().Interface()
 		innerEquals(dereferencedT1, dereferencedT2, currentPath, result)
-		break
 	case reflect.Map:
 		// iterate over children and evaluate values and keys exist in both maps
 		t1Len := t1Value.Len()
@@ -157,7 +155,6 @@ func innerEquals(thing1, thing2 interface{}, currentPath string, result *equalit
 			path := fmt.Sprintf("%s[%v]", currentPath, k)
 			innerEquals(v.Interface(), v2.Interface(), path, result)
 		}
-		break
 	case reflect.Array:
 	case reflect.Slice:
 		// for now this will do an ordinal match of children, possibly allow a param to allow for non ordinal match?
@@ -179,7 +176,6 @@ func innerEquals(thing1, thing2 interface{}, currentPath string, result *equalit
 			path := fmt.Sprintf("%s[%d]", currentPath, i)
 			innerEquals(t1Item, t2Item, path, result)
 		}
-		break
 	case reflect.Interface:
 		// interested to see how this might work?
 	case reflect.Chan:
