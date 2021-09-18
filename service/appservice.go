@@ -22,6 +22,10 @@ func NewAppService(appRepo repo.AppRepo, auditLogRepo repo.AuditLogRepo) service
 	}
 }
 
+func (as appService) GetAppsByOwnerID(ctx context.Context, id string, initiator string) ([]models.App, errors.RichError) {
+	return nil, coreerrors.NewNotImplementedError(true)
+}
+
 func (as appService) GetAppByID(ctx context.Context, id string, initiator string) (models.App, errors.RichError) {
 	return models.App{}, coreerrors.NewNotImplementedError(true)
 }

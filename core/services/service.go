@@ -43,6 +43,7 @@ type UserService interface {
 }
 
 type AppService interface {
+	GetAppsByOwnerID(ctx context.Context, ownerID string, initiator string) ([]models.App, errors.RichError)
 	GetAppByID(ctx context.Context, id string, initiator string) (models.App, errors.RichError)
 	GetAppByClientID(ctx context.Context, clientID string, initiator string) (models.App, errors.RichError)
 	GetAppAndScopesByClientID(ctx context.Context, clientID string, initiator string) (models.App, []models.Scope, errors.RichError)

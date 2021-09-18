@@ -113,6 +113,9 @@ func buildAppService(t *testing.T) services.AppService {
 
 func TestAppService(t *testing.T) {
 	appService := buildAppService(t)
+	t.Run("GetAppsByOwnerID", func(t *testing.T) {
+		_testGetAppsByOwnerID(t, appService)
+	})
 	t.Run("GetAppByID", func(t *testing.T) {
 		_testGetAppByID(t, appService)
 	})
@@ -151,50 +154,115 @@ func TestAppService(t *testing.T) {
 	})
 }
 
+func _testGetAppsByOwnerID(t *testing.T, appService services.AppService) {
+	t.Error("test not implemented")
+	// success
+
+	// failure no apps found
+}
+
 func _testGetAppByID(t *testing.T, appService services.AppService) {
 	t.Error("test not implemented")
+	// success
+
+	// failure no app found
 }
 
 func _testGetAppByClientID(t *testing.T, appService services.AppService) {
 	t.Error("test not implemented")
+	// success
+
+	// failure no client id found
 }
 
 func _testGetAppAndScopesByClientID(t *testing.T, appService services.AppService) {
 	t.Error("test not implemented")
+	// success
+
+	// failure not client id found
 }
 
 func _testAddApp(t *testing.T, appService services.AppService) {
 	t.Error("test not implemented")
+	// success
+
+	// failure no name
+
+	// failure no owner id
+
+	// failure no callback uri
+
+	// failure no logo uri
 }
 
 func _testUpdateApp(t *testing.T, appService services.AppService) {
 	t.Error("test not implemented")
+	// success
+
+	// failure no name
+
+	// failure no owner id
+
+	// failure no callback uri
+
+	// failure no logo uri
 }
 
 func _testDeleteApp(t *testing.T, appService services.AppService) {
 	t.Error("test not implemented")
+	// success
+
+	// failure not app found
 }
 
 func _testGetScopeByID(t *testing.T, appService services.AppService) {
 	t.Error("test not implemented")
+	// success
+
+	//failure no scope id found
 }
 
 func _testGetScopesByAppID(t *testing.T, appService services.AppService) {
 	t.Error("test not implemented")
+	// success
+
+	// failure no app id found
 }
 
 func _testGetScopesByClientID(t *testing.T, appService services.AppService) {
 	t.Error("test not implemented")
+	// success
+
+	// failure no client id found
 }
 
 func _testAddScopesToApp(t *testing.T, appService services.AppService) {
 	t.Error("test not implemented")
+	// success
+
+	// failure no app found
+
+	// failure no app id
+
+	// failure no name
+
+	// failure no description
 }
 
 func _testUpdateScope(t *testing.T, appService services.AppService) {
 	t.Error("test not implemented")
+	// success
+
+	// failure no app id
+
+	// failure no name
+
+	// failure no description
 }
 
 func _testDeleteScope(t *testing.T, appService services.AppService) {
 	t.Error("test not implemented")
+	// success
+
+	// failure scope found
 }
