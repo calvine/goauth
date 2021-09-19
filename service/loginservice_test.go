@@ -71,15 +71,18 @@ func TestLoginService(t *testing.T) {
 func setupLoginServiceTestData(t *testing.T, userRepo repo.UserRepo, contactRepo repo.ContactRepo, tokenService services.TokenService) {
 	passHash, err := utilities.BcryptHashString(confirmedUserPassword, bcrypt.DefaultCost)
 	if err != nil {
-		t.Errorf("failed to create test password hash: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to create test password hash: %s", err.GetErrorCode())
 	}
 	passHash2, err := utilities.BcryptHashString(unconfirmedUserPassword, bcrypt.DefaultCost)
 	if err != nil {
-		t.Errorf("failed to create test password hash: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to create test password hash: %s", err.GetErrorCode())
 	}
 	passHash3, err := utilities.BcryptHashString(otherConfirmedUserPassword, bcrypt.DefaultCost)
 	if err != nil {
-		t.Errorf("failed to create test password hash: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to create test password hash: %s", err.GetErrorCode())
 	}
 	confirmedUser = models.User{
 		ID:           "123",
@@ -129,46 +132,55 @@ func setupLoginServiceTestData(t *testing.T, userRepo repo.UserRepo, contactRepo
 
 	err = userRepo.AddUser(context.TODO(), &confirmedUser, loginServiceTestCreatedBy)
 	if err != nil {
-		t.Errorf("failed to add user for login service tests: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add user for login service tests: %s", err.GetErrorCode())
 	}
 
 	err = userRepo.AddUser(context.TODO(), &unconfirmedUser, loginServiceTestCreatedBy)
 	if err != nil {
-		t.Errorf("failed to add user for login service tests: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add user for login service tests: %s", err.GetErrorCode())
 	}
 
 	err = userRepo.AddUser(context.TODO(), &otherConfirmedUser, loginServiceTestCreatedBy)
 	if err != nil {
-		t.Errorf("failed to add user for login service tests: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add user for login service tests: %s", err.GetErrorCode())
 	}
 
 	err = contactRepo.AddContact(context.TODO(), &confirmedPrimaryContact, loginServiceTestCreatedBy)
 	if err != nil {
-		t.Errorf("failed to add contact for login service tests: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add contact for login service tests: %s", err.GetErrorCode())
 	}
 
 	err = contactRepo.AddContact(context.TODO(), &confirmedSecondaryContact, loginServiceTestCreatedBy)
 	if err != nil {
-		t.Errorf("failed to add contact for login service tests: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add contact for login service tests: %s", err.GetErrorCode())
 	}
 
 	err = contactRepo.AddContact(context.TODO(), &unconfirmedPrimaryContact, loginServiceTestCreatedBy)
 	if err != nil {
-		t.Errorf("failed to add contact for login service tests: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add contact for login service tests: %s", err.GetErrorCode())
 	}
 
 	err = contactRepo.AddContact(context.TODO(), &otherConfirmedPrimaryContact, loginServiceTestCreatedBy)
 	if err != nil {
-		t.Errorf("failed to add contact for login service tests: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add contact for login service tests: %s", err.GetErrorCode())
 	}
 
 	nonPasswordResetToken, err = models.NewToken("", models.TokenTypeSession, time.Minute*10)
 	if err != nil {
-		t.Errorf("failed to add non password reset token with error %s: %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add non password reset token with error: %s", err.GetErrorCode())
 	}
 	tokenService.PutToken(context.TODO(), nonPasswordResetToken)
 	if err != nil {
-		t.Errorf("failed to add non password reset token with error %s: %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add non password reset token with error: %s", err.GetErrorCode())
 	}
 }
 
@@ -210,7 +222,8 @@ func _testStartPasswordResetByPrimaryContact(t *testing.T, loginService services
 func __testStartPasswordResetSuccess(t *testing.T, loginService services.LoginService) {
 	tokenValue, err := loginService.StartPasswordResetByPrimaryContact(context.TODO(), confirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, loginServiceTestCreatedBy)
 	if err != nil {
-		t.Errorf("received error when attempting to start valid password reset: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("received error when attempting to start valid password reset: %s", err.GetErrorCode())
 	}
 	if tokenValue == "" {
 		t.Error("token value should not be an empty string")
@@ -224,7 +237,8 @@ func __testStartPasswordResetFailedNotPrimaryContact(t *testing.T, loginService 
 		t.Error("expected error due to non primary contact being used for password reset")
 	}
 	if err.GetErrorCode() != errors.ErrCodePasswordResetContactNotPrimary {
-		t.Errorf("expected password reset contact not primary error but got %s: %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("expected password reset contact not primary error but got: %s", err.GetErrorCode())
 	}
 	if tokenValue != "" {
 		t.Errorf("token value should be empty because the password reset initiation should have failed: %s", tokenValue)
@@ -256,7 +270,8 @@ func _testResetPassword(t *testing.T, loginService services.LoginService) {
 func __testPasswordResetSuccess(t *testing.T, loginService services.LoginService) {
 	err := loginService.ResetPassword(context.TODO(), testPasswordResetToken, newPasswordPostReset, loginServiceTestCreatedBy)
 	if err != nil {
-		t.Errorf("expected password reset to succeed bug got an an error %s: %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("expected password reset to succeed bug got an an error: %s", err.GetErrorCode())
 	}
 }
 
@@ -273,7 +288,8 @@ func __testPasswordResetFailureEmptyPasswordHash(t *testing.T, loginService serv
 		t.Errorf("expected password reset to fail because the token provided is not a real token")
 	}
 	if err.GetErrorCode() != errors.ErrCodeNoNewPasswordHashProvided {
-		t.Errorf("expected no new password hash error but got %s: %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("expected no new password hash error but got: %s", err.GetErrorCode())
 	}
 }
 
@@ -283,7 +299,8 @@ func __testPasswordResetFailureWrongTokenType(t *testing.T, loginService service
 		t.Errorf("expected password reset to fail because the token provided is not a password reset token")
 	}
 	if err.GetErrorCode() != errors.ErrCodeWrongTokenType {
-		t.Errorf("expected no new password hash error but got %s: %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("expected no new password hash error but got: %s", err.GetErrorCode())
 	}
 }
 
@@ -322,7 +339,8 @@ func _testLoginWithPrimaryContact(t *testing.T, loginService services.LoginServi
 func __testSuccessfullEmailLogin(t *testing.T, loginService services.LoginService) {
 	user, err := loginService.LoginWithPrimaryContact(context.TODO(), confirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, newPasswordPostReset, loginServiceTestCreatedBy)
 	if err != nil {
-		t.Errorf("confirmed user login with primary contact email should be successfull: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("confirmed user login with primary contact email should be successfull: %s", err.GetErrorCode())
 	}
 	if confirmedUser.ID != user.ID {
 		t.Errorf("expected user id does not match returned user id: got %s - expected %s", confirmedUser.ID, user.ID)
@@ -338,7 +356,8 @@ func __testFailedLogin(t *testing.T, loginService services.LoginService) {
 		t.Error("expected failed login wrong password error bug got no error")
 	}
 	if err.GetErrorCode() != errors.ErrCodeLoginFailedWrongPassword {
-		t.Errorf("expected failed login wrong password error bug got another error: %s - %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("expected failed login wrong password error bug got another error: %s", err.GetErrorCode())
 	}
 }
 
@@ -348,7 +367,8 @@ func __testFailedLoginPrimaryContactNotConfirmed(t *testing.T, loginService serv
 		t.Error("expected failed login wrong password error bug got no error")
 	}
 	if err.GetErrorCode() != errors.ErrCodeContactNotConfirmed {
-		t.Errorf("expected failed login wrong password error bug got another error: %s - %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("expected failed login wrong password error bug got another error: %s", err.GetErrorCode())
 	}
 }
 
@@ -358,7 +378,8 @@ func __testFailedLoginSecondaryContactUsed(t *testing.T, loginService services.L
 		t.Error("expected failed login wrong password error bug got no error")
 	}
 	if err.GetErrorCode() != errors.ErrCodeLoginContactNotPrimary {
-		t.Errorf("expected failed login wrong password error bug got another error: %s - %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("expected failed login wrong password error bug got another error: %s", err.GetErrorCode())
 	}
 }
 
@@ -369,7 +390,8 @@ func __testAccountLockout(t *testing.T, loginService services.LoginService) {
 			t.Error("expected error because login details are invalid...")
 		}
 		if err.GetErrorCode() != errors.ErrCodeLoginFailedWrongPassword {
-			t.Errorf("expected failed login wrong password error but got error of type %s: %s", err.GetErrorCode(), err.Error())
+			t.Log(err.Error())
+			t.Errorf("expected failed login wrong password error but got error of type: %s", err.GetErrorCode())
 		}
 	}
 	_, err := loginService.LoginWithPrimaryContact(context.TODO(), otherConfirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, "Not the right password34567898765trew2123456&*!&^", loginServiceTestCreatedBy)
@@ -377,7 +399,8 @@ func __testAccountLockout(t *testing.T, loginService services.LoginService) {
 		t.Errorf("should have locked out user account after %d failed login attempts", lockoutAfterFailedLoginAttempts)
 	}
 	if err.GetErrorCode() != errors.ErrCodeUserLockedOut {
-		t.Errorf("expected user locked out error but received: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("expected user locked out error but received: %s", err.GetErrorCode())
 	}
 }
 
@@ -385,7 +408,8 @@ func __testAccountLockoutRelease(t *testing.T, loginService services.LoginServic
 	time.Sleep(lockoutReleaseWaitDuration)
 	user, err := loginService.LoginWithPrimaryContact(context.TODO(), otherConfirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, otherConfirmedUserPassword, loginServiceTestCreatedBy)
 	if err != nil {
-		t.Errorf("after sleep the users account lockout should have expired but got this error: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("after sleep the users account lockout should have expired but got this error: %s", err.GetErrorCode())
 	}
 	if user.ConsecutiveFailedLoginAttempts != 0 {
 		t.Errorf("expected user consecutive failed login attempts to be 0 but got %d", user.ConsecutiveFailedLoginAttempts)

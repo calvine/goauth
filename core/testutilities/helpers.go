@@ -1,10 +1,13 @@
 package testutilities
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"testing"
 
+	"github.com/calvine/goauth/core/models"
+	"github.com/calvine/goauth/core/services"
 	"github.com/calvine/richerror/errors"
 )
 
@@ -22,10 +25,35 @@ const (
 func PerformErrorCheck(t *testing.T, testCase BaseTestCase, err errors.RichError) {
 	if err != nil {
 		if !testCase.ExpectedError {
-			t.Fatalf("unexpeced error occurred: %s", err.Error())
+			t.Log(err.Error())
+			t.Fatalf("unexpeced error occurred: %s", err.GetErrorCode())
 		} else if testCase.ExpectedErrorCode != err.GetErrorCode() {
-			t.Fatalf("expeced error code does not match expected error type: got: %s - expected %s", err.Error(), testCase.ExpectedErrorCode)
+			t.Log(err.Error())
+			t.Fatalf("expeced error code does not match expected error type: got: %s - expected %s", err.GetErrorCode(), testCase.ExpectedErrorCode)
 		}
+	}
+}
+
+func ValidateExpectedAppEqualToStoredAppWithAppService(t *testing.T, appService services.AppService, expectedApp models.App) {
+	app, err := appService.GetAppByID(context.TODO(), expectedApp.ID, "ValidateExpectedAppEqualToStoredAppWithAppService")
+	if err != nil {
+		t.Fatalf("failed to get app with id %s for comparison from underlying data source: %s", expectedApp.ID, err.Error())
+	}
+	equalityCheck := Equals(app, expectedApp)
+	if !equalityCheck.AreEqual {
+		t.Fatalf("app not equal to expected app: %v", equalityCheck.Failures)
+	}
+}
+
+func ValidateExpectedScopeEqualToStoredScopeWithAppService(t *testing.T, appService services.AppService, expectedScope models.Scope) {
+	scope, err := appService.GetScopeByID(context.TODO(), expectedScope.ID, "ValidateExpectedScopeEqualToStoredScopeWithAppService")
+	if err != nil {
+		t.Log(err.Error())
+		t.Fatalf("failed to get scope with id %s for comparison from underlying data source: %s", expectedScope.ID, err.GetErrorCode())
+	}
+	equalityCheck := Equals(scope, expectedScope)
+	if !equalityCheck.AreEqual {
+		t.Fatalf("scope not equal to expected scope: %v", equalityCheck.Failures)
 	}
 }
 

@@ -46,65 +46,76 @@ func setupAppServiceTestData(t *testing.T, appRepo repo.AppRepo) {
 	var err errors.RichError
 	testAppOne_One, testAppOne_OneClientSecret, err = models.NewApp(testAppOneOwnerID, "", "", "")
 	if err != nil {
-		t.Errorf("failed to create test app one: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to create test app one: %s", err.GetErrorCode())
 	}
 	err = appRepo.AddApp(context.TODO(), &testAppOne_One, createdByAppService)
 	if err != nil {
-		t.Errorf("failed to add app to underlying data store: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add app to underlying data store: %s", err.GetErrorCode())
 	}
 	testAppOne_OneScopes = make([]models.Scope, 0, numScopesToMake)
 	for i := 1; i <= numScopesToMake; i++ {
 		scope := models.NewScope(testAppOne_One.ID, fmt.Sprintf("test_app_one_one_scope_%d", i), fmt.Sprintf("test app one_one scope %d", i))
 		err := appRepo.AddScope(context.TODO(), &scope, createdByAppService)
 		if err != nil {
-			t.Errorf("failed to add scope to app with id %s: %s", testAppOne_One.ID, err.Error())
+			t.Log(err.Error())
+			t.Errorf("failed to add scope to app with id %s: %s", testAppOne_One.ID, err.GetErrorCode())
 		}
 		testAppOne_OneScopes = append(testAppOne_OneScopes, scope)
 	}
 
 	testAppOne_Two, testAppOne_TwoClientSecret, err = models.NewApp(testAppOneOwnerID, "", "", "")
 	if err != nil {
-		t.Errorf("failed to create test app one: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to create test app one: %s", err.GetErrorCode())
 	}
 	err = appRepo.AddApp(context.TODO(), &testAppOne_Two, createdByAppService)
 	if err != nil {
-		t.Errorf("failed to add app to underlying data store: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add app to underlying data store: %s", err.GetErrorCode())
 	}
 	testAppOne_TwoScopes = make([]models.Scope, 0, numScopesToMake)
 	for i := 1; i <= numScopesToMake; i++ {
 		scope := models.NewScope(testAppOne_Two.ID, fmt.Sprintf("test_app_one_two_scope_%d", i), fmt.Sprintf("test app one_two scope %d", i))
 		err := appRepo.AddScope(context.TODO(), &scope, createdByAppService)
 		if err != nil {
-			t.Errorf("failed to add scope to app with id %s: %s", testAppOne_Two.ID, err.Error())
+			t.Log(err.Error())
+			t.Errorf("failed to add scope to app with id %s: %s", testAppOne_Two.ID, err.GetErrorCode())
 		}
 		testAppOne_TwoScopes = append(testAppOne_TwoScopes, scope)
 	}
 
 	testAppOne_Three, testAppOne_ThreeClientSecret, err = models.NewApp(testAppOneOwnerID, "", "", "")
 	if err != nil {
-		t.Errorf("failed to create test app one: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to create test app one: %s", err.GetErrorCode())
 	}
 	err = appRepo.AddApp(context.TODO(), &testAppOne_Three, createdByAppService)
 	if err != nil {
-		t.Errorf("failed to add app to underlying data store: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add app to underlying data store: %s", err.GetErrorCode())
 	}
 	testAppOne_ThreeScopes = make([]models.Scope, 0, numScopesToMake)
 	for i := 1; i <= numScopesToMake; i++ {
 		scope := models.NewScope(testAppOne_Three.ID, fmt.Sprintf("test_app_one_three_scope_%d", i), fmt.Sprintf("test app one_three scope %d", i))
 		err := appRepo.AddScope(context.TODO(), &scope, createdByAppService)
 		if err != nil {
-			t.Errorf("failed to add scope to app with id %s: %s", testAppOne_Three.ID, err.Error())
+			t.Log(err.Error())
+			t.Errorf("failed to add scope to app with id %s: %s", testAppOne_Three.ID, err.GetErrorCode())
 		}
 		testAppOne_ThreeScopes = append(testAppOne_ThreeScopes, scope)
 	}
 
 	testAppTwo, testAppTwoClientSecret, err = models.NewApp(testAppOneOwnerID, "", "", "")
 	if err != nil {
-		t.Errorf("failed to create test app one: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to create test app one: %s", err.GetErrorCode())
 	}
 	err = appRepo.AddApp(context.TODO(), &testAppTwo, createdByAppService)
 	if err != nil {
-		t.Errorf("failed to add app to underlying data store: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add app to underlying data store: %s", err.GetErrorCode())
 	}
 }
 
@@ -368,7 +379,8 @@ func _testAddApp(t *testing.T, appService services.AppService) {
 			appToAdd: func(t *testing.T) models.App {
 				app, _, err := models.NewApp("validownerid", "test app", "https://app.com/callack", "https://logo.org/logo.png")
 				if err != nil {
-					t.Fatalf("failed to create app: %s", err.Error())
+					t.Log(err.Error())
+					t.Fatalf("failed to create app: %s", err.GetErrorCode())
 				}
 				return app
 			},
@@ -382,7 +394,8 @@ func _testAddApp(t *testing.T, appService services.AppService) {
 			appToAdd: func(t *testing.T) models.App {
 				app, _, err := models.NewApp("validownerid", "", "https://app.com/callack", "https://logo.org/logo.png")
 				if err != nil {
-					t.Fatalf("failed to create app: %s", err.Error())
+					t.Log(err.Error())
+					t.Fatalf("failed to create app: %s", err.GetErrorCode())
 				}
 				return app
 			},
@@ -396,7 +409,8 @@ func _testAddApp(t *testing.T, appService services.AppService) {
 			appToAdd: func(t *testing.T) models.App {
 				app, _, err := models.NewApp("", "test app", "https://app.com/callack", "https://logo.org/logo.png")
 				if err != nil {
-					t.Fatalf("failed to create app: %s", err.Error())
+					t.Log(err.Error())
+					t.Fatalf("failed to create app: %s", err.GetErrorCode())
 				}
 				return app
 			},
@@ -410,7 +424,8 @@ func _testAddApp(t *testing.T, appService services.AppService) {
 			appToAdd: func(t *testing.T) models.App {
 				app, _, err := models.NewApp("validownerid", "test app", "", "https://logo.org/logo.png")
 				if err != nil {
-					t.Fatalf("failed to create app: %s", err.Error())
+					t.Log(err.Error())
+					t.Fatalf("failed to create app: %s", err.GetErrorCode())
 				}
 				return app
 			},
@@ -424,7 +439,23 @@ func _testAddApp(t *testing.T, appService services.AppService) {
 			appToAdd: func(t *testing.T) models.App {
 				app, _, err := models.NewApp("validownerid", "test app", "https://app.com/callack", "")
 				if err != nil {
-					t.Fatalf("failed to create app: %s", err.Error())
+					t.Log(err.Error())
+					t.Fatalf("failed to create app: %s", err.GetErrorCode())
+				}
+				return app
+			},
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeInvalidAppCreation,
+				Name:              "failure no valid props",
+			},
+			appToAdd: func(t *testing.T) models.App {
+				app, _, err := models.NewApp("", "", "", "")
+				if err != nil {
+					t.Log(err.Error())
+					t.Fatalf("failed to create app: %s", err.GetErrorCode())
 				}
 				return app
 			},
@@ -437,29 +468,138 @@ func _testAddApp(t *testing.T, appService services.AppService) {
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
 			if err != nil {
 				appToAdd = app
+				testutilities.ValidateExpectedAppEqualToStoredAppWithAppService(t, appService, app)
 			}
 		})
 	}
 }
 
 func _testUpdateApp(t *testing.T, appService services.AppService) {
-	t.Error("test not implemented")
-	// success
-
-	// failure no name
-
-	// failure no owner id
-
-	// failure no callback uri
-
-	// failure no logo uri
+	testCases := []struct {
+		baseData  testutilities.BaseTestCase
+		updateApp func(t *testing.T, app models.App) models.App
+	}{
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     false,
+				ExpectedErrorCode: "",
+				Name:              "success",
+			},
+			updateApp: func(t *testing.T, app models.App) models.App {
+				app.OwnerID = "new owner id"
+				app.Name = "new app name"
+				app.CallbackURI = "https://new.app.com/callback"
+				app.LogoURI = "https://new.app.com/assets/logo.png"
+				return app
+			},
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeInvalidAppCreation,
+				Name:              "failure no name",
+			},
+			updateApp: func(t *testing.T, app models.App) models.App {
+				app.Name = ""
+				return app
+			},
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeInvalidAppCreation,
+				Name:              "failure no owner id",
+			},
+			updateApp: func(t *testing.T, app models.App) models.App {
+				app.OwnerID = ""
+				return app
+			},
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeInvalidAppCreation,
+				Name:              "failure no callback uri",
+			},
+			updateApp: func(t *testing.T, app models.App) models.App {
+				app.CallbackURI = ""
+				return app
+			},
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeInvalidAppCreation,
+				Name:              "failure no logo uri",
+			},
+			updateApp: func(t *testing.T, app models.App) models.App {
+				app.LogoURI = ""
+				return app
+			},
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeInvalidAppCreation,
+				Name:              "failure no valid props",
+			},
+			updateApp: func(t *testing.T, app models.App) models.App {
+				app.OwnerID = ""
+				app.Name = ""
+				app.CallbackURI = ""
+				app.LogoURI = ""
+				return app
+			},
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.baseData.Name, func(t *testing.T) {
+			app := tt.updateApp(t, appToAdd)
+			err := appService.UpdateApp(context.TODO(), &app, createdByAppService)
+			testutilities.PerformErrorCheck(t, tt.baseData, err)
+			if err != nil {
+				testutilities.ValidateExpectedAppEqualToStoredAppWithAppService(t, appService, app)
+			}
+		})
+	}
 }
 
 func _testDeleteApp(t *testing.T, appService services.AppService) {
-	t.Error("test not implemented")
-	// success
-
-	// failure not app found
+	testCases := []struct {
+		baseData testutilities.BaseTestCase
+		app      models.App
+	}{
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     false,
+				ExpectedErrorCode: "",
+				Name:              "success",
+			},
+			app: appToAdd,
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeInvalidAppCreation,
+				Name:              "failure no name",
+			},
+			app: models.App{
+				ID: "not a real app id...",
+			},
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.baseData.Name, func(t *testing.T) {
+			err := appService.DeleteApp(context.TODO(), &tt.app, createdByAppService)
+			testutilities.PerformErrorCheck(t, tt.baseData, err)
+			if err != nil {
+				_, err := appService.GetAppByID(context.TODO(), tt.app.ID, createdByAppService)
+				if err == nil {
+					t.Fatal("should have failed to retreive app because it should have been deleted...")
+				}
+			}
+		})
+	}
 }
 
 func _testGetScopeByID(t *testing.T, appService services.AppService) {
