@@ -7,6 +7,7 @@ import (
 	"github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
+	richerrors "github.com/calvine/richerror/errors"
 )
 
 var (
@@ -20,6 +21,8 @@ const (
 	ARBITRARY_DATA_KEY   = "arbitrary_data"
 	ARBITRARY_DATA_VALUE = "1234"
 )
+
+// TODO: encapsulate sub tests so the run more coherently...
 
 func testTokenRepo(t *testing.T, tokenRepo repo.TokenRepo) {
 	_makeTokens(t)
@@ -35,7 +38,8 @@ func testTokenRepo(t *testing.T, tokenRepo repo.TokenRepo) {
 }
 
 func _makeTokens(t *testing.T) {
-	testCSRFToken, err := models.NewToken("", models.TokenTypeCSRF, time.Second*20)
+	var err richerrors.RichError
+	testCSRFToken, err = models.NewToken("", models.TokenTypeCSRF, time.Second*20)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to add token of type %s: %s", testCSRFToken.TokenType.String(), err.GetErrorCode())

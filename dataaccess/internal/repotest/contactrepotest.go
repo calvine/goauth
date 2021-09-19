@@ -74,32 +74,37 @@ func _testAddContact(t *testing.T, userRepo repo.ContactRepo) {
 	newContact1.UserID = testUser1.ID
 	err := userRepo.AddContact(context.TODO(), &newContact1, testUser1.ID)
 	if err != nil {
-		t.Error("failed to add contact to user", err)
+		t.Log(err.Error())
+		t.Error("failed to add contact to user", err.GetErrorCode())
 	}
 
 	newContact2.UserID = testUser1.ID
 	err = userRepo.AddContact(context.TODO(), &newContact2, testUser1.ID)
 	if err != nil {
-		t.Error("failed to add contact to user", err)
+		t.Log(err.Error())
+		t.Error("failed to add contact to user", err.GetErrorCode())
 	}
 
 	newContact3.UserID = testUser1.ID
 	err = userRepo.AddContact(context.TODO(), &newContact3, testUser1.ID)
 	if err != nil {
-		t.Error("failed to add contact to user", err)
+		t.Log(err.Error())
+		t.Error("failed to add contact to user", err.GetErrorCode())
 	}
 
 	newContact4.UserID = testUser1.ID
 	err = userRepo.AddContact(context.TODO(), &newContact4, testUser1.ID)
 	if err != nil {
-		t.Error("failed to add contact to user", err)
+		t.Log(err.Error())
+		t.Error("failed to add contact to user", err.GetErrorCode())
 	}
 }
 
 func _testGetContactByID(t *testing.T, userRepo repo.ContactRepo) {
 	_, err := userRepo.GetContactByID(context.TODO(), newContact1.ID)
 	if err != nil {
-		t.Error("failed to get contact by given id", newContact1.ID, err)
+		t.Log(err.Error())
+		t.Error("failed to get contact by given id", newContact1.ID, err.GetErrorCode())
 	}
 }
 
@@ -107,7 +112,8 @@ func _testGetPrimaryContactByUserID(t *testing.T, userRepo repo.ContactRepo) {
 	userID := testUser1.ID
 	contact, err := userRepo.GetPrimaryContactByUserID(context.TODO(), userID)
 	if err != nil {
-		t.Error("failed to get primary contact for user", userID, err)
+		t.Log(err.Error())
+		t.Error("failed to get primary contact for user", userID, err.GetErrorCode())
 	}
 	if contact.UserID != testUser1.ID {
 		t.Error("expected contact.UserID and testUser1.ID to match", testUser1.ID, contact.UserID)
@@ -125,7 +131,8 @@ func _testGetContactsByUserID(t *testing.T, userRepo repo.ContactRepo) {
 	userID := testUser1.ID
 	contacts, err := userRepo.GetContactsByUserID(context.TODO(), userID)
 	if err != nil {
-		t.Error("failed to get contacts by user id", userID, err)
+		t.Log(err.Error())
+		t.Error("failed to get contacts by user id", userID, err.GetErrorCode())
 	}
 	if len(contacts) != 4 {
 		t.Error("wrong number of contacts returned", 3, len(contacts))
@@ -162,7 +169,8 @@ func _testUpdateContact(t *testing.T, userRepo repo.ContactRepo) {
 
 	err := userRepo.UpdateContact(context.TODO(), &newContact3, modifiedByID)
 	if err != nil {
-		t.Error("failed to update contact", err)
+		t.Log(err.Error())
+		t.Error("failed to update contact", err.GetErrorCode())
 	}
 	if newContact3.Principal != newEmail {
 		t.Error("expected principal to be updated", newEmail, newContact3.Principal)
