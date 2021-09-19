@@ -603,10 +603,40 @@ func _testDeleteApp(t *testing.T, appService services.AppService) {
 }
 
 func _testGetScopeByID(t *testing.T, appService services.AppService) {
-	t.Error("test not implemented")
-	// success
-
-	//failure no scope id found
+	testCases := []struct {
+		baseData       testutilities.BaseTestCase
+		scopeID        string
+		expectedOutput models.Scope
+	}{
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError: false,
+				Name:          "success",
+			},
+			scopeID:        testAppOne_OneScopes[0].ID,
+			expectedOutput: testAppOne_OneScopes[0],
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeNoScopeFound,
+				Name:              "failure no scope found",
+			},
+			scopeID: "not a valid scope id",
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.baseData.Name, func(t *testing.T) {
+			scope, err := appService.GetScopeByID(context.TODO(), tt.scopeID, createdByAppService)
+			testutilities.PerformErrorCheck(t, tt.baseData, err)
+			if err != nil {
+				equalityMatch := testutilities.Equals(scope, tt.expectedOutput)
+				if !equalityMatch.AreEqual {
+					t.Errorf("found app and expected scope do not match: got %v - expected %v", scope, tt.expectedOutput)
+				}
+			}
+		})
+	}
 }
 
 func _testGetScopesByAppID(t *testing.T, appService services.AppService) {
