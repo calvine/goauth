@@ -22,9 +22,9 @@ const (
 func PerformErrorCheck(t *testing.T, testCase BaseTestCase, err errors.RichError) {
 	if err != nil {
 		if !testCase.ExpectedError {
-			t.Errorf("unexpeced error occurred: %s", err.Error())
+			t.Fatalf("unexpeced error occurred: %s", err.Error())
 		} else if testCase.ExpectedErrorCode != err.GetErrorCode() {
-			t.Errorf("expeced error code does not match expected error type: got: %s - expected %s", err.Error(), testCase.ExpectedErrorCode)
+			t.Fatalf("expeced error code does not match expected error type: got: %s - expected %s", err.Error(), testCase.ExpectedErrorCode)
 		}
 	}
 }
@@ -54,6 +54,7 @@ func (ecf equlaityCheckFailure) ToString(includeValues bool) string {
 
 // TODO: have options for reference checks for pointer maps arrays slices.
 
+// Equals is a deep equals check against two things passed in as parameters
 func Equals(thing1, thing2 interface{}) equalityCheckResult {
 	result := equalityCheckResult{
 		Failures: make([]equlaityCheckFailure, 0),

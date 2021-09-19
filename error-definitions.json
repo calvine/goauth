@@ -46,6 +46,12 @@
         "metaData": []
     },
     {
+        "code": "InvalidAppCreation",
+        "message": "this app is missing have the required fields",
+        "includeMap": true,
+        "metaData": []
+    },
+    {
         "code": "NoScopeFound",
         "message": "no scope found for given query",
         "includeMap": true,

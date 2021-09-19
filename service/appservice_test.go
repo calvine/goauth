@@ -37,6 +37,9 @@ var (
 	testAppTwo models.App
 	// testAppTwoScopes       []models.Scope
 	testAppTwoClientSecret string
+
+	appToAdd   models.App
+	scopeToAdd models.Scope
 )
 
 func setupAppServiceTestData(t *testing.T, appRepo repo.AppRepo) {
@@ -164,9 +167,8 @@ func _testGetAppsByOwnerID(t *testing.T, appService services.AppService) {
 	}{
 		{
 			baseData: testutilities.BaseTestCase{
-				ExpectedError:     false,
-				ExpectedErrorCode: "",
-				Name:              "success",
+				ExpectedError: false,
+				Name:          "success",
 			},
 			ownerID:        testAppOne_One.OwnerID,
 			expectedOutput: []models.App{testAppOne_One, testAppOne_Two, testAppOne_Three},
@@ -185,26 +187,28 @@ func _testGetAppsByOwnerID(t *testing.T, appService services.AppService) {
 		t.Run(tt.baseData.Name, func(t *testing.T) {
 			apps, err := appService.GetAppsByOwnerID(context.TODO(), tt.ownerID, createdByAppService)
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
-			numAppsReturned := len(apps)
-			expectedNumApps := len(tt.expectedOutput)
-			if numAppsReturned != expectedNumApps {
-				t.Errorf("number of expected apps returned did not match how many were returned: got: %d - expected: %d", numAppsReturned, expectedNumApps)
-			}
-			for _, app := range apps {
-				found := false
-				var matchingApp models.App
-				for _, expectedApp := range tt.expectedOutput {
-					if expectedApp.ID == app.ID {
-						matchingApp = expectedApp
-						found = true
+			if err != nil {
+				numAppsReturned := len(apps)
+				expectedNumApps := len(tt.expectedOutput)
+				if numAppsReturned != expectedNumApps {
+					t.Errorf("number of expected apps returned did not match how many were returned: got: %d - expected: %d", numAppsReturned, expectedNumApps)
+				}
+				for _, app := range apps {
+					found := false
+					var matchingApp models.App
+					for _, expectedApp := range tt.expectedOutput {
+						if expectedApp.ID == app.ID {
+							matchingApp = expectedApp
+							found = true
+						}
 					}
-				}
-				if !found {
-					t.Errorf("failed to find app with id: %s", app.ID)
-				}
-				equalityMatch := testutilities.Equals(app, matchingApp)
-				if !equalityMatch.AreEqual {
-					t.Errorf("found app and expected app do not match: got %v - expected %v", app, matchingApp)
+					if !found {
+						t.Errorf("failed to find app with id: %s", app.ID)
+					}
+					equalityMatch := testutilities.Equals(app, matchingApp)
+					if !equalityMatch.AreEqual {
+						t.Errorf("found app and expected app do not match: got %v - expected %v", app, matchingApp)
+					}
 				}
 			}
 		})
@@ -219,9 +223,8 @@ func _testGetAppByID(t *testing.T, appService services.AppService) {
 	}{
 		{
 			baseData: testutilities.BaseTestCase{
-				ExpectedError:     false,
-				ExpectedErrorCode: "",
-				Name:              "success",
+				ExpectedError: false,
+				Name:          "success",
 			},
 			appID:          testAppOne_One.ID,
 			expectedOutput: testAppOne_One,
@@ -239,9 +242,11 @@ func _testGetAppByID(t *testing.T, appService services.AppService) {
 		t.Run(tt.baseData.Name, func(t *testing.T) {
 			app, err := appService.GetAppByID(context.TODO(), tt.appID, createdByAppService)
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
-			equalityMatch := testutilities.Equals(app, tt.expectedOutput)
-			if !equalityMatch.AreEqual {
-				t.Errorf("found app and expected app do not match: got %v - expected %v", app, tt.expectedOutput)
+			if err != nil {
+				equalityMatch := testutilities.Equals(app, tt.expectedOutput)
+				if !equalityMatch.AreEqual {
+					t.Errorf("found app and expected app do not match: got %v - expected %v", app, tt.expectedOutput)
+				}
 			}
 		})
 	}
@@ -255,9 +260,8 @@ func _testGetAppByClientID(t *testing.T, appService services.AppService) {
 	}{
 		{
 			baseData: testutilities.BaseTestCase{
-				ExpectedError:     false,
-				ExpectedErrorCode: "",
-				Name:              "success",
+				ExpectedError: false,
+				Name:          "success",
 			},
 			clientID:       testAppOne_One.ClientID,
 			expectedOutput: testAppOne_One,
@@ -275,32 +279,167 @@ func _testGetAppByClientID(t *testing.T, appService services.AppService) {
 		t.Run(tt.baseData.Name, func(t *testing.T) {
 			app, err := appService.GetAppByClientID(context.TODO(), tt.clientID, createdByAppService)
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
-			equalityMatch := testutilities.Equals(app, tt.expectedOutput)
-			if !equalityMatch.AreEqual {
-				t.Errorf("found app and expected app do not match: got %v - expected %v", app, tt.expectedOutput)
+			if err != nil {
+				equalityMatch := testutilities.Equals(app, tt.expectedOutput)
+				if !equalityMatch.AreEqual {
+					t.Errorf("found app and expected app do not match: got %v - expected %v", app, tt.expectedOutput)
+				}
 			}
 		})
 	}
 }
 
 func _testGetAppAndScopesByClientID(t *testing.T, appService services.AppService) {
-	t.Error("test not implemented")
-	// success
-
-	// failure not client id found
+	testCases := []struct {
+		baseData       testutilities.BaseTestCase
+		clientID       string
+		expectedOutput struct {
+			app    models.App
+			scopes []models.Scope
+		}
+	}{
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError: false,
+				Name:          "success",
+			},
+			clientID: testAppOne_One.ClientID,
+			expectedOutput: struct {
+				app    models.App
+				scopes []models.Scope
+			}{
+				app:    testAppOne_One,
+				scopes: testAppOne_OneScopes,
+			},
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeNoAppFound,
+				Name:              "failure no client id found",
+			},
+			clientID: "not a valid client id",
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.baseData.Name, func(t *testing.T) {
+			app, scopes, err := appService.GetAppAndScopesByClientID(context.TODO(), tt.clientID, createdByAppService)
+			testutilities.PerformErrorCheck(t, tt.baseData, err)
+			if err != nil {
+				equalityMatch := testutilities.Equals(app, tt.expectedOutput.app)
+				if !equalityMatch.AreEqual {
+					t.Errorf("found app and expected app do not match: got %v - expected %v", app, tt.expectedOutput.app)
+				}
+				for _, scope := range scopes {
+					var matchingScope models.Scope
+					scopeFound := false
+					for _, s := range testAppOne_OneScopes {
+						if scope.ID == s.ID {
+							matchingScope = s
+							scopeFound = true
+							break
+						}
+					}
+					if scopeFound {
+						equalResults := testutilities.Equals(scope, matchingScope)
+						if !equalResults.AreEqual {
+							t.Errorf("scope found does not match expected scope: got: %v - expected: %v", scope, matchingScope)
+						}
+					} else {
+						t.Errorf("unable to retreive scope from underlying data source: %v", scope)
+					}
+				}
+			}
+		})
+	}
 }
 
 func _testAddApp(t *testing.T, appService services.AppService) {
-	t.Error("test not implemented")
-	// success
-
-	// failure no name
-
-	// failure no owner id
-
-	// failure no callback uri
-
-	// failure no logo uri
+	testCases := []struct {
+		baseData testutilities.BaseTestCase
+		appToAdd func(t *testing.T) models.App
+	}{
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     false,
+				ExpectedErrorCode: "",
+				Name:              "success",
+			},
+			appToAdd: func(t *testing.T) models.App {
+				app, _, err := models.NewApp("validownerid", "test app", "https://app.com/callack", "https://logo.org/logo.png")
+				if err != nil {
+					t.Fatalf("failed to create app: %s", err.Error())
+				}
+				return app
+			},
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeInvalidAppCreation,
+				Name:              "failure no name",
+			},
+			appToAdd: func(t *testing.T) models.App {
+				app, _, err := models.NewApp("validownerid", "", "https://app.com/callack", "https://logo.org/logo.png")
+				if err != nil {
+					t.Fatalf("failed to create app: %s", err.Error())
+				}
+				return app
+			},
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeInvalidAppCreation,
+				Name:              "failure no owner id",
+			},
+			appToAdd: func(t *testing.T) models.App {
+				app, _, err := models.NewApp("", "test app", "https://app.com/callack", "https://logo.org/logo.png")
+				if err != nil {
+					t.Fatalf("failed to create app: %s", err.Error())
+				}
+				return app
+			},
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeInvalidAppCreation,
+				Name:              "failure no callback uri",
+			},
+			appToAdd: func(t *testing.T) models.App {
+				app, _, err := models.NewApp("validownerid", "test app", "", "https://logo.org/logo.png")
+				if err != nil {
+					t.Fatalf("failed to create app: %s", err.Error())
+				}
+				return app
+			},
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeInvalidAppCreation,
+				Name:              "failure no logo uri",
+			},
+			appToAdd: func(t *testing.T) models.App {
+				app, _, err := models.NewApp("validownerid", "test app", "https://app.com/callack", "")
+				if err != nil {
+					t.Fatalf("failed to create app: %s", err.Error())
+				}
+				return app
+			},
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.baseData.Name, func(t *testing.T) {
+			app := tt.appToAdd(t)
+			err := appService.AddApp(context.TODO(), &app, createdByAppService)
+			testutilities.PerformErrorCheck(t, tt.baseData, err)
+			if err != nil {
+				appToAdd = app
+			}
+		})
+	}
 }
 
 func _testUpdateApp(t *testing.T, appService services.AppService) {
