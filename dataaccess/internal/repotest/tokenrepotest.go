@@ -35,49 +35,57 @@ func testTokenRepo(t *testing.T, tokenRepo repo.TokenRepo) {
 }
 
 func _makeTokens(t *testing.T) {
-	var err error
-	testCSRFToken, err = models.NewToken("", models.TokenTypeCSRF, time.Second*20)
+	testCSRFToken, err := models.NewToken("", models.TokenTypeCSRF, time.Second*20)
 	if err != nil {
-		t.Errorf("failed to add token of type %s: %s", testCSRFToken.TokenType.String(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add token of type %s: %s", testCSRFToken.TokenType.String(), err.GetErrorCode())
 	}
 	testPasswordResetToken, err = models.NewToken("", models.TokenTypePasswordReset, time.Second*20)
 	if err != nil {
-		t.Errorf("failed to add token of type %s: %s", testPasswordResetToken.TokenType.String(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add token of type %s: %s", testPasswordResetToken.TokenType.String(), err.GetErrorCode())
 	}
 	testSessionToken, err = models.NewToken("fake_user_id", models.TokenTypeSession, time.Second*20)
 	if err != nil {
-		t.Errorf("failed to add token of type %s: %s", testSessionToken.TokenType.String(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add token of type %s: %s", testSessionToken.TokenType.String(), err.GetErrorCode())
 	}
 	testSessionToken.AddMetaData(ARBITRARY_DATA_KEY, ARBITRARY_DATA_VALUE)
 	testExpiredToken, err = models.NewToken("fake_user_id2", models.TokenTypeSession, time.Second*-20)
 	if err != nil {
-		t.Errorf("failed to add token of type %s: %s", testExpiredToken.TokenType.String(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add token of type %s: %s", testExpiredToken.TokenType.String(), err.GetErrorCode())
 	}
 }
 
 func _testPutToken(t *testing.T, tokenRepo repo.TokenRepo) {
 	err := tokenRepo.PutToken(testCSRFToken)
 	if err != nil {
-		t.Errorf("failed to put token of type %s: %s", testCSRFToken.TokenType.String(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to put token of type %s: %s", testCSRFToken.TokenType.String(), err.GetErrorCode())
 	}
 	err = tokenRepo.PutToken(testPasswordResetToken)
 	if err != nil {
-		t.Errorf("failed to put token of type %s: %s", testPasswordResetToken.TokenType.String(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to put token of type %s: %s", testPasswordResetToken.TokenType.String(), err.GetErrorCode())
 	}
 	err = tokenRepo.PutToken(testSessionToken)
 	if err != nil {
-		t.Errorf("failed to put token of type %s: %s", testSessionToken.TokenType.String(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to put token of type %s: %s", testSessionToken.TokenType.String(), err.GetErrorCode())
 	}
 	err = tokenRepo.PutToken(testExpiredToken)
 	if err != nil {
-		t.Errorf("failed to put token of type %s: %s", testExpiredToken.TokenType.String(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to put token of type %s: %s", testExpiredToken.TokenType.String(), err.GetErrorCode())
 	}
 }
 
 func _testDeleteToken(t *testing.T, tokenRepo repo.TokenRepo) {
 	err := tokenRepo.DeleteToken(testPasswordResetToken.Value)
 	if err != nil {
-		t.Errorf("failed to delete token with type %s: %s", testPasswordResetToken.TokenType.String(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to delete token with type %s: %s", testPasswordResetToken.TokenType.String(), err.GetErrorCode())
 	}
 }
 
@@ -88,14 +96,16 @@ func _testGetToken(t *testing.T, tokenRepo repo.TokenRepo) {
 	}
 	expiredToken, err := tokenRepo.GetToken(testExpiredToken.Value)
 	if err != nil {
-		t.Errorf("failed to get testExpiredToken from repo: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to get testExpiredToken from repo: %s", err.GetErrorCode())
 	}
 	if !expiredToken.IsExpired() {
 		t.Errorf("testExpiredToken should be expired but expiration is: %s and it is now %s", expiredToken.Expiration.UTC().String(), time.Now().UTC().String())
 	}
 	csrfToken, err := tokenRepo.GetToken(testCSRFToken.Value)
 	if err != nil {
-		t.Errorf("failed to get testCSRFToken from repo: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to get testCSRFToken from repo: %s", err.GetErrorCode())
 	}
 	if csrfToken.TokenType != models.TokenTypeCSRF {
 		t.Errorf("testCSRFToken expected token type does not match expected value: got: %s - expected: %s", csrfToken.TokenType.String(), testCSRFToken.TokenType.String())
@@ -105,7 +115,8 @@ func _testGetToken(t *testing.T, tokenRepo repo.TokenRepo) {
 	}
 	sessionToken, err := tokenRepo.GetToken(testSessionToken.Value)
 	if err != nil {
-		t.Errorf("failed to get testSessionToken from repo: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to get testSessionToken from repo: %s", err.GetErrorCode())
 	}
 	if sessionToken.TokenType != models.TokenTypeSession {
 		t.Errorf("testSessionToken expected token type does not match expected value: got: %s - expected: %s", sessionToken.TokenType.String(), testSessionToken.TokenType.String())

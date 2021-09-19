@@ -56,28 +56,34 @@ func setupTestTokens(t *testing.T) {
 	var err errors.RichError
 	csrfToken, err = models.NewToken(tokenUserID, models.TokenTypeCSRF, time.Minute*1)
 	if err != nil {
-		t.Errorf("faiiled to create token for testing token service: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("faiiled to create token for testing token service: %s", err.GetErrorCode())
 	}
 	confirmContactToken, err = models.NewToken(tokenUserID, models.TokenTypeConfirmContact, time.Minute*1)
 	if err != nil {
-		t.Errorf("faiiled to create token for testing token service: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("faiiled to create token for testing token service: %s", err.GetErrorCode())
 	}
 	passwordResetToken, err = models.NewToken(tokenUserID, models.TokenTypePasswordReset, time.Minute*1)
 	if err != nil {
-		t.Errorf("faiiled to create token for testing token service: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("faiiled to create token for testing token service: %s", err.GetErrorCode())
 	}
 	sessionToken, err = models.NewToken(tokenUserID, models.TokenTypeSession, time.Minute*1)
 	sessionToken.AddMetaData(testKey, testValue)
 	if err != nil {
-		t.Errorf("faiiled to create token for testing token service: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("faiiled to create token for testing token service: %s", err.GetErrorCode())
 	}
 	shortDurationSessionToken, err = models.NewToken(tokenUserID, models.TokenTypeSession, sesssionTokenExpirationDuration)
 	if err != nil {
-		t.Errorf("faiiled to create token for testing token service: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("faiiled to create token for testing token service: %s", err.GetErrorCode())
 	}
 	expiredSessionToken, err = models.NewToken(tokenUserID, models.TokenTypeSession, time.Minute*-1)
 	if err != nil {
-		t.Errorf("faiiled to create token for testing token service: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("faiiled to create token for testing token service: %s", err.GetErrorCode())
 	}
 }
 
@@ -106,30 +112,36 @@ func _testPutToken(t *testing.T, tokenService services.TokenService) {
 func __testPutTokenSuccess(t *testing.T, tokenService services.TokenService) {
 	err := tokenService.PutToken(context.TODO(), csrfToken)
 	if err != nil {
-		t.Errorf("failed to add token %v got error %s: %s", csrfToken, err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add token %v got error: %s", csrfToken, err.GetErrorCode())
 	}
 	err = tokenService.PutToken(context.TODO(), confirmContactToken)
 	if err != nil {
-		t.Errorf("failed to add token %v got error %s: %s", csrfToken, err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add token %v got error: %s", csrfToken, err.GetErrorCode())
 	}
 	err = tokenService.PutToken(context.TODO(), passwordResetToken)
 	if err != nil {
-		t.Errorf("failed to add token %v got error %s: %s", csrfToken, err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add token %v got error: %s", csrfToken, err.GetErrorCode())
 	}
 	err = tokenService.PutToken(context.TODO(), sessionToken)
 	if err != nil {
-		t.Errorf("failed to add token %v got error %s: %s", csrfToken, err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add token %v got error: %s", csrfToken, err.GetErrorCode())
 	}
 	err = tokenService.PutToken(context.TODO(), shortDurationSessionToken)
 	if err != nil {
-		t.Errorf("failed to add token %v got error %s: %s", csrfToken, err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to add token %v got error: %s", csrfToken, err.GetErrorCode())
 	}
 }
 
 func __testPutTokenFailureEmptyTokenValue(t *testing.T, tokenService services.TokenService) {
 	emptyValueToken, err := models.NewToken("", models.TokenTypeCSRF, time.Minute*1)
 	if err != nil {
-		t.Errorf("faiiled to create token for testing token service: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("faiiled to create token for testing token service: %s", err.GetErrorCode())
 	}
 	emptyValueToken.Value = ""
 	err = tokenService.PutToken(context.TODO(), emptyValueToken)
@@ -137,7 +149,8 @@ func __testPutTokenFailureEmptyTokenValue(t *testing.T, tokenService services.To
 		t.Error("expected error because token expiration has passed")
 	}
 	if err.GetErrorCode() != coreerrors.ErrCodeMalfomedToken {
-		t.Errorf("expected malformed token error bug got %s: %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("expected malformed token error bug got: %s", err.GetErrorCode())
 	}
 }
 
@@ -147,21 +160,24 @@ func __testPutTokenFailureExpiredToken(t *testing.T, tokenService services.Token
 		t.Error("expected error because token expiration has passed")
 	}
 	if err.GetErrorCode() != coreerrors.ErrCodeMalfomedToken {
-		t.Errorf("expected malformed token error bug got %s: %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("expected malformed token error bug got: %s", err.GetErrorCode())
 	}
 }
 
 func __testPutTokenFailureInvalidTokenType(t *testing.T, tokenService services.TokenService) {
 	invalidToken, err := models.NewToken("", models.TokenTypeInvalid, time.Minute*1)
 	if err != nil {
-		t.Errorf("faiiled to create token for testing token service: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("faiiled to create token for testing token service: %s", err.GetErrorCode())
 	}
 	err = tokenService.PutToken(context.TODO(), invalidToken)
 	if err == nil {
 		t.Error("expected error because token expiration has passed")
 	}
 	if err.GetErrorCode() != coreerrors.ErrCodeMalfomedToken {
-		t.Errorf("expected malformed token error bug got %s: %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("expected malformed token error bug got: %s", err.GetErrorCode())
 	}
 }
 
@@ -187,7 +203,8 @@ func _testGetToken(t *testing.T, tokenService services.TokenService) {
 func __testGetTokenSuccess(t *testing.T, tokenService services.TokenService) {
 	token, err := tokenService.GetToken(context.TODO(), csrfToken.Value, models.TokenTypeCSRF)
 	if err != nil {
-		t.Errorf("failed to get token got error %s: %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to get token got error: %s", err.GetErrorCode())
 	}
 	if token.Value != csrfToken.Value {
 		t.Errorf("retreived token value does not match expected value: got: %s - expected %s", token.Value, csrfToken.Value)
@@ -200,7 +217,8 @@ func __testGetTokenSuccess(t *testing.T, tokenService services.TokenService) {
 func __testGetTokenSuccessWithMetadata(t *testing.T, tokenService services.TokenService) {
 	token, err := tokenService.GetToken(context.TODO(), sessionToken.Value, models.TokenTypeSession)
 	if err != nil {
-		t.Errorf("failed to get token got error %s: %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to get token got error: %s", err.GetErrorCode())
 	}
 	if token.Value != sessionToken.Value {
 		t.Errorf("retreived token value does not match expected value: got: %s - expected %s", token.Value, sessionToken.Value)
@@ -223,7 +241,8 @@ func __testGetTokenFailureTokenExpired(t *testing.T, tokenService services.Token
 		t.Error("expected error because the token is expired")
 	}
 	if err.GetErrorCode() != coreerrors.ErrCodeExpiredToken {
-		t.Errorf("expected expired token error but got %s: %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("expected expired token error but got: %s", err.GetErrorCode())
 	}
 }
 
@@ -233,7 +252,8 @@ func __testGetTokenFailureWrongTokenType(t *testing.T, tokenService services.Tok
 		t.Error("expected error because the token is expired")
 	}
 	if err.GetErrorCode() != coreerrors.ErrCodeWrongTokenType {
-		t.Errorf("expected expired token error but got %s: %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("expected expired token error but got: %s", err.GetErrorCode())
 	}
 }
 
@@ -252,13 +272,15 @@ func _testDeleteToken(t *testing.T, tokenService services.TokenService) {
 func __testDeleteTokenSuccess(t *testing.T, tokenService services.TokenService) {
 	err := tokenService.DeleteToken(context.TODO(), csrfToken.Value)
 	if err != nil {
-		t.Errorf("failed to delete token got error %s: %s", err.GetErrorCode(), err.Error())
+		t.Log(err.Error())
+		t.Errorf("failed to delete token got error: %s", err.GetErrorCode())
 	}
 }
 
 // func __testDeleteTokenFailuireTokenNotFound(t *testing.T, tokenService services.TokenService) {
 // 	err := tokenService.DeleteToken(context.TODO(), "not a real token value9867568797567687")
 // 	if err != nil {
-// 		t.Errorf("failed to delete token got error %s: %s", err.GetErrorCode(), err.Error())
+// 		t.Log(err.Error())
+// 		t.Errorf("failed to delete token got error %s: %s", err.GetErrorCode(), err.GetErrorCode())
 // 	}
 // }

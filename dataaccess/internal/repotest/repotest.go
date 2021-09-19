@@ -127,7 +127,8 @@ func setupTestHarnessData(t *testing.T, input RepoTestHarnessInput) {
 	// add a test user
 	err = (*input.UserRepo).AddUser(context.TODO(), &initialTestUser, createdByID)
 	if err != nil {
-		t.Errorf("setup failed to add user to database: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("setup failed to add user to database: %s", err.GetErrorCode())
 	}
 
 	// create test contact
@@ -135,27 +136,32 @@ func setupTestHarnessData(t *testing.T, input RepoTestHarnessInput) {
 	// add a test contact for the test user.
 	err = (*input.ContactRepo).AddContact(context.TODO(), &initialTestContact, createdByID)
 	if err != nil {
-		t.Errorf("setup failed to add contact to database: %s", err.Error())
+		t.Log(err.Error())
+		t.Errorf("setup failed to add contact to database: %s", err.GetErrorCode())
 	}
 
 	if input.AppRepo != nil {
 		// create test apps
 		initialTestApp, _, err = models.NewApp(initialTestUser.ID, "test app 1", "https://my.app/callback", "https://my.app/assets/logo.png")
 		if err != nil {
-			t.Errorf("setup failed to create app: %s", err.Error())
+			t.Log(err.Error())
+			t.Errorf("setup failed to create app: %s", err.GetErrorCode())
 		}
 		initialTestApp2, _, err = models.NewApp(initialTestUser.ID, "test app 1", "https://my.app/callback", "https://my.app/assets/logo.png")
 		if err != nil {
-			t.Errorf("setup failed to create app: %s", err.Error())
+			t.Log(err.Error())
+			t.Errorf("setup failed to create app: %s", err.GetErrorCode())
 		}
 		// add test apps
 		err = (*input.AppRepo).AddApp(context.TODO(), &initialTestApp, createdByID)
 		if err != nil {
-			t.Errorf("setup failed to add app to database: %s", err.Error())
+			t.Log(err.Error())
+			t.Errorf("setup failed to add app to database: %s", err.GetErrorCode())
 		}
 		err = (*input.AppRepo).AddApp(context.TODO(), &initialTestApp2, createdByID)
 		if err != nil {
-			t.Errorf("setup failed to add app to database: %s", err.Error())
+			t.Log(err.Error())
+			t.Errorf("setup failed to add app to database: %s", err.GetErrorCode())
 		}
 		// create test scopes
 		initialTestAppScopes = make([]models.Scope, 0, numScopes)
@@ -165,7 +171,8 @@ func setupTestHarnessData(t *testing.T, input RepoTestHarnessInput) {
 			scope := models.NewScope(initialTestApp.ID, fmt.Sprintf("app_scope_%d", i), fmt.Sprintf("permissions associated with app_scope_%d", i))
 			err = (*input.AppRepo).AddScope(context.TODO(), &scope, createdByID)
 			if err != nil {
-				t.Errorf("setup failed to add scope %d to database: %s", i, err.Error())
+				t.Log(err.Error())
+				t.Errorf("setup failed to add scope %d to database: %s", i, err.GetErrorCode())
 			}
 			initialTestAppScopes = append(initialTestAppScopes, scope)
 
@@ -174,7 +181,8 @@ func setupTestHarnessData(t *testing.T, input RepoTestHarnessInput) {
 			// scope2 := models.NewScope(initialTestApp2.ID, fmt.Sprintf("other_app_scope_%d", i), fmt.Sprintf("permissions associated with other_app_scope_%d", i))
 			// err = (*input.AppRepo).AddScope(context.TODO(), &scope2, createdByID)
 			// if err != nil {
-			// 	t.Errorf("setup failed to add other app scope %d to database: %s", i, err.Error())
+			// t.Log(err.Error())
+			// 	t.Errorf("setup failed to add other app scope %d to database: %s", i, err.GetErrorCode())
 			// }
 			// initialTestApp2Scopes = append(initialTestApp2Scopes, scope2)
 		}

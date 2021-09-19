@@ -40,7 +40,8 @@ func _testAddUser(t *testing.T, userRepo repo.UserRepo) {
 
 	err := userRepo.AddUser(context.TODO(), &testUser1, createdByID)
 	if err != nil {
-		t.Error("failed to add user to database", err)
+		t.Log(err.Error())
+		t.Error("failed to add user to database", err.GetErrorCode())
 	}
 	if testUser1.AuditData.CreatedByID != createdByID {
 		t.Error("failed to set the test user 1 CreatedByID to the right value", testUser1.AuditData.CreatedByID, createdByID)
@@ -53,14 +54,16 @@ func _testUpdateUser(t *testing.T, userRepo repo.UserRepo) {
 	testUser1.PasswordHash = newPasswordHash
 	err := userRepo.UpdateUser(context.TODO(), &testUser1, testUser1.ID)
 	if err != nil {
-		t.Error("failed to update user", err)
+		t.Log(err.Error())
+		t.Error("failed to update user", err.GetErrorCode())
 	}
 	if !testUser1.AuditData.ModifiedOnDate.Value.After(preUpdateDate) {
 		t.Error("ModifiedOnDate should be after the preUpdate for test", preUpdateDate, testUser1.AuditData.ModifiedOnDate)
 	}
 	retreivedUser, err := userRepo.GetUserByID(context.TODO(), testUser1.ID)
 	if err != nil {
-		t.Error("failed to retreive updated user to check that fields were updated.", err)
+		t.Log(err.Error())
+		t.Error("failed to retreive updated user to check that fields were updated.", err.GetErrorCode())
 	}
 	if retreivedUser.PasswordHash != newPasswordHash {
 		t.Error("password hash did not update.", retreivedUser.PasswordHash, newPasswordHash)
@@ -71,7 +74,8 @@ func _testGetUserByID(t *testing.T, userRepo repo.UserRepo) {
 	userID := initialTestUser.ID
 	retreivedUser, err := userRepo.GetUserByID(context.TODO(), userID)
 	if err != nil {
-		t.Error("error getting user with id", userID, err)
+		t.Log(err.Error())
+		t.Error("error getting user with id", userID, err.GetErrorCode())
 	}
 	if retreivedUser.PasswordHash != initialTestUser.PasswordHash {
 		t.Error("retreivedUser should have same data as user with id tested", retreivedUser, initialTestUser)
@@ -82,7 +86,8 @@ func _testGetUserByPrimaryContact(t *testing.T, userRepo repo.UserRepo) {
 	contactType, principal := core.CONTACT_TYPE_EMAIL, initialTestContact.Principal
 	retreivedUser, err := userRepo.GetUserByPrimaryContact(context.TODO(), contactType, principal)
 	if err != nil {
-		t.Error("failed to retreive user via primary contact info", contactType, principal, err)
+		t.Log(err.Error())
+		t.Error("failed to retreive user via primary contact info", contactType, principal, err.GetErrorCode())
 	}
 	if retreivedUser.ID != initialTestUser.ID {
 		t.Error("expected retreivedUser and initialTestUser ID to match", retreivedUser.ID, initialTestUser.ID)
@@ -93,7 +98,8 @@ func _testGetUserAndContactByContact(t *testing.T, userRepo repo.UserRepo) {
 	contactType, principal := core.CONTACT_TYPE_EMAIL, initialTestContact.Principal
 	retreivedUser, retreivedContact, err := userRepo.GetUserAndContactByContact(context.TODO(), contactType, principal)
 	if err != nil {
-		t.Error("failed to retreive user via primary contact info", contactType, principal, err)
+		t.Log(err.Error())
+		t.Error("failed to retreive user via primary contact info", contactType, principal, err.GetErrorCode())
 	}
 	if retreivedUser.ID != initialTestUser.ID {
 		t.Error("expected retreivedUser and initialTestUser ID to match", retreivedUser.ID, initialTestUser.ID)
