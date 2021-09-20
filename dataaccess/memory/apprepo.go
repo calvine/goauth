@@ -35,6 +35,17 @@ func (ar appRepo) GetAppByID(ctx context.Context, id string) (models.App, errors
 	return app, nil
 }
 
+func (ar appRepo) GetAppByClientID(ctx context.Context, clientID string) (models.App, errors.RichError) {
+	var app models.App
+	for _, a := range *ar.apps {
+		if a.ClientID == clientID {
+			app = a
+			break
+		}
+	}
+	return app, nil
+}
+
 func (ar appRepo) GetAppsByOwnerID(ctx context.Context, ownerID string) ([]models.App, errors.RichError) {
 	apps := make([]models.App, 0)
 	for _, app := range *ar.apps {

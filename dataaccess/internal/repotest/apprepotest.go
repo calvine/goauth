@@ -26,6 +26,9 @@ func testAppRepo(t *testing.T, appRepo repo.AppRepo) {
 	t.Run("GetAppsByOwnerID", func(t *testing.T) {
 		_testGetAppsByOwnerID(t, appRepo)
 	})
+	t.Run("GetAppsByClientID", func(t *testing.T) {
+		_testGetAppsByClientID(t, appRepo)
+	})
 	t.Run("AddApp", func(t *testing.T) {
 		_testAddApp(t, appRepo)
 	})
@@ -71,6 +74,16 @@ func _testGetAppsByOwnerID(t *testing.T, appRepo repo.AppRepo) {
 	}
 	if len(apps) != 2 {
 		t.Errorf("expected to get back two apps based on provided owner id: %v", apps)
+	}
+}
+func _testGetAppsByClientID(t *testing.T, appRepo repo.AppRepo) {
+	app, err := appRepo.GetAppByClientID(context.TODO(), initialTestApp.ClientID)
+	if err != nil {
+		t.Log(err.Error())
+		t.Errorf("failed to get apps from underlying data store: %s", err.GetErrorCode())
+	}
+	if initialTestApp.ID != app.ID {
+		t.Errorf("retreived app id does not match expected app is: got %s - expected %s", app.ID, initialTestApp.ID)
 	}
 }
 func _testAddApp(t *testing.T, appRepo repo.AppRepo) {

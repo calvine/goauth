@@ -6,12 +6,12 @@ import (
 	"github.com/calvine/richerror/errors"
 )
 
-// ErrCodeInvalidAppCreation this app is missing have the required fields
+// ErrCodeInvalidAppCreation this app had bad or missing required fields
 const ErrCodeInvalidAppCreation = "InvalidAppCreation"
 
 // NewInvalidAppCreationError creates a new specific error
 func NewInvalidAppCreationError(fields map[string]interface{}, includeStack bool) errors.RichError {
-	msg := "this app is missing have the required fields"
+	msg := "this app had bad or missing required fields"
 	err := errors.NewRichError(ErrCodeInvalidAppCreation, msg).WithMetaData(fields)
 	if includeStack {
 		err = err.WithStack(1)
