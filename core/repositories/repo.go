@@ -83,7 +83,7 @@ type AppRepo interface {
 	UpdateApp(ctx context.Context, app *models.App, modifiedBy string) errors.RichError
 	DeleteApp(ctx context.Context, app *models.App, deletedBy string) errors.RichError
 
-	GetScopeByIDAndAppID(ctx context.Context, id, appID string) (models.Scope, errors.RichError)
+	GetScopeByID(ctx context.Context, id string) (models.Scope, errors.RichError)
 	GetScopesByAppID(ctx context.Context, appID string) ([]models.Scope, errors.RichError)
 	AddScope(ctx context.Context, scope *models.Scope, createdBy string) errors.RichError
 	UpdateScope(ctx context.Context, scope *models.Scope, modifiedBy string) errors.RichError

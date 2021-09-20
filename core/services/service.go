@@ -52,7 +52,9 @@ type AppService interface {
 	DeleteApp(ctx context.Context, app *models.App, initiator string) errors.RichError
 	GetScopeByID(ctx context.Context, id string, initiator string) (models.Scope, errors.RichError)
 	GetScopesByAppID(ctx context.Context, appID string, initiator string) ([]models.Scope, errors.RichError)
-	GetScopesByClientID(ctx context.Context, clientID string, initiator string) ([]models.Scope, errors.RichError)
+	// TODO: Determine if needed...
+	// GetScopesByClientID(ctx context.Context, clientID string, initiator string) ([]models.Scope, errors.RichError)
+
 	AddScopeToApp(ctx context.Context, scopes *models.Scope, initiator string) errors.RichError
 	UpdateScope(ctx context.Context, scope *models.Scope, initiator string) errors.RichError
 	DeleteScope(ctx context.Context, scope *models.Scope, initiator string) errors.RichError

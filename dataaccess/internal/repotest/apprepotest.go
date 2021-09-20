@@ -39,8 +39,8 @@ func testAppRepo(t *testing.T, appRepo repo.AppRepo) {
 		_testDeleteApp(t, appRepo)
 	})
 
-	t.Run("GetScopeByIDAndAppID", func(t *testing.T) {
-		_testGetScopeByIDAndAppID(t, appRepo)
+	t.Run("GetScopeByID", func(t *testing.T) {
+		_testGetScopeByID(t, appRepo)
 	})
 	t.Run("GetScopesByAppID", func(t *testing.T) {
 		_testGetScopesByAppID(t, appRepo)
@@ -132,15 +132,18 @@ func _testDeleteApp(t *testing.T, appRepo repo.AppRepo) {
 	}
 }
 
-func _testGetScopeByIDAndAppID(t *testing.T, appRepo repo.AppRepo) {
+func _testGetScopeByID(t *testing.T, appRepo repo.AppRepo) {
 	scopeID := initialTestAppScopes[0].ID
-	scope, err := appRepo.GetScopeByIDAndAppID(context.TODO(), scopeID, initialTestApp.ID)
+	scope, err := appRepo.GetScopeByID(context.TODO(), scopeID)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to get scopes from underlying data store: %s", err.GetErrorCode())
 	}
 	if scope.ID != scopeID {
 		t.Errorf("got scope id that was not expected: got: %s - expected: %s", scope.ID, scopeID)
+	}
+	if scope.AppID != initialTestApp.ID {
+		t.Errorf("got scope app id that was not expected: got: %s - expected: %s", scope.AppID, initialTestApp.ID)
 	}
 }
 func _testGetScopesByAppID(t *testing.T, appRepo repo.AppRepo) {

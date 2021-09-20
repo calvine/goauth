@@ -42,6 +42,50 @@ var (
 	scopeToAdd models.Scope
 )
 
+func TestAppService(t *testing.T) {
+	appService := buildAppService(t)
+	t.Run("GetAppsByOwnerID", func(t *testing.T) {
+		_testGetAppsByOwnerID(t, appService)
+	})
+	t.Run("GetAppByID", func(t *testing.T) {
+		_testGetAppByID(t, appService)
+	})
+	t.Run("GetAppByClientID", func(t *testing.T) {
+		_testGetAppByClientID(t, appService)
+	})
+	t.Run("GetAppAndScopesByClientID", func(t *testing.T) {
+		_testGetAppAndScopesByClientID(t, appService)
+	})
+	t.Run("AddApp", func(t *testing.T) {
+		_testAddApp(t, appService)
+	})
+	t.Run("UpdateApp", func(t *testing.T) {
+		_testUpdateApp(t, appService)
+	})
+	t.Run("DeleteApp", func(t *testing.T) {
+		_testDeleteApp(t, appService)
+	})
+	t.Run("GetScopeByID", func(t *testing.T) {
+		_testGetScopeByID(t, appService)
+	})
+	t.Run("GetScopesByAppID", func(t *testing.T) {
+		_testGetScopesByAppID(t, appService)
+	})
+	// TODO: Determine if needed...
+	// t.Run("GetScopesByClientID", func(t *testing.T) {
+	// 	_testGetScopesByClientID(t, appService)
+	// })
+	t.Run("AddScopesToApp", func(t *testing.T) {
+		_testAddScopeToApp(t, appService)
+	})
+	t.Run("UpdateScope", func(t *testing.T) {
+		_testUpdateScope(t, appService)
+	})
+	t.Run("DeleteScope", func(t *testing.T) {
+		_testDeleteScope(t, appService)
+	})
+}
+
 func setupAppServiceTestData(t *testing.T, appRepo repo.AppRepo) {
 	var err errors.RichError
 	testAppOne_One, testAppOne_OneClientSecret, err = models.NewApp(testAppOneOwnerID, "app name 1_1", "https://app11.com/callback", "https://app11.com/assets/logo.png")
@@ -125,49 +169,6 @@ func buildAppService(t *testing.T) services.AppService {
 	appService := NewAppService(appRepo, auditLogRepo)
 	setupAppServiceTestData(t, appRepo)
 	return appService
-}
-
-func TestAppService(t *testing.T) {
-	appService := buildAppService(t)
-	t.Run("GetAppsByOwnerID", func(t *testing.T) {
-		_testGetAppsByOwnerID(t, appService)
-	})
-	t.Run("GetAppByID", func(t *testing.T) {
-		_testGetAppByID(t, appService)
-	})
-	t.Run("GetAppByClientID", func(t *testing.T) {
-		_testGetAppByClientID(t, appService)
-	})
-	t.Run("GetAppAndScopesByClientID", func(t *testing.T) {
-		_testGetAppAndScopesByClientID(t, appService)
-	})
-	t.Run("AddApp", func(t *testing.T) {
-		_testAddApp(t, appService)
-	})
-	t.Run("UpdateApp", func(t *testing.T) {
-		_testUpdateApp(t, appService)
-	})
-	t.Run("DeleteApp", func(t *testing.T) {
-		_testDeleteApp(t, appService)
-	})
-	t.Run("GetScopeByID", func(t *testing.T) {
-		_testGetScopeByID(t, appService)
-	})
-	t.Run("GetScopesByAppID", func(t *testing.T) {
-		_testGetScopesByAppID(t, appService)
-	})
-	t.Run("GetScopesByClientID", func(t *testing.T) {
-		_testGetScopesByClientID(t, appService)
-	})
-	t.Run("AddScopesToApp", func(t *testing.T) {
-		_testAddScopeToApp(t, appService)
-	})
-	t.Run("UpdateScope", func(t *testing.T) {
-		_testUpdateScope(t, appService)
-	})
-	t.Run("DeleteScope", func(t *testing.T) {
-		_testDeleteScope(t, appService)
-	})
 }
 
 func _testGetAppsByOwnerID(t *testing.T, appService services.AppService) {
@@ -648,7 +649,7 @@ func _testGetScopesByAppID(t *testing.T, appService services.AppService) {
 				ExpectedError: false,
 				Name:          "success",
 			},
-			appID:          testAppOne_TwoScopes[0].ID,
+			appID:          testAppOne_Two.ID,
 			expectedOutput: testAppOne_TwoScopes,
 		},
 		{
@@ -689,57 +690,58 @@ func _testGetScopesByAppID(t *testing.T, appService services.AppService) {
 	}
 }
 
-func _testGetScopesByClientID(t *testing.T, appService services.AppService) {
-	testCases := []struct {
-		baseData       testutilities.BaseTestCase
-		clientID       string
-		expectedOutput []models.Scope
-	}{
-		{
-			baseData: testutilities.BaseTestCase{
-				ExpectedError: false,
-				Name:          "success",
-			},
-			clientID:       testAppOne_Two.ClientID,
-			expectedOutput: testAppOne_TwoScopes,
-		},
-		{
-			baseData: testutilities.BaseTestCase{
-				ExpectedError:     true,
-				ExpectedErrorCode: coreerrors.ErrCodeNoScopeFound,
-				Name:              "failure no app client id found",
-			},
-			clientID: "not a valid scope id",
-		},
-	}
-	for _, tt := range testCases {
-		t.Run(tt.baseData.Name, func(t *testing.T) {
-			scopes, err := appService.GetScopesByAppID(context.TODO(), tt.clientID, createdByAppService)
-			testutilities.PerformErrorCheck(t, tt.baseData, err)
-			if err == nil {
-				for _, scope := range scopes {
-					scopeFound := false
-					var matchingScope models.Scope
-					for _, s := range tt.expectedOutput {
-						if scope.ID == s.ID {
-							scopeFound = true
-							matchingScope = s
-							break
-						}
-					}
-					if scopeFound {
-						equalityMatch := testutilities.Equals(scope, matchingScope)
-						if !equalityMatch.AreEqual {
-							t.Errorf("found app and expected scope do not match: got %v - expected %v", scope, matchingScope)
-						}
-					} else {
-						t.Errorf("failed to find scope with id %s in underlying data scource", scope.ID)
-					}
-				}
-			}
-		})
-	}
-}
+// TODO: Determine if needed...
+// func _testGetScopesByClientID(t *testing.T, appService services.AppService) {
+// 	testCases := []struct {
+// 		baseData       testutilities.BaseTestCase
+// 		clientID       string
+// 		expectedOutput []models.Scope
+// 	}{
+// 		{
+// 			baseData: testutilities.BaseTestCase{
+// 				ExpectedError: false,
+// 				Name:          "success",
+// 			},
+// 			clientID:       testAppOne_Two.ClientID,
+// 			expectedOutput: testAppOne_TwoScopes,
+// 		},
+// 		{
+// 			baseData: testutilities.BaseTestCase{
+// 				ExpectedError:     true,
+// 				ExpectedErrorCode: coreerrors.ErrCodeNoScopeFound,
+// 				Name:              "failure no app client id found",
+// 			},
+// 			clientID: "not a valid scope id",
+// 		},
+// 	}
+// 	for _, tt := range testCases {
+// 		t.Run(tt.baseData.Name, func(t *testing.T) {
+// 			scopes, err := appService.GetScopesByClientID(context.TODO(), tt.clientID, createdByAppService)
+// 			testutilities.PerformErrorCheck(t, tt.baseData, err)
+// 			if err == nil {
+// 				for _, scope := range scopes {
+// 					scopeFound := false
+// 					var matchingScope models.Scope
+// 					for _, s := range tt.expectedOutput {
+// 						if scope.ID == s.ID {
+// 							scopeFound = true
+// 							matchingScope = s
+// 							break
+// 						}
+// 					}
+// 					if scopeFound {
+// 						equalityMatch := testutilities.Equals(scope, matchingScope)
+// 						if !equalityMatch.AreEqual {
+// 							t.Errorf("found app and expected scope do not match: got %v - expected %v", scope, matchingScope)
+// 						}
+// 					} else {
+// 						t.Errorf("failed to find scope with id %s in underlying data scource", scope.ID)
+// 					}
+// 				}
+// 			}
+// 		})
+// 	}
+// }
 
 func _testAddScopeToApp(t *testing.T, appService services.AppService) {
 	testCases := []struct {

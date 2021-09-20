@@ -67,16 +67,25 @@ func (as appService) DeleteApp(ctx context.Context, app *models.App, initiator s
 }
 
 func (as appService) GetScopeByID(ctx context.Context, id string, initiator string) (models.Scope, errors.RichError) {
-	return models.Scope{}, coreerrors.NewNotImplementedError(true)
+	scope, err := as.appRepo.GetScopeByID(ctx, id)
+	if err != nil {
+		return models.Scope{}, err
+	}
+	return scope, nil
 }
 
 func (as appService) GetScopesByAppID(ctx context.Context, appID string, initiator string) ([]models.Scope, errors.RichError) {
-	return nil, coreerrors.NewNotImplementedError(true)
+	scopes, err := as.appRepo.GetScopesByAppID(ctx, appID)
+	if err != nil {
+		return nil, err
+	}
+	return scopes, nil
 }
 
-func (as appService) GetScopesByClientID(ctx context.Context, clientID string, initiator string) ([]models.Scope, errors.RichError) {
-	return nil, coreerrors.NewNotImplementedError(true)
-}
+// TODO: Determine if needed...
+// func (as appService) GetScopesByClientID(ctx context.Context, clientID string, initiator string) ([]models.Scope, errors.RichError) {
+// 	return nil, coreerrors.NewNotImplementedError(true)
+// }
 
 func (as appService) AddScopeToApp(ctx context.Context, scopes *models.Scope, initiator string) errors.RichError {
 	return coreerrors.NewNotImplementedError(true)

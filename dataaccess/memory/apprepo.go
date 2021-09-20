@@ -102,19 +102,26 @@ func (ar appRepo) DeleteApp(ctx context.Context, app *models.App, deletedBy stri
 	return nil
 }
 
-func (ar appRepo) GetScopeByIDAndAppID(ctx context.Context, id, appID string) (models.Scope, errors.RichError) {
-	scopes, ok := (*ar.appScopes)[appID]
-	if !ok {
-		fields := map[string]interface{}{"appID": appID, "id": id}
-		return models.Scope{}, coreerrors.NewNoScopeFoundError(fields, true)
-	}
-	for _, scope := range scopes {
-		if scope.ID == id {
-			return scope, nil
+func (ar appRepo) GetScopeByID(ctx context.Context, id string) (models.Scope, errors.RichError) {
+	var scope models.Scope
+	found := false
+	for _, appScopes := range *ar.appScopes {
+		for _, s := range appScopes {
+			if s.ID == id {
+				scope = s
+				found = true
+				break
+			}
+		}
+		if found {
+			break
 		}
 	}
-	fields := map[string]interface{}{"appID": appID, "id": id}
-	return models.Scope{}, coreerrors.NewNoScopeFoundError(fields, true)
+	if !found {
+		fields := map[string]interface{}{"id": id}
+		return models.Scope{}, coreerrors.NewNoScopeFoundError(fields, true)
+	}
+	return scope, nil
 }
 
 func (ar appRepo) GetScopesByAppID(ctx context.Context, appID string) ([]models.Scope, errors.RichError) {
