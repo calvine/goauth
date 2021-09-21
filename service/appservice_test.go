@@ -12,6 +12,7 @@ import (
 	"github.com/calvine/goauth/core/testutilities"
 	"github.com/calvine/goauth/dataaccess/memory"
 	"github.com/calvine/richerror/errors"
+	"go.uber.org/zap/zaptest"
 )
 
 const (
@@ -197,7 +198,8 @@ func _testGetAppsByOwnerID(t *testing.T, appService services.AppService) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.baseData.Name, func(t *testing.T) {
-			apps, err := appService.GetAppsByOwnerID(context.TODO(), tt.ownerID, createdByAppService)
+			logger := zaptest.NewLogger(t)
+			apps, err := appService.GetAppsByOwnerID(context.TODO(), logger, tt.ownerID, createdByAppService)
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
 			if err == nil {
 				numAppsReturned := len(apps)
@@ -253,7 +255,8 @@ func _testGetAppByID(t *testing.T, appService services.AppService) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.baseData.Name, func(t *testing.T) {
-			app, err := appService.GetAppByID(context.TODO(), tt.appID, createdByAppService)
+			logger := zaptest.NewLogger(t)
+			app, err := appService.GetAppByID(context.TODO(), logger, tt.appID, createdByAppService)
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
 			if err == nil {
 				equalityMatch := testutilities.Equals(app, tt.expectedOutput)
@@ -290,7 +293,8 @@ func _testGetAppByClientID(t *testing.T, appService services.AppService) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.baseData.Name, func(t *testing.T) {
-			app, err := appService.GetAppByClientID(context.TODO(), tt.clientID, createdByAppService)
+			logger := zaptest.NewLogger(t)
+			app, err := appService.GetAppByClientID(context.TODO(), logger, tt.clientID, createdByAppService)
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
 			if err == nil {
 				equalityMatch := testutilities.Equals(app, tt.expectedOutput)
@@ -336,7 +340,8 @@ func _testGetAppAndScopesByClientID(t *testing.T, appService services.AppService
 	}
 	for _, tt := range testCases {
 		t.Run(tt.baseData.Name, func(t *testing.T) {
-			app, scopes, err := appService.GetAppAndScopesByClientID(context.TODO(), tt.clientID, createdByAppService)
+			logger := zaptest.NewLogger(t)
+			app, scopes, err := appService.GetAppAndScopesByClientID(context.TODO(), logger, tt.clientID, createdByAppService)
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
 			if err == nil {
 				equalityMatch := testutilities.Equals(app, tt.expectedOutput.app)
@@ -464,12 +469,13 @@ func _testAddApp(t *testing.T, appService services.AppService) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.baseData.Name, func(t *testing.T) {
+			logger := zaptest.NewLogger(t)
 			app := tt.appToAdd(t)
-			err := appService.AddApp(context.TODO(), &app, createdByAppService)
+			err := appService.AddApp(context.TODO(), logger, &app, createdByAppService)
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
 			if err == nil {
 				appToAdd = app
-				testutilities.ValidateExpectedAppEqualToStoredAppWithAppService(t, appService, app)
+				testutilities.ValidateExpectedAppEqualToStoredAppWithAppService(t, logger, appService, app)
 			}
 		})
 	}
@@ -554,11 +560,12 @@ func _testUpdateApp(t *testing.T, appService services.AppService) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.baseData.Name, func(t *testing.T) {
+			logger := zaptest.NewLogger(t)
 			app := tt.updateApp(t, appToAdd)
-			err := appService.UpdateApp(context.TODO(), &app, createdByAppService)
+			err := appService.UpdateApp(context.TODO(), logger, &app, createdByAppService)
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
 			if err == nil {
-				testutilities.ValidateExpectedAppEqualToStoredAppWithAppService(t, appService, app)
+				testutilities.ValidateExpectedAppEqualToStoredAppWithAppService(t, logger, appService, app)
 			}
 		})
 	}
@@ -589,10 +596,11 @@ func _testDeleteApp(t *testing.T, appService services.AppService) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.baseData.Name, func(t *testing.T) {
-			err := appService.DeleteApp(context.TODO(), &tt.app, createdByAppService)
+			logger := zaptest.NewLogger(t)
+			err := appService.DeleteApp(context.TODO(), logger, &tt.app, createdByAppService)
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
 			if err == nil {
-				_, err := appService.GetAppByID(context.TODO(), tt.app.ID, createdByAppService)
+				_, err := appService.GetAppByID(context.TODO(), logger, tt.app.ID, createdByAppService)
 				if err == nil {
 					t.Fatal("should have failed to retreive app because it should have been deleted...")
 				}
@@ -626,7 +634,8 @@ func _testGetScopeByID(t *testing.T, appService services.AppService) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.baseData.Name, func(t *testing.T) {
-			scope, err := appService.GetScopeByID(context.TODO(), tt.scopeID, createdByAppService)
+			logger := zaptest.NewLogger(t)
+			scope, err := appService.GetScopeByID(context.TODO(), logger, tt.scopeID, createdByAppService)
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
 			if err == nil {
 				equalityMatch := testutilities.Equals(scope, tt.expectedOutput)
@@ -663,7 +672,8 @@ func _testGetScopesByAppID(t *testing.T, appService services.AppService) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.baseData.Name, func(t *testing.T) {
-			scopes, err := appService.GetScopesByAppID(context.TODO(), tt.appID, createdByAppService)
+			logger := zaptest.NewLogger(t)
+			scopes, err := appService.GetScopesByAppID(context.TODO(), logger, tt.appID, createdByAppService)
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
 			if err == nil {
 				for _, scope := range scopes {
@@ -816,12 +826,13 @@ func _testAddScopeToApp(t *testing.T, appService services.AppService) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.baseData.Name, func(t *testing.T) {
+			logger := zaptest.NewLogger(t)
 			scope := tt.scopeToAdd(t)
-			err := appService.AddScopeToApp(context.TODO(), &scope, createdByAppService)
+			err := appService.AddScopeToApp(context.TODO(), logger, &scope, createdByAppService)
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
 			if err == nil {
 				scopeToAdd = scope
-				testutilities.ValidateExpectedScopeEqualToStoredScopeWithAppService(t, appService, scope)
+				testutilities.ValidateExpectedScopeEqualToStoredScopeWithAppService(t, logger, appService, scope)
 			}
 		})
 	}
@@ -902,12 +913,13 @@ func _testUpdateScope(t *testing.T, appService services.AppService) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.baseData.Name, func(t *testing.T) {
+			logger := zaptest.NewLogger(t)
 			scope := tt.scopeToUpdate(t)
-			err := appService.UpdateScope(context.TODO(), &scope, createdByAppService)
+			err := appService.UpdateScope(context.TODO(), logger, &scope, createdByAppService)
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
 			if err == nil {
 				scopeToAdd = scope
-				testutilities.ValidateExpectedScopeEqualToStoredScopeWithAppService(t, appService, scope)
+				testutilities.ValidateExpectedScopeEqualToStoredScopeWithAppService(t, logger, appService, scope)
 			}
 		})
 	}
@@ -938,10 +950,11 @@ func _testDeleteScope(t *testing.T, appService services.AppService) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.baseData.Name, func(t *testing.T) {
-			err := appService.DeleteScope(context.TODO(), &tt.scope, createdByAppService)
+			logger := zaptest.NewLogger(t)
+			err := appService.DeleteScope(context.TODO(), logger, &tt.scope, createdByAppService)
 			testutilities.PerformErrorCheck(t, tt.baseData, err)
 			if err == nil {
-				_, err := appService.GetScopeByID(context.TODO(), tt.scope.ID, createdByAppService)
+				_, err := appService.GetScopeByID(context.TODO(), logger, tt.scope.ID, createdByAppService)
 				if err == nil {
 					t.Fatal("should have failed to retreive app because it should have been deleted...")
 				}

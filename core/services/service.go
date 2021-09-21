@@ -5,6 +5,7 @@ import (
 
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/richerror/errors"
+	"go.uber.org/zap"
 )
 
 // TODO: change all instances of error to RichError
@@ -43,21 +44,21 @@ type UserService interface {
 }
 
 type AppService interface {
-	GetAppsByOwnerID(ctx context.Context, ownerID string, initiator string) ([]models.App, errors.RichError)
-	GetAppByID(ctx context.Context, id string, initiator string) (models.App, errors.RichError)
-	GetAppByClientID(ctx context.Context, clientID string, initiator string) (models.App, errors.RichError)
-	GetAppAndScopesByClientID(ctx context.Context, clientID string, initiator string) (models.App, []models.Scope, errors.RichError)
-	AddApp(ctx context.Context, app *models.App, initiator string) errors.RichError
-	UpdateApp(ctx context.Context, app *models.App, initiator string) errors.RichError
-	DeleteApp(ctx context.Context, app *models.App, initiator string) errors.RichError
-	GetScopeByID(ctx context.Context, id string, initiator string) (models.Scope, errors.RichError)
-	GetScopesByAppID(ctx context.Context, appID string, initiator string) ([]models.Scope, errors.RichError)
+	GetAppsByOwnerID(ctx context.Context, logger *zap.Logger, ownerID string, initiator string) ([]models.App, errors.RichError)
+	GetAppByID(ctx context.Context, logger *zap.Logger, id string, initiator string) (models.App, errors.RichError)
+	GetAppByClientID(ctx context.Context, logger *zap.Logger, clientID string, initiator string) (models.App, errors.RichError)
+	GetAppAndScopesByClientID(ctx context.Context, logger *zap.Logger, clientID string, initiator string) (models.App, []models.Scope, errors.RichError)
+	AddApp(ctx context.Context, logger *zap.Logger, app *models.App, initiator string) errors.RichError
+	UpdateApp(ctx context.Context, logger *zap.Logger, app *models.App, initiator string) errors.RichError
+	DeleteApp(ctx context.Context, logger *zap.Logger, app *models.App, initiator string) errors.RichError
+	GetScopeByID(ctx context.Context, logger *zap.Logger, id string, initiator string) (models.Scope, errors.RichError)
+	GetScopesByAppID(ctx context.Context, logger *zap.Logger, appID string, initiator string) ([]models.Scope, errors.RichError)
 	// TODO: Determine if needed...
 	// GetScopesByClientID(ctx context.Context, clientID string, initiator string) ([]models.Scope, errors.RichError)
 
-	AddScopeToApp(ctx context.Context, scopes *models.Scope, initiator string) errors.RichError
-	UpdateScope(ctx context.Context, scope *models.Scope, initiator string) errors.RichError
-	DeleteScope(ctx context.Context, scope *models.Scope, initiator string) errors.RichError
+	AddScopeToApp(ctx context.Context, logger *zap.Logger, scopes *models.Scope, initiator string) errors.RichError
+	UpdateScope(ctx context.Context, logger *zap.Logger, scope *models.Scope, initiator string) errors.RichError
+	DeleteScope(ctx context.Context, logger *zap.Logger, scope *models.Scope, initiator string) errors.RichError
 }
 
 type EmailService interface {

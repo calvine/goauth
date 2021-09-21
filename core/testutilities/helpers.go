@@ -9,6 +9,7 @@ import (
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/services"
 	"github.com/calvine/richerror/errors"
+	"go.uber.org/zap"
 )
 
 const (
@@ -34,19 +35,24 @@ func PerformErrorCheck(t *testing.T, testCase BaseTestCase, err errors.RichError
 	}
 }
 
-func ValidateExpectedAppEqualToStoredAppWithAppService(t *testing.T, appService services.AppService, expectedApp models.App) {
-	app, err := appService.GetAppByID(context.TODO(), expectedApp.ID, "ValidateExpectedAppEqualToStoredAppWithAppService")
+func ValidateExpectedAppEqualToStoredAppWithAppService(t *testing.T, logger *zap.Logger, appService services.AppService, expectedApp models.App) {
+	app, err := appService.GetAppByID(context.TODO(), logger, expectedApp.ID, "ValidateExpectedAppEqualToStoredAppWithAppService")
 	if err != nil {
-		t.Fatalf("failed to get app with id %s for comparison from underlying data source: %s", expectedApp.ID, err.Error())
+		logger.Fatal("failed to get app for comparison from underlying data source", zap.String("expectedApp.ID", expectedApp.ID), zap.String("errCode", err.GetErrorCode()))
 	}
 	equalityCheck := Equals(app, expectedApp)
 	if !equalityCheck.AreEqual {
-		t.Fatalf("app not equal to expected app: %v", equalityCheck.Failures)
+		numFailures := len(equalityCheck.Failures)
+		equalityFailures := make([]string, 0, numFailures)
+		for i := 0; i < numFailures; i++ {
+			equalityFailures[i] = equalityCheck.Failures[i].ToString(true)
+		}
+		logger.Fatal("app not equal to expected app", zap.Strings("expectedAppEqualityFailures", equalityFailures))
 	}
 }
 
-func ValidateExpectedScopeEqualToStoredScopeWithAppService(t *testing.T, appService services.AppService, expectedScope models.Scope) {
-	scope, err := appService.GetScopeByID(context.TODO(), expectedScope.ID, "ValidateExpectedScopeEqualToStoredScopeWithAppService")
+func ValidateExpectedScopeEqualToStoredScopeWithAppService(t *testing.T, logger *zap.Logger, appService services.AppService, expectedScope models.Scope) {
+	scope, err := appService.GetScopeByID(context.TODO(), logger, expectedScope.ID, "ValidateExpectedScopeEqualToStoredScopeWithAppService")
 	if err != nil {
 		t.Log(err.Error())
 		t.Fatalf("failed to get scope with id %s for comparison from underlying data source: %s", expectedScope.ID, err.GetErrorCode())

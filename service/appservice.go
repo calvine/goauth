@@ -7,6 +7,7 @@ import (
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/core/services"
 	"github.com/calvine/richerror/errors"
+	"go.uber.org/zap"
 )
 
 // TODO: need validated info added to mutative function parameters for another level of checking
@@ -23,7 +24,7 @@ func NewAppService(appRepo repo.AppRepo, auditLogRepo repo.AuditLogRepo) service
 	}
 }
 
-func (as appService) GetAppsByOwnerID(ctx context.Context, ownerID string, initiator string) ([]models.App, errors.RichError) {
+func (as appService) GetAppsByOwnerID(ctx context.Context, logger *zap.Logger, ownerID string, initiator string) ([]models.App, errors.RichError) {
 	apps, err := as.appRepo.GetAppsByOwnerID(ctx, ownerID)
 	if err != nil {
 		return nil, err
@@ -31,7 +32,7 @@ func (as appService) GetAppsByOwnerID(ctx context.Context, ownerID string, initi
 	return apps, nil
 }
 
-func (as appService) GetAppByID(ctx context.Context, id string, initiator string) (models.App, errors.RichError) {
+func (as appService) GetAppByID(ctx context.Context, logger *zap.Logger, id string, initiator string) (models.App, errors.RichError) {
 	app, err := as.appRepo.GetAppByID(ctx, id)
 	if err != nil {
 		return models.App{}, err
@@ -39,7 +40,7 @@ func (as appService) GetAppByID(ctx context.Context, id string, initiator string
 	return app, nil
 }
 
-func (as appService) GetAppByClientID(ctx context.Context, clientID string, initiator string) (models.App, errors.RichError) {
+func (as appService) GetAppByClientID(ctx context.Context, logger *zap.Logger, clientID string, initiator string) (models.App, errors.RichError) {
 	app, err := as.appRepo.GetAppByClientID(ctx, clientID)
 	if err != nil {
 		return models.App{}, err
@@ -47,7 +48,7 @@ func (as appService) GetAppByClientID(ctx context.Context, clientID string, init
 	return app, nil
 }
 
-func (as appService) GetAppAndScopesByClientID(ctx context.Context, clientID string, initiator string) (models.App, []models.Scope, errors.RichError) {
+func (as appService) GetAppAndScopesByClientID(ctx context.Context, logger *zap.Logger, clientID string, initiator string) (models.App, []models.Scope, errors.RichError) {
 	app, scopes, err := as.appRepo.GetAppAndScopesByClientID(ctx, clientID)
 	if err != nil {
 		return models.App{}, nil, err
@@ -55,7 +56,7 @@ func (as appService) GetAppAndScopesByClientID(ctx context.Context, clientID str
 	return app, scopes, nil
 }
 
-func (as appService) AddApp(ctx context.Context, app *models.App, initiator string) errors.RichError {
+func (as appService) AddApp(ctx context.Context, logger *zap.Logger, app *models.App, initiator string) errors.RichError {
 	err := models.ValidateApp(false, *app)
 	if err != nil {
 		return err
@@ -64,7 +65,7 @@ func (as appService) AddApp(ctx context.Context, app *models.App, initiator stri
 	return err
 }
 
-func (as appService) UpdateApp(ctx context.Context, app *models.App, initiator string) errors.RichError {
+func (as appService) UpdateApp(ctx context.Context, logger *zap.Logger, app *models.App, initiator string) errors.RichError {
 	err := models.ValidateApp(true, *app)
 	if err != nil {
 		return err
@@ -73,12 +74,12 @@ func (as appService) UpdateApp(ctx context.Context, app *models.App, initiator s
 	return err
 }
 
-func (as appService) DeleteApp(ctx context.Context, app *models.App, initiator string) errors.RichError {
+func (as appService) DeleteApp(ctx context.Context, logger *zap.Logger, app *models.App, initiator string) errors.RichError {
 	err := as.appRepo.DeleteApp(ctx, app, initiator)
 	return err
 }
 
-func (as appService) GetScopeByID(ctx context.Context, id string, initiator string) (models.Scope, errors.RichError) {
+func (as appService) GetScopeByID(ctx context.Context, logger *zap.Logger, id string, initiator string) (models.Scope, errors.RichError) {
 	scope, err := as.appRepo.GetScopeByID(ctx, id)
 	if err != nil {
 		return models.Scope{}, err
@@ -86,7 +87,7 @@ func (as appService) GetScopeByID(ctx context.Context, id string, initiator stri
 	return scope, nil
 }
 
-func (as appService) GetScopesByAppID(ctx context.Context, appID string, initiator string) ([]models.Scope, errors.RichError) {
+func (as appService) GetScopesByAppID(ctx context.Context, logger *zap.Logger, appID string, initiator string) ([]models.Scope, errors.RichError) {
 	scopes, err := as.appRepo.GetScopesByAppID(ctx, appID)
 	if err != nil {
 		return nil, err
@@ -99,7 +100,7 @@ func (as appService) GetScopesByAppID(ctx context.Context, appID string, initiat
 // 	return nil, coreerrors.NewNotImplementedError(true)
 // }
 
-func (as appService) AddScopeToApp(ctx context.Context, scope *models.Scope, initiator string) errors.RichError {
+func (as appService) AddScopeToApp(ctx context.Context, logger *zap.Logger, scope *models.Scope, initiator string) errors.RichError {
 	err := models.ValidateScope(false, *scope)
 	if err != nil {
 		return err
@@ -108,7 +109,7 @@ func (as appService) AddScopeToApp(ctx context.Context, scope *models.Scope, ini
 	return err
 }
 
-func (as appService) UpdateScope(ctx context.Context, scope *models.Scope, initiator string) errors.RichError {
+func (as appService) UpdateScope(ctx context.Context, logger *zap.Logger, scope *models.Scope, initiator string) errors.RichError {
 	err := models.ValidateScope(false, *scope)
 	if err != nil {
 		return err
@@ -117,7 +118,7 @@ func (as appService) UpdateScope(ctx context.Context, scope *models.Scope, initi
 	return err
 }
 
-func (as appService) DeleteScope(ctx context.Context, scope *models.Scope, initiator string) errors.RichError {
+func (as appService) DeleteScope(ctx context.Context, logger *zap.Logger, scope *models.Scope, initiator string) errors.RichError {
 	err := as.appRepo.DeleteScope(ctx, scope, initiator)
 	return err
 }
