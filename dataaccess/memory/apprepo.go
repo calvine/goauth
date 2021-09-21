@@ -81,6 +81,7 @@ func (ar appRepo) AddApp(ctx context.Context, app *models.App, createdBy string)
 		app.ID = uuid.Must(uuid.NewRandom()).String()
 	}
 	(*ar.apps)[app.ID] = *app
+	(*ar.appScopes)[app.ID] = make([]models.Scope, 0, 5)
 	return nil
 }
 
@@ -142,7 +143,8 @@ func (ar appRepo) AddScope(ctx context.Context, scope *models.Scope, createdBy s
 	}
 	scopes, ok := (*ar.appScopes)[appID]
 	if !ok {
-		scopes = make([]models.Scope, 0, 1)
+		fields := map[string]interface{}{"ID": scope.ID, "AppID": scope.AppID}
+		return coreerrors.NewNoAppFoundError(fields, true)
 	}
 	scopes = append(scopes, *scope)
 	(*ar.appScopes)[appID] = scopes
@@ -157,13 +159,20 @@ func (ar appRepo) UpdateScope(ctx context.Context, scope *models.Scope, modified
 		fields := map[string]interface{}{"appID": appID}
 		return coreerrors.NewNoScopeFoundError(fields, true)
 	}
-	for _, s := range scopes {
+	scopeFound := false
+	for i, s := range scopes {
 		if s.ID == scopeID {
 			scope.AuditData.ModifiedByID = nullable.NullableString{HasValue: true, Value: modifiedBy}
 			scope.AuditData.ModifiedOnDate = nullable.NullableTime{HasValue: true, Value: time.Now().UTC()}
-			scopes = append(scopes, *scope)
+			scopes[i] = *scope
 			(*ar.appScopes)[appID] = scopes
+			scopeFound = true
+			break
 		}
+	}
+	if !scopeFound {
+		fields := map[string]interface{}{"ID": scope.ID, "appID": scope.AppID}
+		return coreerrors.NewNoScopeFoundError(fields, true)
 	}
 	return nil
 }
@@ -183,7 +192,7 @@ func (ar appRepo) DeleteScope(ctx context.Context, scope *models.Scope, deletedB
 			scopes[i] = scopes[len(scopes)-1]
 			scopes = scopes[:len(scopes)-1]
 			// same, but would preserve order
-			scopes = append(scopes[:i], scopes[i+1:]...)
+			// scopes = append(scopes[:i], scopes[i+1:]...)
 			scope = nil
 			(*ar.appScopes)[appID] = scopes
 			scopeFound = true

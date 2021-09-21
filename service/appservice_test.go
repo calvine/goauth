@@ -579,7 +579,7 @@ func _testDeleteApp(t *testing.T, appService services.AppService) {
 		{
 			baseData: testutilities.BaseTestCase{
 				ExpectedError:     true,
-				ExpectedErrorCode: coreerrors.ErrCodeInvalidAppCreation,
+				ExpectedErrorCode: coreerrors.ErrCodeNoAppFound,
 				Name:              "failure no name",
 			},
 			app: models.App{
@@ -838,7 +838,9 @@ func _testUpdateScope(t *testing.T, appService services.AppService) {
 				Name:          "success",
 			},
 			scopeToUpdate: func(t *testing.T) models.Scope {
-				scope := models.NewScope(testAppOne_Three.ID, "test_add_scope_scope", "this is a scope added as a test")
+				scope := scopeToAdd
+				scope.Name = "new_scope_name"
+				scope.Description = "Updted scope description"
 				return scope
 			},
 		},
@@ -878,7 +880,7 @@ func _testUpdateScope(t *testing.T, appService services.AppService) {
 		{
 			baseData: testutilities.BaseTestCase{
 				ExpectedError:     true,
-				ExpectedErrorCode: coreerrors.ErrCodeNoAppFound,
+				ExpectedErrorCode: coreerrors.ErrCodeNoScopeFound,
 				Name:              "failure appID does not exist in data store",
 			},
 			scopeToUpdate: func(t *testing.T) models.Scope {
@@ -926,7 +928,7 @@ func _testDeleteScope(t *testing.T, appService services.AppService) {
 		{
 			baseData: testutilities.BaseTestCase{
 				ExpectedError:     true,
-				ExpectedErrorCode: coreerrors.ErrCodeInvalidAppCreation,
+				ExpectedErrorCode: coreerrors.ErrCodeNoScopeFound,
 				Name:              "failure scope not found",
 			},
 			scope: models.Scope{

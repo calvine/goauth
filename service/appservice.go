@@ -3,12 +3,13 @@ package service
 import (
 	"context"
 
-	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/core/services"
 	"github.com/calvine/richerror/errors"
 )
+
+// TODO: need validated info added to mutative function parameters for another level of checking
 
 type appService struct {
 	appRepo      repo.AppRepo
@@ -55,15 +56,26 @@ func (as appService) GetAppAndScopesByClientID(ctx context.Context, clientID str
 }
 
 func (as appService) AddApp(ctx context.Context, app *models.App, initiator string) errors.RichError {
-	return coreerrors.NewNotImplementedError(true)
+	err := models.ValidateApp(false, *app)
+	if err != nil {
+		return err
+	}
+	err = as.appRepo.AddApp(ctx, app, initiator)
+	return err
 }
 
 func (as appService) UpdateApp(ctx context.Context, app *models.App, initiator string) errors.RichError {
-	return coreerrors.NewNotImplementedError(true)
+	err := models.ValidateApp(true, *app)
+	if err != nil {
+		return err
+	}
+	err = as.appRepo.UpdateApp(ctx, app, initiator)
+	return err
 }
 
 func (as appService) DeleteApp(ctx context.Context, app *models.App, initiator string) errors.RichError {
-	return coreerrors.NewNotImplementedError(true)
+	err := as.appRepo.DeleteApp(ctx, app, initiator)
+	return err
 }
 
 func (as appService) GetScopeByID(ctx context.Context, id string, initiator string) (models.Scope, errors.RichError) {
@@ -87,14 +99,25 @@ func (as appService) GetScopesByAppID(ctx context.Context, appID string, initiat
 // 	return nil, coreerrors.NewNotImplementedError(true)
 // }
 
-func (as appService) AddScopeToApp(ctx context.Context, scopes *models.Scope, initiator string) errors.RichError {
-	return coreerrors.NewNotImplementedError(true)
+func (as appService) AddScopeToApp(ctx context.Context, scope *models.Scope, initiator string) errors.RichError {
+	err := models.ValidateScope(false, *scope)
+	if err != nil {
+		return err
+	}
+	err = as.appRepo.AddScope(ctx, scope, initiator)
+	return err
 }
 
 func (as appService) UpdateScope(ctx context.Context, scope *models.Scope, initiator string) errors.RichError {
-	return coreerrors.NewNotImplementedError(true)
+	err := models.ValidateScope(false, *scope)
+	if err != nil {
+		return err
+	}
+	err = as.appRepo.UpdateScope(ctx, scope, initiator)
+	return err
 }
 
 func (as appService) DeleteScope(ctx context.Context, scope *models.Scope, initiator string) errors.RichError {
-	return coreerrors.NewNotImplementedError(true)
+	err := as.appRepo.DeleteScope(ctx, scope, initiator)
+	return err
 }
