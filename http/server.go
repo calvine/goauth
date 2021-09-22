@@ -8,9 +8,11 @@ import (
 	"github.com/calvine/goauth/core/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"go.uber.org/zap"
 )
 
 type server struct {
+	logger       *zap.Logger
 	loginService services.LoginService
 	emailService services.EmailService
 	tokenService services.TokenService
@@ -19,9 +21,9 @@ type server struct {
 	Mux          *chi.Mux
 }
 
-func NewServer(loginService services.LoginService, emailService services.EmailService, tokenService services.TokenService, staticFS *http.FileSystem, templateFS *embed.FS) server {
+func NewServer(logger *zap.Logger, loginService services.LoginService, emailService services.EmailService, tokenService services.TokenService, staticFS *http.FileSystem, templateFS *embed.FS) server {
 	mux := chi.NewRouter()
-	return server{loginService, emailService, tokenService, staticFS, templateFS, mux}
+	return server{logger, loginService, emailService, tokenService, staticFS, templateFS, mux}
 }
 
 func (hh *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

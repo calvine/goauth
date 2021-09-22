@@ -12,6 +12,7 @@ import (
 	coreservices "github.com/calvine/goauth/core/services"
 	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/richerror/errors"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -60,7 +61,7 @@ func NewLoginService(options LoginServiceOptions) coreservices.LoginService {
 
 //TODO: Add audit logging
 
-func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, principalType, password string, initiator string) (models.User, errors.RichError) {
+func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.Logger, principal, principalType, password string, initiator string) (models.User, errors.RichError) {
 	user, contact, err := ls.userRepo.GetUserAndContactByContact(ctx, principalType, principal)
 	if err != nil {
 		return models.User{}, err
@@ -114,9 +115,10 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, principal, p
 	return user, nil
 }
 
-func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, principal, principalType string, initiator string) (string, errors.RichError) {
+func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, logger *zap.Logger, principal, principalType string, initiator string) (string, errors.RichError) {
 	user, contact, err := ls.userRepo.GetUserAndContactByContact(ctx, principalType, principal)
 	if err != nil {
+		logger.Error("", zap.Any("error", err))
 		return "", err
 	}
 	if !contact.IsPrimary {
@@ -135,14 +137,14 @@ func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, p
 	case core.CONTACT_TYPE_EMAIL:
 		// TODO: create template for this...
 		body := fmt.Sprintf("A Password reset has been initiated. Your password reset token is: %s", token.Value)
-		ls.emailService.SendPlainTextEmail([]string{contact.Principal}, "Password reset", body)
+		ls.emailService.SendPlainTextEmail(ctx, []string{contact.Principal}, "Password reset", body)
 	default:
 		return "", coreerrors.NewComponentNotImplementedError("notification system", fmt.Sprintf("%s notification service", contact.Type), true)
 	}
 	return token.Value, nil
 }
 
-func (ls loginService) ResetPassword(ctx context.Context, passwordResetToken string, newPassword string, initiator string) errors.RichError {
+func (ls loginService) ResetPassword(ctx context.Context, logger *zap.Logger, passwordResetToken string, newPassword string, initiator string) errors.RichError {
 	if newPassword == "" {
 		return coreerrors.NewNoNewPasswordHashProvidedError(true)
 	}

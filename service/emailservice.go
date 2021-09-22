@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
 	coreerrors "github.com/calvine/goauth/core/errors"
@@ -28,13 +29,13 @@ func NewEmailService(serviceType string, options interface{}) (coreServices.Emai
 
 type noopEmailService struct{}
 
-func (ne noopEmailService) SendPlainTextEmail(to []string, subject, body string) errors.RichError {
+func (ne noopEmailService) SendPlainTextEmail(ctx context.Context, to []string, subject, body string) errors.RichError {
 	return nil
 }
 
 type mockEmailService struct{}
 
-func (mse mockEmailService) SendPlainTextEmail(to []string, subject, body string) errors.RichError {
+func (mse mockEmailService) SendPlainTextEmail(ctx context.Context, to []string, subject, body string) errors.RichError {
 	fmt.Println("********** BEGIN EMAIL  **********")
 
 	fmt.Printf("TO:\t%v\n\n", to)

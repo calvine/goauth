@@ -13,6 +13,7 @@ import (
 	"github.com/calvine/goauth/core/services"
 	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/goauth/dataaccess/memory"
+	"go.uber.org/zap/zaptest"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -220,7 +221,8 @@ func _testStartPasswordResetByPrimaryContact(t *testing.T, loginService services
 }
 
 func __testStartPasswordResetSuccess(t *testing.T, loginService services.LoginService) {
-	tokenValue, err := loginService.StartPasswordResetByPrimaryContact(context.TODO(), confirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, loginServiceTestCreatedBy)
+	logger := zaptest.NewLogger(t)
+	tokenValue, err := loginService.StartPasswordResetByPrimaryContact(context.TODO(), logger, confirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, loginServiceTestCreatedBy)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("received error when attempting to start valid password reset: %s", err.GetErrorCode())
@@ -232,7 +234,8 @@ func __testStartPasswordResetSuccess(t *testing.T, loginService services.LoginSe
 }
 
 func __testStartPasswordResetFailedNotPrimaryContact(t *testing.T, loginService services.LoginService) {
-	tokenValue, err := loginService.StartPasswordResetByPrimaryContact(context.TODO(), confirmedSecondaryEmail, core.CONTACT_TYPE_EMAIL, loginServiceTestCreatedBy)
+	logger := zaptest.NewLogger(t)
+	tokenValue, err := loginService.StartPasswordResetByPrimaryContact(context.TODO(), logger, confirmedSecondaryEmail, core.CONTACT_TYPE_EMAIL, loginServiceTestCreatedBy)
 	if err == nil {
 		t.Error("expected error due to non primary contact being used for password reset")
 	}
@@ -268,7 +271,8 @@ func _testResetPassword(t *testing.T, loginService services.LoginService) {
 }
 
 func __testPasswordResetSuccess(t *testing.T, loginService services.LoginService) {
-	err := loginService.ResetPassword(context.TODO(), testPasswordResetToken, newPasswordPostReset, loginServiceTestCreatedBy)
+	logger := zaptest.NewLogger(t)
+	err := loginService.ResetPassword(context.TODO(), logger, testPasswordResetToken, newPasswordPostReset, loginServiceTestCreatedBy)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("expected password reset to succeed bug got an an error: %s", err.GetErrorCode())
@@ -276,14 +280,16 @@ func __testPasswordResetSuccess(t *testing.T, loginService services.LoginService
 }
 
 func __testPasswordResetFailureInvalidToken(t *testing.T, loginService services.LoginService) {
-	err := loginService.ResetPassword(context.TODO(), "made up token that is not real", "new password hash 2", loginServiceTestCreatedBy)
+	logger := zaptest.NewLogger(t)
+	err := loginService.ResetPassword(context.TODO(), logger, "made up token that is not real", "new password hash 2", loginServiceTestCreatedBy)
 	if err == nil {
 		t.Errorf("expected password reset to fail because the token provided is not a real token")
 	}
 }
 
 func __testPasswordResetFailureEmptyPasswordHash(t *testing.T, loginService services.LoginService) {
-	err := loginService.ResetPassword(context.TODO(), "made up token that is not real", "", loginServiceTestCreatedBy)
+	logger := zaptest.NewLogger(t)
+	err := loginService.ResetPassword(context.TODO(), logger, "made up token that is not real", "", loginServiceTestCreatedBy)
 	if err == nil {
 		t.Errorf("expected password reset to fail because the token provided is not a real token")
 	}
@@ -294,7 +300,8 @@ func __testPasswordResetFailureEmptyPasswordHash(t *testing.T, loginService serv
 }
 
 func __testPasswordResetFailureWrongTokenType(t *testing.T, loginService services.LoginService) {
-	err := loginService.ResetPassword(context.TODO(), nonPasswordResetToken.Value, "new password hash 3", loginServiceTestCreatedBy)
+	logger := zaptest.NewLogger(t)
+	err := loginService.ResetPassword(context.TODO(), logger, nonPasswordResetToken.Value, "new password hash 3", loginServiceTestCreatedBy)
 	if err == nil {
 		t.Errorf("expected password reset to fail because the token provided is not a password reset token")
 	}
@@ -337,7 +344,8 @@ func _testLoginWithPrimaryContact(t *testing.T, loginService services.LoginServi
 }
 
 func __testSuccessfullEmailLogin(t *testing.T, loginService services.LoginService) {
-	user, err := loginService.LoginWithPrimaryContact(context.TODO(), confirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, newPasswordPostReset, loginServiceTestCreatedBy)
+	logger := zaptest.NewLogger(t)
+	user, err := loginService.LoginWithPrimaryContact(context.TODO(), logger, confirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, newPasswordPostReset, loginServiceTestCreatedBy)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("confirmed user login with primary contact email should be successfull: %s", err.GetErrorCode())
@@ -351,7 +359,8 @@ func __testSuccessfullEmailLogin(t *testing.T, loginService services.LoginServic
 }
 
 func __testFailedLogin(t *testing.T, loginService services.LoginService) {
-	_, err := loginService.LoginWithPrimaryContact(context.TODO(), confirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, "not the right password 12345678904321234567", loginServiceTestCreatedBy)
+	logger := zaptest.NewLogger(t)
+	_, err := loginService.LoginWithPrimaryContact(context.TODO(), logger, confirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, "not the right password 12345678904321234567", loginServiceTestCreatedBy)
 	if err == nil {
 		t.Error("expected failed login wrong password error bug got no error")
 	}
@@ -362,7 +371,8 @@ func __testFailedLogin(t *testing.T, loginService services.LoginService) {
 }
 
 func __testFailedLoginPrimaryContactNotConfirmed(t *testing.T, loginService services.LoginService) {
-	_, err := loginService.LoginWithPrimaryContact(context.TODO(), unconfirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, "not the right password 12345678904321234567", loginServiceTestCreatedBy)
+	logger := zaptest.NewLogger(t)
+	_, err := loginService.LoginWithPrimaryContact(context.TODO(), logger, unconfirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, "not the right password 12345678904321234567", loginServiceTestCreatedBy)
 	if err == nil {
 		t.Error("expected failed login wrong password error bug got no error")
 	}
@@ -373,7 +383,8 @@ func __testFailedLoginPrimaryContactNotConfirmed(t *testing.T, loginService serv
 }
 
 func __testFailedLoginSecondaryContactUsed(t *testing.T, loginService services.LoginService) {
-	_, err := loginService.LoginWithPrimaryContact(context.TODO(), confirmedSecondaryEmail, core.CONTACT_TYPE_EMAIL, confirmedUserPassword, loginServiceTestCreatedBy)
+	logger := zaptest.NewLogger(t)
+	_, err := loginService.LoginWithPrimaryContact(context.TODO(), logger, confirmedSecondaryEmail, core.CONTACT_TYPE_EMAIL, confirmedUserPassword, loginServiceTestCreatedBy)
 	if err == nil {
 		t.Error("expected failed login wrong password error bug got no error")
 	}
@@ -384,8 +395,9 @@ func __testFailedLoginSecondaryContactUsed(t *testing.T, loginService services.L
 }
 
 func __testAccountLockout(t *testing.T, loginService services.LoginService) {
+	logger := zaptest.NewLogger(t)
 	for i := 0; i < lockoutAfterFailedLoginAttempts; i++ {
-		_, err := loginService.LoginWithPrimaryContact(context.TODO(), otherConfirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, "Not the right password34567898765trew2123456&*!&^", loginServiceTestCreatedBy)
+		_, err := loginService.LoginWithPrimaryContact(context.TODO(), logger, otherConfirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, "Not the right password34567898765trew2123456&*!&^", loginServiceTestCreatedBy)
 		if err == nil {
 			t.Error("expected error because login details are invalid...")
 		}
@@ -394,7 +406,7 @@ func __testAccountLockout(t *testing.T, loginService services.LoginService) {
 			t.Errorf("expected failed login wrong password error but got error of type: %s", err.GetErrorCode())
 		}
 	}
-	_, err := loginService.LoginWithPrimaryContact(context.TODO(), otherConfirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, "Not the right password34567898765trew2123456&*!&^", loginServiceTestCreatedBy)
+	_, err := loginService.LoginWithPrimaryContact(context.TODO(), logger, otherConfirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, "Not the right password34567898765trew2123456&*!&^", loginServiceTestCreatedBy)
 	if err == nil {
 		t.Errorf("should have locked out user account after %d failed login attempts", lockoutAfterFailedLoginAttempts)
 	}
@@ -406,7 +418,8 @@ func __testAccountLockout(t *testing.T, loginService services.LoginService) {
 
 func __testAccountLockoutRelease(t *testing.T, loginService services.LoginService) {
 	time.Sleep(lockoutReleaseWaitDuration)
-	user, err := loginService.LoginWithPrimaryContact(context.TODO(), otherConfirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, otherConfirmedUserPassword, loginServiceTestCreatedBy)
+	logger := zaptest.NewLogger(t)
+	user, err := loginService.LoginWithPrimaryContact(context.TODO(), logger, otherConfirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, otherConfirmedUserPassword, loginServiceTestCreatedBy)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("after sleep the users account lockout should have expired but got this error: %s", err.GetErrorCode())

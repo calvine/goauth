@@ -14,11 +14,11 @@ import (
 type LoginService interface {
 	// LoginWithContact attempts to confirm a users credentials and if they match it returns true and resets the users ConsecutiveFailedLoginAttempts, otherwise it returns false and increments the users ConsecutiveFailedLoginAttempts
 	// The principal should only work when it has been confirmed
-	LoginWithPrimaryContact(ctx context.Context, principal, principalType, password string, initiator string) (models.User, errors.RichError)
+	LoginWithPrimaryContact(ctx context.Context, logger *zap.Logger, principal, principalType, password string, initiator string) (models.User, errors.RichError)
 	// StartPasswordResetByContact sets a password reset token for the user with the corresponding principal and type that are confirmed.
-	StartPasswordResetByPrimaryContact(ctx context.Context, principal, principalType string, initiator string) (string, errors.RichError)
+	StartPasswordResetByPrimaryContact(ctx context.Context, logger *zap.Logger, principal, principalType string, initiator string) (string, errors.RichError)
 	// ResetPassword resets a users password given a password reset token and new password hash and salt.
-	ResetPassword(ctx context.Context, passwordResetToken string, newPassword string, initiator string) errors.RichError
+	ResetPassword(ctx context.Context, logger *zap.Logger, passwordResetToken string, newPassword string, initiator string) errors.RichError
 }
 
 // UserService is a service that facilitates access to user related data.
@@ -62,7 +62,7 @@ type AppService interface {
 }
 
 type EmailService interface {
-	SendPlainTextEmail(to []string, subject, body string) errors.RichError
+	SendPlainTextEmail(ctx context.Context, to []string, subject, body string) errors.RichError
 }
 
 type TokenService interface {

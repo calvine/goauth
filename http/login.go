@@ -84,7 +84,7 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 		if err != nil {
 			// uh of the token was not deleted! need to log this...
 		}
-		_, err = s.loginService.LoginWithPrimaryContact(ctx, data.Email, core.CONTACT_TYPE_EMAIL, data.Password, "login post handler")
+		_, err = s.loginService.LoginWithPrimaryContact(ctx, s.logger, data.Email, core.CONTACT_TYPE_EMAIL, data.Password, "login post handler")
 		if err != nil {
 			http.Error(rw, err.GetErrorMessage(), http.StatusUnauthorized)
 			return
