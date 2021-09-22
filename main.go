@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -15,7 +16,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+	"go.opentelemetry.io/otel/internal/metric/global"
+	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
@@ -41,6 +45,31 @@ var (
 	templateFS embed.FS
 )
 
+// https://opentelemetry.io/docs/go/getting-started/
+
+func setupTelemetry(ctx context.Context) (func(), error) {
+	tracePusher, traceCleanup, err := setupTracing(ctx)
+	if err != nil {
+		return nil, err
+	}
+	metricsPusher, metricsCleanup, err := setupMetrics(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	otel.SetTracerProvider(tracePusher)
+	global.SetMeterProvider(metricsPusher.MeterProvider())
+
+	propagator := propagation.NewCompositeTextMapPropagator(propagation.Baggage{}, propagation.TraceContext{})
+	otel.SetTextMapPropagator(propagator)
+
+	return func() {
+		traceCleanup()
+		metricsCleanup()
+	}, nil
+
+}
+
 func setupTracing(ctx context.Context) (*sdktrace.TracerProvider, func(), error) {
 	traceExporter, err := stdouttrace.New(
 		stdouttrace.WithPrettyPrint(),
@@ -55,12 +84,12 @@ func setupTracing(ctx context.Context) (*sdktrace.TracerProvider, func(), error)
 	return tp, func() { _ = tp.Shutdown(ctx) }, nil
 }
 
-func setupMetrics(ctx context.Context) (func(), error) {
+func setupMetrics(ctx context.Context) (*controller.Controller, func(), error) {
 	metricExporter, err := stdoutmetric.New(
 		stdoutmetric.WithPrettyPrint(),
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	pusher := controller.New(
@@ -74,13 +103,19 @@ func setupMetrics(ctx context.Context) (func(), error) {
 
 	err = pusher.Start(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return func() { _ = pusher.Stop(ctx) }, nil
+	return pusher, func() { _ = pusher.Stop(ctx) }, nil
 }
 
 func main() {
+	ctx := context.Background()
+	telemetryCleanup, err := setupTelemetry(ctx)
+	if err != nil {
+		log.Fatalf("failed to start telemetry", err.Error())
+	}
+	defer telemetryCleanup()
 	if err := run(); err != nil {
 		fmt.Printf("an error occurred while starting the http server: %s", err.Error())
 	}
