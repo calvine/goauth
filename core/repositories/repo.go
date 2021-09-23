@@ -14,11 +14,11 @@ type AuditLogRepo interface {
 
 type TokenRepo interface {
 	// GetToken retreives a token from a store
-	GetToken(tokenValue string) (models.Token, errors.RichError)
+	GetToken(ctx context.Context, tokenValue string) (models.Token, errors.RichError)
 	// PutToken stores a token in a store
-	PutToken(token models.Token) errors.RichError
+	PutToken(ctx context.Context, token models.Token) errors.RichError
 	// DeleteToken deletes a token from a store
-	DeleteToken(tokenValue string) errors.RichError
+	DeleteToken(ctx context.Context, tokenValue string) errors.RichError
 }
 
 // UserRepo is responsible for accessing user data from the database.

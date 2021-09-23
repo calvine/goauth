@@ -1,6 +1,7 @@
 package repotest
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -63,22 +64,22 @@ func _makeTokens(t *testing.T) {
 }
 
 func _testPutToken(t *testing.T, tokenRepo repo.TokenRepo) {
-	err := tokenRepo.PutToken(testCSRFToken)
+	err := tokenRepo.PutToken(context.TODO(), testCSRFToken)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to put token of type %s: %s", testCSRFToken.TokenType.String(), err.GetErrorCode())
 	}
-	err = tokenRepo.PutToken(testPasswordResetToken)
+	err = tokenRepo.PutToken(context.TODO(), testPasswordResetToken)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to put token of type %s: %s", testPasswordResetToken.TokenType.String(), err.GetErrorCode())
 	}
-	err = tokenRepo.PutToken(testSessionToken)
+	err = tokenRepo.PutToken(context.TODO(), testSessionToken)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to put token of type %s: %s", testSessionToken.TokenType.String(), err.GetErrorCode())
 	}
-	err = tokenRepo.PutToken(testExpiredToken)
+	err = tokenRepo.PutToken(context.TODO(), testExpiredToken)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to put token of type %s: %s", testExpiredToken.TokenType.String(), err.GetErrorCode())
@@ -86,7 +87,7 @@ func _testPutToken(t *testing.T, tokenRepo repo.TokenRepo) {
 }
 
 func _testDeleteToken(t *testing.T, tokenRepo repo.TokenRepo) {
-	err := tokenRepo.DeleteToken(testPasswordResetToken.Value)
+	err := tokenRepo.DeleteToken(context.TODO(), testPasswordResetToken.Value)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to delete token with type %s: %s", testPasswordResetToken.TokenType.String(), err.GetErrorCode())
@@ -94,11 +95,11 @@ func _testDeleteToken(t *testing.T, tokenRepo repo.TokenRepo) {
 }
 
 func _testGetToken(t *testing.T, tokenRepo repo.TokenRepo) {
-	_, err := tokenRepo.GetToken(testPasswordResetToken.Value)
+	_, err := tokenRepo.GetToken(context.TODO(), testPasswordResetToken.Value)
 	if err.GetErrorCode() != errors.ErrCodeTokenNotFound {
 		t.Error("testPasswordResetToken found inspite of being deleted in the tokenRepo.DeleteToken test...")
 	}
-	expiredToken, err := tokenRepo.GetToken(testExpiredToken.Value)
+	expiredToken, err := tokenRepo.GetToken(context.TODO(), testExpiredToken.Value)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to get testExpiredToken from repo: %s", err.GetErrorCode())
@@ -106,7 +107,7 @@ func _testGetToken(t *testing.T, tokenRepo repo.TokenRepo) {
 	if !expiredToken.IsExpired() {
 		t.Errorf("testExpiredToken should be expired but expiration is: %s and it is now %s", expiredToken.Expiration.UTC().String(), time.Now().UTC().String())
 	}
-	csrfToken, err := tokenRepo.GetToken(testCSRFToken.Value)
+	csrfToken, err := tokenRepo.GetToken(context.TODO(), testCSRFToken.Value)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to get testCSRFToken from repo: %s", err.GetErrorCode())
@@ -117,7 +118,7 @@ func _testGetToken(t *testing.T, tokenRepo repo.TokenRepo) {
 	if csrfToken.IsExpired() {
 		t.Errorf("testCSRFToken should not be expired but expiration is: %s and it is now %s", expiredToken.Expiration.UTC().String(), time.Now().UTC().String())
 	}
-	sessionToken, err := tokenRepo.GetToken(testSessionToken.Value)
+	sessionToken, err := tokenRepo.GetToken(context.TODO(), testSessionToken.Value)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to get testSessionToken from repo: %s", err.GetErrorCode())

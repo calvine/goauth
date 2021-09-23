@@ -10,6 +10,7 @@ import (
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/core/services"
 	"github.com/calvine/richerror/errors"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type tokenService struct {
@@ -21,7 +22,7 @@ func NewTokenService(tokenRepo repo.TokenRepo) services.TokenService {
 }
 
 func (ts tokenService) GetToken(ctx context.Context, tokenValue string, expectedTokenType models.TokenType) (models.Token, errors.RichError) {
-	token, err := ts.tokenRepo.GetToken(tokenValue)
+	token, err := ts.tokenRepo.GetToken(ctx, tokenValue)
 	if err != nil {
 		return token, err
 	}
@@ -37,6 +38,9 @@ func (ts tokenService) GetToken(ctx context.Context, tokenValue string, expected
 }
 
 func (ts tokenService) PutToken(ctx context.Context, token models.Token) errors.RichError {
+	spanContext := trace.SpanFromContext(ctx)
+	ctx, span := spanContext.TracerProvider().Tracer("tokenService").Start(ctx, "PutToken")
+	defer span.End()
 	tokenErrorsMap := make(map[string]interface{})
 	if token.Value == "" {
 		// token value must be populated
@@ -51,11 +55,11 @@ func (ts tokenService) PutToken(ctx context.Context, token models.Token) errors.
 	if len(tokenErrorsMap) > 0 {
 		return coreerrors.NewMalfomedTokenError(tokenErrorsMap, true)
 	}
-	err := ts.tokenRepo.PutToken(token)
+	err := ts.tokenRepo.PutToken(ctx, token)
 	return err
 }
 
 func (ts tokenService) DeleteToken(ctx context.Context, tokenValue string) errors.RichError {
-	err := ts.tokenRepo.DeleteToken(tokenValue)
+	err := ts.tokenRepo.DeleteToken(ctx, tokenValue)
 	return err
 }

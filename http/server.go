@@ -8,6 +8,7 @@ import (
 	"github.com/calvine/goauth/core/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
 )
 
@@ -30,6 +31,18 @@ func (hh *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hh.Mux.ServeHTTP(w, r)
 }
 
+// func addTrace(h http.HandlerFunc, name string) http.HandlerFunc {
+// 	return func(rw http.ResponseWriter, r *http.Request) {
+// 		// ol.Start(r.Context(), name)
+// 		span := trace.SpanFromContext(r.Context())
+// 		// trace.
+// 		span.SetName(name)
+// 		defer span.End()
+// 		otelhttp.NewHandler
+// 		h(rw, r)
+// 	}
+// }
+
 func (hh *server) BuildRoutes() {
 	hh.Mux.Use(
 		// middleware.Recoverer,
@@ -41,7 +54,7 @@ func (hh *server) BuildRoutes() {
 		r.Use(middleware.NoCache)
 		r.Route("/login", func(r chi.Router) {
 			// this is the route for the login page
-			r.Get("/", hh.handleLoginGet())
+			r.Get("/", otelhttp.NewHandler(hh.handleLoginGet(), "GET /auth/login").ServeHTTP) //addTrace(hh.handleLoginGet(), "GET /auth/login"))
 			// this is the post target for the login page
 			r.Post("/", hh.handleLoginPost())
 		})

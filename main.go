@@ -18,9 +18,11 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
-	"go.opentelemetry.io/otel/internal/metric/global"
+	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
@@ -79,7 +81,12 @@ func setupTracing(ctx context.Context) (*sdktrace.TracerProvider, func(), error)
 	}
 
 	bsp := sdktrace.NewBatchSpanProcessor(traceExporter)
-	tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(bsp))
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithSpanProcessor(bsp),
+		sdktrace.WithResource(
+			resource.NewWithAttributes("com.calvinechols.goauth/resources", semconv.ServiceNameKey.String("goauth")),
+		),
+	)
 
 	return tp, func() { _ = tp.Shutdown(ctx) }, nil
 }
@@ -113,7 +120,7 @@ func main() {
 	ctx := context.Background()
 	telemetryCleanup, err := setupTelemetry(ctx)
 	if err != nil {
-		log.Fatalf("failed to start telemetry", err.Error())
+		log.Fatalf("failed to start telemetry: %s", err.Error())
 	}
 	defer telemetryCleanup()
 	if err := run(); err != nil {

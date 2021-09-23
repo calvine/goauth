@@ -1,10 +1,14 @@
 package memory
 
 import (
+	"context"
+
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/richerror/errors"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type localTokenRepo struct {
@@ -16,7 +20,7 @@ func NewMemoryTokenRepo() repo.TokenRepo {
 	return &localTokenRepo{tokenMap}
 }
 
-func (ltr *localTokenRepo) GetToken(tokenValue string) (models.Token, errors.RichError) {
+func (ltr *localTokenRepo) GetToken(ctx context.Context, tokenValue string) (models.Token, errors.RichError) {
 	token, ok := ltr.tokenMap[tokenValue]
 	if !ok {
 		return token, coreerrors.NewTokenNotFoundError(tokenValue, true)
@@ -24,12 +28,16 @@ func (ltr *localTokenRepo) GetToken(tokenValue string) (models.Token, errors.Ric
 	return token, nil
 }
 
-func (ltr *localTokenRepo) PutToken(token models.Token) errors.RichError {
+func (ltr *localTokenRepo) PutToken(ctx context.Context, token models.Token) errors.RichError {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer("tokenRepo").Start(ctx, "PutToken")
+	span.SetAttributes(attribute.String("db", "memory"))
+	defer span.End()
 	ltr.tokenMap[token.Value] = token
 	return nil
 }
 
-func (ltr *localTokenRepo) DeleteToken(tokenValue string) errors.RichError {
+func (ltr *localTokenRepo) DeleteToken(ctx context.Context, tokenValue string) errors.RichError {
 	delete(ltr.tokenMap, tokenValue)
 	return nil
 }

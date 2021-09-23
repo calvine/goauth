@@ -9,6 +9,7 @@ import (
 	"github.com/calvine/goauth/core"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const loginCookieName = "x-goauth-session"
@@ -37,18 +38,22 @@ func (s *server) handleLoginGet() http.HandlerFunc {
 		}
 		// TODO: make CSRF token life span configurable
 		ctx := r.Context()
+		span := trace.SpanFromContext(ctx)
 		token, err := models.NewToken("", models.TokenTypeCSRF, time.Minute*10)
 		if err != nil {
+			span.RecordError(err)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		err = s.tokenService.PutToken(ctx, token)
 		if err != nil {
+			span.RecordError(err)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		templateRenderError := loginTemplate.Execute(rw, requestData{token.Value})
 		if templateRenderError != nil {
+			span.RecordError(err)
 			err = coreerrors.NewTemplateRenderErrorError(templatePath, templateRenderError, true)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
