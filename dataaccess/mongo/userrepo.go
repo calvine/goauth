@@ -12,6 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -49,7 +51,19 @@ func NewUserRepoWithNames(client *mongo.Client, dbName, collectionName string) u
 	return userRepo{client, dbName, collectionName}
 }
 
+func (userRepo) GetName() string {
+	return "userRepo"
+}
+
+func (userRepo) GetType() string {
+	return dataSourceType
+}
+
 func (ur userRepo) GetUserByID(ctx context.Context, id string) (models.User, errors.RichError) {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer(ur.GetName()).Start(ctx, "GetUserByID")
+	span.SetAttributes(attribute.String("db", ur.GetType()))
+	defer span.End()
 	var repoUser repoModels.RepoUser
 	options := options.FindOneOptions{
 		Projection: ProjUserOnly,
@@ -74,6 +88,10 @@ func (ur userRepo) GetUserByID(ctx context.Context, id string) (models.User, err
 }
 
 func (ur userRepo) GetUserAndContactByContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer(ur.GetName()).Start(ctx, "GetUserAndContactByContact")
+	span.SetAttributes(attribute.String("db", ur.GetType()))
+	defer span.End()
 	var receiver struct {
 		User    repoModels.RepoUser      `bson:",inline"`
 		Contact []repoModels.RepoContact `bson:"contacts"`
@@ -112,6 +130,10 @@ func (ur userRepo) GetUserAndContactByContact(ctx context.Context, contactType, 
 }
 
 func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, errors.RichError) {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer(ur.GetName()).Start(ctx, "GetUserByPrimaryContact")
+	span.SetAttributes(attribute.String("db", ur.GetType()))
+	defer span.End()
 	var repoUser repoModels.RepoUser
 	options := options.FindOneOptions{
 		Projection: ProjUserOnly,
@@ -144,6 +166,10 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, con
 }
 
 func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdByID string) errors.RichError {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer(ur.GetName()).Start(ctx, "AddUser")
+	span.SetAttributes(attribute.String("db", ur.GetType()))
+	defer span.End()
 	user.AuditData.CreatedByID = createdByID
 	user.AuditData.CreatedOnDate = time.Now().UTC()
 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).InsertOne(ctx, user, nil)
@@ -160,6 +186,10 @@ func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdByID s
 }
 
 func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedByID string) errors.RichError {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer(ur.GetName()).Start(ctx, "UpdateUser")
+	span.SetAttributes(attribute.String("db", ur.GetType()))
+	defer span.End()
 	user.AuditData.ModifiedByID.Set(modifiedByID)
 	user.AuditData.ModifiedOnDate.Set(time.Now().UTC())
 	repoUser, err := repoModels.CoreUser(*user).ToRepoUser()

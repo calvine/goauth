@@ -3,12 +3,17 @@ package services
 import (
 	"context"
 
+	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/richerror/errors"
 	"go.uber.org/zap"
 )
 
 // TODO: change all instances of error to RichError
+
+type Service interface {
+	core.NamedComponent
+}
 
 // LoginService is a service used to facilitate logging in
 type LoginService interface {
@@ -19,6 +24,8 @@ type LoginService interface {
 	StartPasswordResetByPrimaryContact(ctx context.Context, logger *zap.Logger, principal, principalType string, initiator string) (string, errors.RichError)
 	// ResetPassword resets a users password given a password reset token and new password hash and salt.
 	ResetPassword(ctx context.Context, logger *zap.Logger, passwordResetToken string, newPassword string, initiator string) errors.RichError
+
+	Service
 }
 
 // UserService is a service that facilitates access to user related data.
@@ -41,6 +48,8 @@ type UserService interface {
 	UpdateContact(ctx context.Context, contact *models.Contact, initiator string) errors.RichError
 	// ConfirmContact takes a confirmation code and updates the users contact record to be confirmed.
 	ConfirmContact(ctx context.Context, confirmationCode string, initiator string) (bool, errors.RichError)
+
+	Service
 }
 
 type AppService interface {
@@ -59,14 +68,20 @@ type AppService interface {
 	AddScopeToApp(ctx context.Context, logger *zap.Logger, scopes *models.Scope, initiator string) errors.RichError
 	UpdateScope(ctx context.Context, logger *zap.Logger, scope *models.Scope, initiator string) errors.RichError
 	DeleteScope(ctx context.Context, logger *zap.Logger, scope *models.Scope, initiator string) errors.RichError
+
+	Service
 }
 
 type EmailService interface {
 	SendPlainTextEmail(ctx context.Context, to []string, subject, body string) errors.RichError
+
+	Service
 }
 
 type TokenService interface {
 	GetToken(ctx context.Context, tokenValue string, expectedTokenType models.TokenType) (models.Token, errors.RichError)
 	PutToken(ctx context.Context, token models.Token) errors.RichError
 	DeleteToken(ctx context.Context, tokenValue string) errors.RichError
+
+	Service
 }

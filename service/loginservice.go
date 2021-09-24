@@ -59,6 +59,10 @@ func NewLoginService(options LoginServiceOptions) coreservices.LoginService {
 	}
 }
 
+func (loginService) GetName() string {
+	return "loginService"
+}
+
 //TODO: Add audit logging
 
 func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.Logger, principal, principalType, password string, initiator string) (models.User, errors.RichError) {

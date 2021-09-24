@@ -5,4 +5,6 @@ const (
 
 	USER_COLLECTION     = "users"
 	AUDITLOG_COLLECTION = "auditlog"
+
+	dataSourceType = "string"
 )

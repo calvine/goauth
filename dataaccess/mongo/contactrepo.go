@@ -13,6 +13,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -29,6 +31,10 @@ var (
 )
 
 func (ur userRepo) GetContactByID(ctx context.Context, id string) (models.Contact, errors.RichError) {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer("contactRepo").Start(ctx, "GetContactByID")
+	span.SetAttributes(attribute.String("db", ur.GetType()))
+	defer span.End()
 	var receiver struct {
 		UserID  primitive.ObjectID       `bson:"_id"`
 		Contact []repoModels.RepoContact `bson:"contacts"`
@@ -40,6 +46,7 @@ func (ur userRepo) GetContactByID(ctx context.Context, id string) (models.Contac
 	})
 	contactOid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
+		span.RecordError(err)
 		return emptyContact, coreerrors.NewFailedToParseObjectIDError(id, err, true)
 	}
 	filter := bson.D{
@@ -60,6 +67,10 @@ func (ur userRepo) GetContactByID(ctx context.Context, id string) (models.Contac
 }
 
 func (ur userRepo) GetPrimaryContactByUserID(ctx context.Context, userID string) (models.Contact, errors.RichError) {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer("contactRepo").Start(ctx, "GetPrimaryContactByUserID")
+	span.SetAttributes(attribute.String("db", ur.GetType()))
+	defer span.End()
 	var receiver struct {
 		Contacts []repoModels.RepoContact `bson:"contacts"`
 	}
@@ -95,9 +106,11 @@ func (ur userRepo) GetPrimaryContactByUserID(ctx context.Context, userID string)
 	return contact, nil
 }
 
-// TODO: finish implementing
-
 func (ur userRepo) GetContactsByUserID(ctx context.Context, userID string) ([]models.Contact, errors.RichError) {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer("contactRepo").Start(ctx, "GetContactsByUserID")
+	span.SetAttributes(attribute.String("db", ur.GetType()))
+	defer span.End()
 	var receiver struct {
 		Contacts []repoModels.RepoContact `bson:"contacts"`
 	}
@@ -130,35 +143,11 @@ func (ur userRepo) GetContactsByUserID(ctx context.Context, userID string) ([]mo
 	return contacts, nil
 }
 
-// func (ur userRepo) GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, errors.RichError) {
-// 	var receiver struct {
-// 		UserID  primitive.ObjectID       `bson:"_id"`
-// 		Contact []repoModels.RepoContact `bson:"contacts"`
-// 	}
-// 	options := options.FindOneOptions{
-// 		Projection: bson.D{
-// 			{Key: " _id", Value: 1},
-// 			{Key: "contacts.$", Value: 1},
-// 		},
-// 	}
-// 	filter := bson.M{
-// 		"contacts.confirmationCode": confirmationCode,
-// 	}
-// 	err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
-// 	if err != nil {
-// 		if err == mongo.ErrNoDocuments {
-// 			fields := map[string]interface{}{
-// 				"contacts.confirmationCode": confirmationCode,
-// 			}
-// 			return emptyContact, coreerrors.NewNoContactFoundError(fields, true)
-// 		}
-// 		return emptyContact, coreerrors.NewRepoQueryFailedError(err, true)
-// 	}
-// 	receiver.Contact[0].UserID = receiver.UserID.Hex()
-// 	return receiver.Contact[0].ToCoreContact(), nil
-// }
-
 func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, createdByID string) errors.RichError {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer("contactRepo").Start(ctx, "AddContact")
+	span.SetAttributes(attribute.String("db", ur.GetType()))
+	defer span.End()
 	contact.AuditData.CreatedByID = createdByID
 	contact.AuditData.CreatedOnDate = time.Now().UTC()
 	contact.ID = primitive.NewObjectID().Hex()
@@ -200,6 +189,10 @@ func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, crea
 }
 
 func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, modifiedByID string) errors.RichError {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer("contactRepo").Start(ctx, "UpdateContact")
+	span.SetAttributes(attribute.String("db", ur.GetType()))
+	defer span.End()
 	contact.AuditData.ModifiedByID = nullable.NullableString{}
 	contact.AuditData.ModifiedByID.Set(modifiedByID)
 	contact.AuditData.ModifiedOnDate = nullable.NullableTime{}
@@ -242,29 +235,3 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 	}
 	return nil
 }
-
-// func (ur userRepo) ConfirmContact(ctx context.Context, confirmationCode, modifiedByID string) errors.RichError {
-// 	now := time.Now().UTC()
-// 	filter := bson.D{
-// 		{Key: "contacts.confirmationCode", Value: confirmationCode},
-// 	}
-// 	update := bson.D{
-// 		{Key: "$set", Value: bson.D{
-// 			{Key: "contacts.$.confirmationCode", Value: nil},
-// 			{Key: "contacts.$.confirmedDate", Value: now},
-// 			{Key: "contacts.$.modifiedById", Value: modifiedByID},
-// 			{Key: "contacts.$.modifiedOnDate", Value: now},
-// 		}},
-// 	}
-// 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(ctx, filter, update, nil)
-// 	if err != nil {
-// 		return coreerrors.NewRepoQueryFailedError(err, true)
-// 	}
-// 	if result.ModifiedCount == 0 {
-// 		fields := map[string]interface{}{
-// 			"contacts.confirmationCode": confirmationCode,
-// 		}
-// 		return coreerrors.NewNoContactFoundError(fields, true)
-// 	}
-// 	return nil
-// }

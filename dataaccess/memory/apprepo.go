@@ -26,6 +26,14 @@ func NewMemoryAppRepo() repo.AppRepo {
 	}
 }
 
+func (appRepo) GetName() string {
+	return "appRepo"
+}
+
+func (appRepo) GetType() string {
+	return dataSourceType
+}
+
 func (ar appRepo) GetAppByID(ctx context.Context, id string) (models.App, errors.RichError) {
 	app, ok := (*ar.apps)[id]
 	if !ok {

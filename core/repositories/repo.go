@@ -3,13 +3,22 @@ package repo
 import (
 	"context"
 
+	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/richerror/errors"
 )
 
+type Repo interface {
+	GetType() string
+
+	core.NamedComponent
+}
+
 //TODO: Make "ID" consistent through code base...
 type AuditLogRepo interface {
 	LogMessage(ctx context.Context, message models.AuditLog) errors.RichError
+
+	Repo
 }
 
 type TokenRepo interface {
@@ -19,6 +28,8 @@ type TokenRepo interface {
 	PutToken(ctx context.Context, token models.Token) errors.RichError
 	// DeleteToken deletes a token from a store
 	DeleteToken(ctx context.Context, tokenValue string) errors.RichError
+
+	Repo
 }
 
 // UserRepo is responsible for accessing user data from the database.
@@ -33,6 +44,8 @@ type UserRepo interface {
 	GetUserByPrimaryContact(ctx context.Context, contactPrincipalType, contactPrincipal string) (models.User, errors.RichError)
 	// GetUserAndContactByContact gets the user and the primary contact by their primary contact principal and contactType
 	GetUserAndContactByContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError)
+
+	Repo
 }
 
 type ContactRepo interface {
@@ -50,6 +63,8 @@ type ContactRepo interface {
 	UpdateContact(ctx context.Context, contact *models.Contact, modifiedByID string) errors.RichError
 	// ConfirmContact sets a contact to confirmed based on the received confirmation code.
 	// ConfirmContact(ctx context.Context, confirmationCode, modifiedByID string) errors.RichError
+
+	Repo
 }
 
 type ProfileRepo interface {
@@ -59,6 +74,8 @@ type ProfileRepo interface {
 	AddProfile(ctx context.Context, profile *models.Profile, createdByID string) errors.RichError
 	// UpdateUserProfile updates a users profile data
 	UpdateUserProfile(ctx context.Context, profile *models.Profile, modifiedByID string) errors.RichError
+
+	Repo
 }
 
 type AddressRepo interface {
@@ -72,6 +89,8 @@ type AddressRepo interface {
 	AddAddress(ctx context.Context, address *models.Address, createdByID string) errors.RichError
 	// UpdateAddress updates a users address
 	UpdateAddress(ctx context.Context, address *models.Address, modifiedByID string) errors.RichError
+
+	Repo
 }
 
 type AppRepo interface {
@@ -88,4 +107,6 @@ type AppRepo interface {
 	AddScope(ctx context.Context, scope *models.Scope, createdBy string) errors.RichError
 	UpdateScope(ctx context.Context, scope *models.Scope, modifiedBy string) errors.RichError
 	DeleteScope(ctx context.Context, scope *models.Scope, deletedBy string) errors.RichError
+
+	Repo
 }

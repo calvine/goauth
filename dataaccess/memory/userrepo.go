@@ -10,6 +10,8 @@ import (
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/richerror/errors"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type userRepo struct {
@@ -30,7 +32,19 @@ func NewMemoryUserRepo() repo.UserRepo {
 	}
 }
 
+func (userRepo) GetName() string {
+	return "userRepo"
+}
+
+func (userRepo) GetType() string {
+	return dataSourceType
+}
+
 func (ur userRepo) GetUserByID(ctx context.Context, id string) (models.User, errors.RichError) {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer(ur.GetName()).Start(ctx, "GetUserByID")
+	span.SetAttributes(attribute.String("db", ur.GetType()))
+	defer span.End()
 	user, ok := (*ur.users)[id]
 	if !ok {
 		fields := map[string]interface{}{"id": id}
@@ -40,6 +54,10 @@ func (ur userRepo) GetUserByID(ctx context.Context, id string) (models.User, err
 }
 
 func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdByID string) errors.RichError {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer(ur.GetName()).Start(ctx, "AddUser")
+	span.SetAttributes(attribute.String("db", ur.GetType()))
+	defer span.End()
 	user.AuditData.CreatedByID = createdByID
 	user.AuditData.CreatedOnDate = time.Now().UTC()
 	if user.ID == "" {
@@ -50,6 +68,10 @@ func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdByID s
 }
 
 func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedByID string) errors.RichError {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer(ur.GetName()).Start(ctx, "UpdateUser")
+	span.SetAttributes(attribute.String("db", ur.GetType()))
+	defer span.End()
 	user.AuditData.ModifiedByID = nullable.NullableString{HasValue: true, Value: modifiedByID}
 	user.AuditData.ModifiedOnDate = nullable.NullableTime{HasValue: true, Value: time.Now().UTC()}
 	(*ur.users)[user.ID] = *user
@@ -57,6 +79,10 @@ func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedBy
 }
 
 func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactPrincipalType, contactPrincipal string) (models.User, errors.RichError) {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer(ur.GetName()).Start(ctx, "GetUserByPrimaryContact")
+	span.SetAttributes(attribute.String("db", ur.GetType()))
+	defer span.End()
 	var user models.User
 	var contact models.Contact
 	contactFound := false
@@ -91,6 +117,10 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactPrincipal
 }
 
 func (ur userRepo) GetUserAndContactByContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer(ur.GetName()).Start(ctx, "GetUserAndContactByContact")
+	span.SetAttributes(attribute.String("db", ur.GetType()))
+	defer span.End()
 	var user models.User
 	var contact models.Contact
 	contactFound := false

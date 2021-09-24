@@ -24,6 +24,10 @@ func NewAppService(appRepo repo.AppRepo, auditLogRepo repo.AuditLogRepo) service
 	}
 }
 
+func (appService) GetName() string {
+	return "appService"
+}
+
 func (as appService) GetAppsByOwnerID(ctx context.Context, logger *zap.Logger, ownerID string, initiator string) ([]models.App, errors.RichError) {
 	apps, err := as.appRepo.GetAppsByOwnerID(ctx, ownerID)
 	if err != nil {

@@ -29,11 +29,19 @@ func NewEmailService(serviceType string, options interface{}) (coreServices.Emai
 
 type noopEmailService struct{}
 
+func (noopEmailService) GetName() string {
+	return "noopEmailService"
+}
+
 func (ne noopEmailService) SendPlainTextEmail(ctx context.Context, to []string, subject, body string) errors.RichError {
 	return nil
 }
 
 type mockEmailService struct{}
+
+func (mockEmailService) GetName() string {
+	return "mockEmailService"
+}
 
 func (mse mockEmailService) SendPlainTextEmail(ctx context.Context, to []string, subject, body string) errors.RichError {
 	fmt.Println("********** BEGIN EMAIL  **********")

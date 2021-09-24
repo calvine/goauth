@@ -11,16 +11,28 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type localTokenRepo struct {
+type tokenRepo struct {
 	tokenMap map[string]models.Token
 }
 
 func NewMemoryTokenRepo() repo.TokenRepo {
 	tokenMap := make(map[string]models.Token)
-	return &localTokenRepo{tokenMap}
+	return &tokenRepo{tokenMap}
 }
 
-func (ltr *localTokenRepo) GetToken(ctx context.Context, tokenValue string) (models.Token, errors.RichError) {
+func (tokenRepo) GetName() string {
+	return "tokenRepo"
+}
+
+func (tokenRepo) GetType() string {
+	return dataSourceType
+}
+
+func (ltr *tokenRepo) GetToken(ctx context.Context, tokenValue string) (models.Token, errors.RichError) {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer(ltr.GetName()).Start(ctx, "GetToken")
+	span.SetAttributes(attribute.String("db", ltr.GetType()))
+	defer span.End()
 	token, ok := ltr.tokenMap[tokenValue]
 	if !ok {
 		return token, coreerrors.NewTokenNotFoundError(tokenValue, true)
@@ -28,16 +40,20 @@ func (ltr *localTokenRepo) GetToken(ctx context.Context, tokenValue string) (mod
 	return token, nil
 }
 
-func (ltr *localTokenRepo) PutToken(ctx context.Context, token models.Token) errors.RichError {
+func (ltr *tokenRepo) PutToken(ctx context.Context, token models.Token) errors.RichError {
 	spanContext := trace.SpanFromContext(ctx)
-	_, span := spanContext.TracerProvider().Tracer("tokenRepo").Start(ctx, "PutToken")
-	span.SetAttributes(attribute.String("db", "memory"))
+	_, span := spanContext.TracerProvider().Tracer(ltr.GetName()).Start(ctx, "PutToken")
+	span.SetAttributes(attribute.String("db", ltr.GetType()))
 	defer span.End()
 	ltr.tokenMap[token.Value] = token
 	return nil
 }
 
-func (ltr *localTokenRepo) DeleteToken(ctx context.Context, tokenValue string) errors.RichError {
+func (ltr *tokenRepo) DeleteToken(ctx context.Context, tokenValue string) errors.RichError {
+	spanContext := trace.SpanFromContext(ctx)
+	_, span := spanContext.TracerProvider().Tracer(ltr.GetName()).Start(ctx, "DeleteToken")
+	span.SetAttributes(attribute.String("db", ltr.GetType()))
+	defer span.End()
 	delete(ltr.tokenMap, tokenValue)
 	return nil
 }
