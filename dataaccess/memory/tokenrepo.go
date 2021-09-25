@@ -2,13 +2,13 @@ package memory
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/richerror/errors"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type tokenRepo struct {
@@ -29,31 +29,38 @@ func (tokenRepo) GetType() string {
 }
 
 func (ltr *tokenRepo) GetToken(ctx context.Context, tokenValue string) (models.Token, errors.RichError) {
-	spanContext := trace.SpanFromContext(ctx)
-	_, span := spanContext.TracerProvider().Tracer(ltr.GetName()).Start(ctx, "GetToken")
-	span.SetAttributes(attribute.String("db", ltr.GetType()))
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, ltr.GetName(), "GetToken", ltr.GetType())
 	defer span.End()
 	token, ok := ltr.tokenMap[tokenValue]
 	if !ok {
-		return token, coreerrors.NewTokenNotFoundError(tokenValue, true)
+		evtString := fmt.Sprintf("token not found: %s", tokenValue)
+		span.AddEvent(evtString)
+		err := coreerrors.NewTokenNotFoundError(tokenValue, true)
+		return token, err
 	}
+	span.AddEvent("token retreived")
 	return token, nil
 }
 
 func (ltr *tokenRepo) PutToken(ctx context.Context, token models.Token) errors.RichError {
-	spanContext := trace.SpanFromContext(ctx)
-	_, span := spanContext.TracerProvider().Tracer(ltr.GetName()).Start(ctx, "PutToken")
-	span.SetAttributes(attribute.String("db", ltr.GetType()))
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, ltr.GetName(), "PutToken", ltr.GetType())
 	defer span.End()
 	ltr.tokenMap[token.Value] = token
+	span.AddEvent("token stored")
 	return nil
 }
 
 func (ltr *tokenRepo) DeleteToken(ctx context.Context, tokenValue string) errors.RichError {
-	spanContext := trace.SpanFromContext(ctx)
-	_, span := spanContext.TracerProvider().Tracer(ltr.GetName()).Start(ctx, "DeleteToken")
-	span.SetAttributes(attribute.String("db", ltr.GetType()))
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, ltr.GetName(), "DeleteToken", ltr.GetType())
 	defer span.End()
+	_, ok := ltr.tokenMap[tokenValue]
+	if !ok {
+		evtString := fmt.Sprintf("token not found: %s", tokenValue)
+		span.AddEvent(evtString)
+		err := coreerrors.NewTokenNotFoundError(tokenValue, true)
+		return err
+	}
 	delete(ltr.tokenMap, tokenValue)
+	span.AddEvent("token deleted")
 	return nil
 }

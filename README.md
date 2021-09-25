@@ -6,6 +6,10 @@ An OAuth OIDC server written in Go.
 
 * I am working on it 😜
 
+## Open Telemetry Use Guidelines
+
+The idea here is to primarily lean on tracing, and add metrics after the fact. Events are added to spans through request processing. each function being traced should add events for the end of the happy path as well as for any error that originates in that function, events shouild not be added to the span for errors who already had events added in other (nested) function calls. if the request fails then the span status should be set to error, but the error details span should not be added again at higher levels of the call stack unless the context makes it relevant.
+
 ## TODO List
 
 * Build docker file

@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/calvine/goauth/core/apptelemetry"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/core/services"
@@ -29,71 +31,112 @@ func (appService) GetName() string {
 }
 
 func (as appService) GetAppsByOwnerID(ctx context.Context, logger *zap.Logger, ownerID string, initiator string) ([]models.App, errors.RichError) {
+	span := apptelemetry.CreateFunctionSpan(ctx, as.GetName(), "GetAppsByOwnerID")
+	defer span.End()
 	apps, err := as.appRepo.GetAppsByOwnerID(ctx, ownerID)
 	if err != nil {
+		evtString := fmt.Sprintf("no apps found for owner id: %s", ownerID)
+		span.AddEvent(evtString)
+		apptelemetry.SetSpanError(&span, err)
 		return nil, err
 	}
+	span.AddEvent("apps retreived")
 	return apps, nil
 }
 
 func (as appService) GetAppByID(ctx context.Context, logger *zap.Logger, id string, initiator string) (models.App, errors.RichError) {
+	span := apptelemetry.CreateFunctionSpan(ctx, as.GetName(), "GetAppByID")
+	defer span.End()
 	app, err := as.appRepo.GetAppByID(ctx, id)
 	if err != nil {
+		apptelemetry.SetSpanError(&span, err)
 		return models.App{}, err
 	}
 	return app, nil
 }
 
 func (as appService) GetAppByClientID(ctx context.Context, logger *zap.Logger, clientID string, initiator string) (models.App, errors.RichError) {
+	span := apptelemetry.CreateFunctionSpan(ctx, as.GetName(), "GetAppByClientID")
+	defer span.End()
 	app, err := as.appRepo.GetAppByClientID(ctx, clientID)
 	if err != nil {
+		apptelemetry.SetSpanError(&span, err)
 		return models.App{}, err
 	}
 	return app, nil
 }
 
 func (as appService) GetAppAndScopesByClientID(ctx context.Context, logger *zap.Logger, clientID string, initiator string) (models.App, []models.Scope, errors.RichError) {
+	span := apptelemetry.CreateFunctionSpan(ctx, as.GetName(), "GetAppAndScopesByClientID")
+	defer span.End()
 	app, scopes, err := as.appRepo.GetAppAndScopesByClientID(ctx, clientID)
 	if err != nil {
+		apptelemetry.SetSpanError(&span, err)
 		return models.App{}, nil, err
 	}
 	return app, scopes, nil
 }
 
 func (as appService) AddApp(ctx context.Context, logger *zap.Logger, app *models.App, initiator string) errors.RichError {
+	span := apptelemetry.CreateFunctionSpan(ctx, as.GetName(), "AddApp")
+	defer span.End()
 	err := models.ValidateApp(false, *app)
 	if err != nil {
+		apptelemetry.SetSpanError(&span, err)
 		return err
 	}
 	err = as.appRepo.AddApp(ctx, app, initiator)
-	return err
+	if err != nil {
+		apptelemetry.SetSpanError(&span, err)
+		return err
+	}
+	return nil
 }
 
 func (as appService) UpdateApp(ctx context.Context, logger *zap.Logger, app *models.App, initiator string) errors.RichError {
+	span := apptelemetry.CreateFunctionSpan(ctx, as.GetName(), "UpdateApp")
+	defer span.End()
 	err := models.ValidateApp(true, *app)
 	if err != nil {
+		apptelemetry.SetSpanError(&span, err)
 		return err
 	}
 	err = as.appRepo.UpdateApp(ctx, app, initiator)
-	return err
+	if err != nil {
+		apptelemetry.SetSpanError(&span, err)
+		return err
+	}
+	return nil
 }
 
 func (as appService) DeleteApp(ctx context.Context, logger *zap.Logger, app *models.App, initiator string) errors.RichError {
+	span := apptelemetry.CreateFunctionSpan(ctx, as.GetName(), "DeleteApp")
+	defer span.End()
 	err := as.appRepo.DeleteApp(ctx, app, initiator)
-	return err
+	if err != nil {
+		apptelemetry.SetSpanError(&span, err)
+		return err
+	}
+	return nil
 }
 
 func (as appService) GetScopeByID(ctx context.Context, logger *zap.Logger, id string, initiator string) (models.Scope, errors.RichError) {
+	span := apptelemetry.CreateFunctionSpan(ctx, as.GetName(), "GetScopeByID")
+	defer span.End()
 	scope, err := as.appRepo.GetScopeByID(ctx, id)
 	if err != nil {
+		apptelemetry.SetSpanError(&span, err)
 		return models.Scope{}, err
 	}
 	return scope, nil
 }
 
 func (as appService) GetScopesByAppID(ctx context.Context, logger *zap.Logger, appID string, initiator string) ([]models.Scope, errors.RichError) {
+	span := apptelemetry.CreateFunctionSpan(ctx, as.GetName(), "GetScopesByAppID")
+	defer span.End()
 	scopes, err := as.appRepo.GetScopesByAppID(ctx, appID)
 	if err != nil {
+		apptelemetry.SetSpanError(&span, err)
 		return nil, err
 	}
 	return scopes, nil
@@ -105,24 +148,44 @@ func (as appService) GetScopesByAppID(ctx context.Context, logger *zap.Logger, a
 // }
 
 func (as appService) AddScopeToApp(ctx context.Context, logger *zap.Logger, scope *models.Scope, initiator string) errors.RichError {
+	span := apptelemetry.CreateFunctionSpan(ctx, as.GetName(), "AddScopeToApp")
+	defer span.End()
 	err := models.ValidateScope(false, *scope)
 	if err != nil {
+		apptelemetry.SetSpanError(&span, err)
 		return err
 	}
 	err = as.appRepo.AddScope(ctx, scope, initiator)
-	return err
+	if err != nil {
+		apptelemetry.SetSpanError(&span, err)
+		return err
+	}
+	return nil
 }
 
 func (as appService) UpdateScope(ctx context.Context, logger *zap.Logger, scope *models.Scope, initiator string) errors.RichError {
+	span := apptelemetry.CreateFunctionSpan(ctx, as.GetName(), "UpdateScope")
+	defer span.End()
 	err := models.ValidateScope(false, *scope)
 	if err != nil {
+		apptelemetry.SetSpanError(&span, err)
 		return err
 	}
 	err = as.appRepo.UpdateScope(ctx, scope, initiator)
-	return err
+	if err != nil {
+		apptelemetry.SetSpanError(&span, err)
+		return err
+	}
+	return nil
 }
 
 func (as appService) DeleteScope(ctx context.Context, logger *zap.Logger, scope *models.Scope, initiator string) errors.RichError {
+	span := apptelemetry.CreateFunctionSpan(ctx, as.GetName(), "UpdateScope")
+	defer span.End()
 	err := as.appRepo.DeleteScope(ctx, scope, initiator)
-	return err
+	if err != nil {
+		apptelemetry.SetSpanError(&span, err)
+		return err
+	}
+	return nil
 }

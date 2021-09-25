@@ -2,8 +2,10 @@ package mongo
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	repoModels "github.com/calvine/goauth/dataaccess/mongo/internal/models"
@@ -12,8 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -60,9 +60,7 @@ func (userRepo) GetType() string {
 }
 
 func (ur userRepo) GetUserByID(ctx context.Context, id string) (models.User, errors.RichError) {
-	spanContext := trace.SpanFromContext(ctx)
-	_, span := spanContext.TracerProvider().Tracer(ur.GetName()).Start(ctx, "GetUserByID")
-	span.SetAttributes(attribute.String("db", ur.GetType()))
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetUserByID", ur.GetType())
 	defer span.End()
 	var repoUser repoModels.RepoUser
 	options := options.FindOneOptions{
@@ -70,27 +68,38 @@ func (ur userRepo) GetUserByID(ctx context.Context, id string) (models.User, err
 	}
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return repoUser.ToCoreUser(), coreerrors.NewFailedToParseObjectIDError(id, err, true)
+		rErr := coreerrors.NewFailedToParseObjectIDError(id, err, true)
+		evtString := fmt.Sprintf("%s: %s", rErr.GetErrorMessage(), id)
+		span.AddEvent(evtString)
+		apptelemetry.SetSpanError(&span, rErr)
+		return repoUser.ToCoreUser(), rErr
 	}
 	filter := bson.M{"_id": oid}
 	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&repoUser)
-	user := repoUser.ToCoreUser()
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			fields := map[string]interface{}{
 				"_id": id,
 			}
-			return user, coreerrors.NewNoUserFoundError(fields, true)
+			rErr := coreerrors.NewNoUserFoundError(fields, true)
+			evtString := fmt.Sprintf("%s: %s", rErr.GetErrorMessage(), id)
+			span.AddEvent(evtString)
+			apptelemetry.SetSpanError(&span, rErr)
+			return models.User{}, rErr
 		}
-		return user, coreerrors.NewRepoQueryFailedError(err, true)
+		rErr := coreerrors.NewRepoQueryFailedError(err, true)
+		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
+		span.AddEvent(evtString)
+		apptelemetry.SetSpanError(&span, rErr)
+		return models.User{}, rErr
 	}
+	user := repoUser.ToCoreUser()
+	span.AddEvent("user retreived")
 	return user, nil
 }
 
 func (ur userRepo) GetUserAndContactByContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
-	spanContext := trace.SpanFromContext(ctx)
-	_, span := spanContext.TracerProvider().Tracer(ur.GetName()).Start(ctx, "GetUserAndContactByContact")
-	span.SetAttributes(attribute.String("db", ur.GetType()))
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetUserAndContactByContact", ur.GetType())
 	defer span.End()
 	var receiver struct {
 		User    repoModels.RepoUser      `bson:",inline"`
@@ -119,20 +128,27 @@ func (ur userRepo) GetUserAndContactByContact(ctx context.Context, contactType, 
 				"contacts.type":      contactType,
 				"contacts.principal": contactPrincipal,
 			}
-			return user, contact, coreerrors.NewNoUserFoundError(fields, true)
+			rErr := coreerrors.NewNoUserFoundError(fields, true)
+			evtString := fmt.Sprintf("no user found with contact %s of type %s", contactPrincipal, contactType)
+			span.AddEvent(evtString)
+			apptelemetry.SetSpanError(&span, rErr)
+			return user, contact, rErr
 		}
-		return user, contact, coreerrors.NewRepoQueryFailedError(err, true)
+		rErr := coreerrors.NewRepoQueryFailedError(err, true)
+		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
+		span.AddEvent(evtString)
+		apptelemetry.SetSpanError(&span, rErr)
+		return user, contact, rErr
 	}
 	user = receiver.User.ToCoreUser()
 	contact = receiver.Contact[0].ToCoreContact()
 	contact.UserID = user.ID
+	span.AddEvent("user and contact retreived")
 	return user, contact, nil
 }
 
 func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, errors.RichError) {
-	spanContext := trace.SpanFromContext(ctx)
-	_, span := spanContext.TracerProvider().Tracer(ur.GetName()).Start(ctx, "GetUserByPrimaryContact")
-	span.SetAttributes(attribute.String("db", ur.GetType()))
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetUserByPrimaryContact", ur.GetType())
 	defer span.End()
 	var repoUser repoModels.RepoUser
 	options := options.FindOneOptions{
@@ -158,23 +174,34 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, con
 				"contacts.type":      contactType,
 				"contacts.principal": contactPrincipal,
 			}
-			return user, coreerrors.NewNoUserFoundError(fields, true)
+			rErr := coreerrors.NewNoUserFoundError(fields, true)
+			evtString := fmt.Sprintf("no user found with primary contact %s of type %s", contactPrincipal, contactType)
+			span.AddEvent(evtString)
+			apptelemetry.SetSpanError(&span, rErr)
+			return user, rErr
 		}
-		return user, coreerrors.NewRepoQueryFailedError(err, true)
+		rErr := coreerrors.NewRepoQueryFailedError(err, true)
+		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
+		span.AddEvent(evtString)
+		apptelemetry.SetSpanError(&span, rErr)
+		return user, rErr
 	}
+	span.AddEvent("user retreived")
 	return user, nil
 }
 
 func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdByID string) errors.RichError {
-	spanContext := trace.SpanFromContext(ctx)
-	_, span := spanContext.TracerProvider().Tracer(ur.GetName()).Start(ctx, "AddUser")
-	span.SetAttributes(attribute.String("db", ur.GetType()))
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "AddUser", ur.GetType())
 	defer span.End()
 	user.AuditData.CreatedByID = createdByID
 	user.AuditData.CreatedOnDate = time.Now().UTC()
 	result, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).InsertOne(ctx, user, nil)
 	if err != nil {
-		return coreerrors.NewRepoQueryFailedError(err, true)
+		rErr := coreerrors.NewRepoQueryFailedError(err, true)
+		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
+		span.AddEvent(evtString)
+		apptelemetry.SetSpanError(&span, rErr)
+		return rErr
 	}
 	oid := result.InsertedID.(primitive.ObjectID)
 	// oid, ok := result.InsertedID.(primitive.ObjectID)
@@ -182,18 +209,20 @@ func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdByID s
 	// 	return mongoerrors.NewMongoFailedToParseObjectID(result.InsertedID, true)
 	// }
 	user.ID = oid.Hex()
+	span.AddEvent("user added")
 	return nil
 }
 
 func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedByID string) errors.RichError {
-	spanContext := trace.SpanFromContext(ctx)
-	_, span := spanContext.TracerProvider().Tracer(ur.GetName()).Start(ctx, "UpdateUser")
-	span.SetAttributes(attribute.String("db", ur.GetType()))
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "UpdateUser", ur.GetType())
 	defer span.End()
 	user.AuditData.ModifiedByID.Set(modifiedByID)
 	user.AuditData.ModifiedOnDate.Set(time.Now().UTC())
 	repoUser, err := repoModels.CoreUser(*user).ToRepoUser()
 	if err != nil {
+		evtString := fmt.Sprintf("failed to convert user to repo user: %s", err.GetErrorMessage())
+		span.AddEvent(evtString)
+		apptelemetry.SetSpanError(&span, err)
 		return err
 	}
 	filter := bson.M{
@@ -214,13 +243,22 @@ func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedBy
 	}
 	result, updateErr := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(ctx, filter, update)
 	if updateErr != nil {
-		return coreerrors.NewRepoQueryFailedError(updateErr, true)
+		rErr := coreerrors.NewRepoQueryFailedError(updateErr, true)
+		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
+		span.AddEvent(evtString)
+		apptelemetry.SetSpanError(&span, rErr)
+		return rErr
 	}
 	if result.ModifiedCount == 0 {
 		fields := map[string]interface{}{
 			"_id": user.ID,
 		}
-		return coreerrors.NewNoUserFoundError(fields, true)
+		rErr := coreerrors.NewNoUserFoundError(fields, true)
+		evtString := fmt.Sprintf("no user found with id: %s", user.ID)
+		span.AddEvent(evtString)
+		apptelemetry.SetSpanError(&span, rErr)
+		return rErr
 	}
+	span.AddEvent("user updated")
 	return nil
 }

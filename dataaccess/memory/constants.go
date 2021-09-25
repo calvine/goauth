@@ -1,5 +1,5 @@
 package memory
 
 const (
-	dataSourceType = "string"
+	dataSourceType = "memory"
 )
