@@ -36,8 +36,7 @@ func (ar auditLogRepo) LogMessage(ctx context.Context, message models.AuditLog) 
 	if err != nil {
 		rErr := coreerrors.NewRepoQueryFailedError(err, true)
 		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 	}
 	span.AddEvent("audit log added")
 	return nil

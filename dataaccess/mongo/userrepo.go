@@ -70,8 +70,7 @@ func (ur userRepo) GetUserByID(ctx context.Context, id string) (models.User, err
 	if err != nil {
 		rErr := coreerrors.NewFailedToParseObjectIDError(id, err, true)
 		evtString := fmt.Sprintf("%s: %s", rErr.GetErrorMessage(), id)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return repoUser.ToCoreUser(), rErr
 	}
 	filter := bson.M{"_id": oid}
@@ -83,14 +82,12 @@ func (ur userRepo) GetUserByID(ctx context.Context, id string) (models.User, err
 			}
 			rErr := coreerrors.NewNoUserFoundError(fields, true)
 			evtString := fmt.Sprintf("%s: %s", rErr.GetErrorMessage(), id)
-			span.AddEvent(evtString)
-			apptelemetry.SetSpanError(&span, rErr)
+			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 			return models.User{}, rErr
 		}
 		rErr := coreerrors.NewRepoQueryFailedError(err, true)
 		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return models.User{}, rErr
 	}
 	user := repoUser.ToCoreUser()
@@ -130,14 +127,12 @@ func (ur userRepo) GetUserAndContactByContact(ctx context.Context, contactType, 
 			}
 			rErr := coreerrors.NewNoUserFoundError(fields, true)
 			evtString := fmt.Sprintf("no user found with contact %s of type %s", contactPrincipal, contactType)
-			span.AddEvent(evtString)
-			apptelemetry.SetSpanError(&span, rErr)
+			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 			return user, contact, rErr
 		}
 		rErr := coreerrors.NewRepoQueryFailedError(err, true)
 		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return user, contact, rErr
 	}
 	user = receiver.User.ToCoreUser()
@@ -176,14 +171,12 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, con
 			}
 			rErr := coreerrors.NewNoUserFoundError(fields, true)
 			evtString := fmt.Sprintf("no user found with primary contact %s of type %s", contactPrincipal, contactType)
-			span.AddEvent(evtString)
-			apptelemetry.SetSpanError(&span, rErr)
+			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 			return user, rErr
 		}
 		rErr := coreerrors.NewRepoQueryFailedError(err, true)
 		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return user, rErr
 	}
 	span.AddEvent("user retreived")
@@ -199,8 +192,7 @@ func (ur userRepo) AddUser(ctx context.Context, user *models.User, createdByID s
 	if err != nil {
 		rErr := coreerrors.NewRepoQueryFailedError(err, true)
 		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return rErr
 	}
 	oid := result.InsertedID.(primitive.ObjectID)
@@ -221,8 +213,7 @@ func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedBy
 	repoUser, err := repoModels.CoreUser(*user).ToRepoUser()
 	if err != nil {
 		evtString := fmt.Sprintf("failed to convert user to repo user: %s", err.GetErrorMessage())
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}
 	filter := bson.M{
@@ -245,8 +236,7 @@ func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedBy
 	if updateErr != nil {
 		rErr := coreerrors.NewRepoQueryFailedError(updateErr, true)
 		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return rErr
 	}
 	if result.ModifiedCount == 0 {
@@ -255,8 +245,7 @@ func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedBy
 		}
 		rErr := coreerrors.NewNoUserFoundError(fields, true)
 		evtString := fmt.Sprintf("no user found with id: %s", user.ID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return rErr
 	}
 	span.AddEvent("user updated")

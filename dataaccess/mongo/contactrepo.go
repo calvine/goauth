@@ -47,8 +47,7 @@ func (ur userRepo) GetContactByID(ctx context.Context, id string) (models.Contac
 	if err != nil {
 		rErr := coreerrors.NewFailedToParseObjectIDError(id, err, true)
 		evtString := fmt.Sprintf("%s: %s", rErr.GetErrorMessage(), id)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return emptyContact, rErr
 	}
 	filter := bson.D{
@@ -62,14 +61,12 @@ func (ur userRepo) GetContactByID(ctx context.Context, id string) (models.Contac
 			}
 			rErr := coreerrors.NewNoContactFoundError(fields, true)
 			evtString := fmt.Sprintf("no contact found with id: %s", id)
-			span.AddEvent(evtString)
-			apptelemetry.SetSpanError(&span, rErr)
+			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 			return emptyContact, rErr
 		}
 		rErr := coreerrors.NewRepoQueryFailedError(err, true)
 		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return emptyContact, rErr
 	}
 	receiver.Contact[0].UserID = receiver.UserID.Hex()
@@ -92,8 +89,7 @@ func (ur userRepo) GetPrimaryContactByUserID(ctx context.Context, userID string)
 	if err != nil {
 		rErr := coreerrors.NewFailedToParseObjectIDError(userID, err, true)
 		evtString := fmt.Sprintf("%s: %s", rErr.GetErrorMessage(), userID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return emptyContact, rErr
 	}
 	filter := bson.M{
@@ -111,14 +107,12 @@ func (ur userRepo) GetPrimaryContactByUserID(ctx context.Context, userID string)
 			}
 			rErr := coreerrors.NewNoContactFoundError(fields, true)
 			evtString := fmt.Sprintf("no primary contact found for user id: %s", userID)
-			span.AddEvent(evtString)
-			apptelemetry.SetSpanError(&span, rErr)
+			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 			return emptyContact, rErr
 		}
 		rErr := coreerrors.NewRepoQueryFailedError(err, true)
 		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return emptyContact, rErr
 	}
 	// TODO: need to make sure business logic exists to ensure that there is only 1 primary contact...
@@ -144,8 +138,7 @@ func (ur userRepo) GetContactsByUserID(ctx context.Context, userID string) ([]mo
 	if err != nil {
 		rErr := coreerrors.NewFailedToParseObjectIDError(userID, err, true)
 		evtString := fmt.Sprintf("%s user id: %s", rErr.GetErrorMessage(), userID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return nil, rErr
 	}
 	filter := bson.M{"_id": oid}
@@ -157,14 +150,12 @@ func (ur userRepo) GetContactsByUserID(ctx context.Context, userID string) ([]mo
 			}
 			rErr := coreerrors.NewNoContactFoundError(fields, true)
 			evtString := fmt.Sprintf("no contact found for user id: %s", userID)
-			span.AddEvent(evtString)
-			apptelemetry.SetSpanError(&span, rErr)
+			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 			return nil, rErr
 		}
 		rErr := coreerrors.NewRepoQueryFailedError(err, true)
 		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return nil, rErr
 	}
 	contacts := make([]models.Contact, len(receiver.Contacts))
@@ -186,8 +177,7 @@ func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, crea
 	if err != nil {
 		rErr := coreerrors.NewFailedToParseObjectIDError(contact.UserID, err, true)
 		evtString := fmt.Sprintf("%s user id: %s", rErr.GetErrorMessage(), contact.UserID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return rErr
 	}
 	repoContact, convertErr := repoModels.CoreContact(*contact).ToRepoContact()
@@ -214,8 +204,7 @@ func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, crea
 	if err != nil {
 		rErr := coreerrors.NewRepoQueryFailedError(err, true)
 		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return rErr
 	}
 	if result.ModifiedCount == 0 {
@@ -224,8 +213,7 @@ func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, crea
 		}
 		rErr := coreerrors.NewNoUserFoundError(fields, true)
 		evtString := fmt.Sprintf("no user found with id: %s", contact.UserID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return rErr
 	}
 	span.AddEvent("contact added")
@@ -244,8 +232,7 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 		// TODO: specific error here?
 		rErr := coreerrors.NewFailedToParseObjectIDError(contact.ID, err, true)
 		evtString := fmt.Sprintf("%s contact id: %s", rErr.GetErrorMessage(), contact.ID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return rErr
 	}
 	oid, err := primitive.ObjectIDFromHex(contact.UserID)
@@ -253,8 +240,7 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 		// TODO: specific error here?
 		rErr := coreerrors.NewFailedToParseObjectIDError(contact.UserID, err, true)
 		evtString := fmt.Sprintf("%s user id: %s", rErr.GetErrorMessage(), contact.UserID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return rErr
 	}
 	filter := bson.D{
@@ -276,8 +262,7 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 	if err != nil {
 		rErr := coreerrors.NewRepoQueryFailedError(err, true)
 		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return rErr
 	}
 	if result.ModifiedCount == 0 {
@@ -287,8 +272,7 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 		}
 		rErr := coreerrors.NewNoContactFoundError(fields, true)
 		evtString := fmt.Sprintf("no contact found with id: %s", contact.ID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, rErr)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return rErr
 	}
 	span.AddEvent("contact updated")

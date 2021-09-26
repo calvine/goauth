@@ -27,11 +27,18 @@ func CreateFunctionSpan(ctx context.Context, componentName string, funcName stri
 	}
 	return span
 }
-
-func SetSpanError(span *trace.Span, err errors.RichError) {
+func SetSpanOriginalError(span *trace.Span, err errors.RichError, eventString string) {
+	(*span).AddEvent(eventString)
 	(*span).SetAttributes(
-		attribute.String("errorCode", err.GetErrorCode()),
+		attribute.String("errorData", err.Error()),
 		// attribute.String("errorMessage", err.GetErrorMessage()),
 	)
-	(*span).SetStatus(codes.Error, err.ToString(errors.ShortDetailedOutput))
+	(*span).SetStatus(codes.Error, err.GetErrorCode())
+}
+
+func SetSpanError(span *trace.Span, err errors.RichError, optionalEventString string) {
+	if optionalEventString != "" {
+		(*span).AddEvent(optionalEventString)
+	}
+	(*span).SetStatus(codes.Error, err.GetErrorCode())
 }

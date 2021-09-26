@@ -44,8 +44,7 @@ func (ar appRepo) GetAppByID(ctx context.Context, id string) (models.App, errors
 		fields := map[string]interface{}{"id": id}
 		err := coreerrors.NewNoAppFoundError(fields, true)
 		evtString := fmt.Sprintf("no app found with id: %s", id)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return app, err
 	}
 	span.AddEvent("app retreived")
@@ -79,8 +78,7 @@ func (ar appRepo) GetAppsByOwnerID(ctx context.Context, ownerID string) ([]model
 		fields := map[string]interface{}{"ownerID": ownerID}
 		err := coreerrors.NewNoAppFoundError(fields, true)
 		evtString := fmt.Sprintf("no apps found for owner id: %s", ownerID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return apps, err
 	}
 	span.AddEvent("apps retreived")
@@ -103,8 +101,7 @@ func (ar appRepo) GetAppAndScopesByClientID(ctx context.Context, clientID string
 	fields := map[string]interface{}{"clientID": clientID}
 	err := coreerrors.NewNoAppFoundError(fields, true)
 	evtString := fmt.Sprintf("no apps or scopes found for client id: %s", clientID)
-	span.AddEvent(evtString)
-	apptelemetry.SetSpanError(&span, err)
+	apptelemetry.SetSpanOriginalError(&span, err, evtString)
 	return app, scopes, err
 }
 
@@ -140,8 +137,7 @@ func (ar appRepo) DeleteApp(ctx context.Context, app *models.App, deletedBy stri
 		fields := map[string]interface{}{"id": app.ID}
 		err := coreerrors.NewNoAppFoundError(fields, true)
 		evtString := fmt.Sprintf("no app found with id: %s", app.ID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}
 	delete(*ar.apps, app.ID)
@@ -171,8 +167,7 @@ func (ar appRepo) GetScopeByID(ctx context.Context, id string) (models.Scope, er
 		fields := map[string]interface{}{"id": id}
 		err := coreerrors.NewNoScopeFoundError(fields, true)
 		evtString := fmt.Sprintf("no scope found with id: %s", id)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return models.Scope{}, err
 	}
 	span.AddEvent("scope retreived")
@@ -187,8 +182,7 @@ func (ar appRepo) GetScopesByAppID(ctx context.Context, appID string) ([]models.
 		fields := map[string]interface{}{"appID": appID}
 		err := coreerrors.NewNoScopeFoundError(fields, true)
 		evtString := fmt.Sprintf("no scopes found with app id: %s", appID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return scopes, err
 	}
 	span.AddEvent("scopes retrevied")
@@ -209,8 +203,7 @@ func (ar appRepo) AddScope(ctx context.Context, scope *models.Scope, createdBy s
 		fields := map[string]interface{}{"ID": scope.ID, "AppID": scope.AppID}
 		err := coreerrors.NewNoAppFoundError(fields, true)
 		evtString := fmt.Sprintf("no app found with app id: %s", scope.AppID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}
 	scopes = append(scopes, *scope)
@@ -229,8 +222,7 @@ func (ar appRepo) UpdateScope(ctx context.Context, scope *models.Scope, modified
 		fields := map[string]interface{}{"appID": appID}
 		err := coreerrors.NewNoScopeFoundError(fields, true)
 		evtString := fmt.Sprintf("no scope found with id: %s", scope.ID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}
 	scopeFound := false
@@ -248,8 +240,7 @@ func (ar appRepo) UpdateScope(ctx context.Context, scope *models.Scope, modified
 		fields := map[string]interface{}{"ID": scope.ID, "appID": scope.AppID}
 		err := coreerrors.NewNoScopeFoundError(fields, true)
 		evtString := fmt.Sprintf("no scope found with id: %s", scope.ID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}
 	span.AddEvent("scope updated")
@@ -266,8 +257,7 @@ func (ar appRepo) DeleteScope(ctx context.Context, scope *models.Scope, deletedB
 		fields := map[string]interface{}{"appID": appID}
 		err := coreerrors.NewNoScopeFoundError(fields, true)
 		evtString := fmt.Sprintf("no scope found with id: %s", scope.ID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}
 	scopeFound := false
@@ -288,8 +278,7 @@ func (ar appRepo) DeleteScope(ctx context.Context, scope *models.Scope, deletedB
 		fields := map[string]interface{}{"appID": appID}
 		err := coreerrors.NewNoScopeFoundError(fields, true)
 		evtString := fmt.Sprintf("no scope found with id: %s", scope.ID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}
 	span.AddEvent("scope deleted")

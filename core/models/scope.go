@@ -24,16 +24,16 @@ func NewScope(appID, name, description string) Scope {
 func ValidateScope(includeID bool, scope Scope) errors.RichError {
 	fields := make(map[string]interface{})
 	if includeID && scope.ID == "" {
-		fields["ID"] = "app ID cannot be empty"
+		fields["ID"] = "ID cannot be empty"
 	}
 	if scope.AppID == "" {
 		fields["AppID"] = "app AppID cannot be empty"
 	}
 	if scope.Name == "" {
-		fields["Name"] = "app Name cannot be empty"
+		fields["Name"] = "Name cannot be empty"
 	}
 	if scope.Description == "" {
-		fields["Description"] = "app Description cannot be empty"
+		fields["Description"] = "Description cannot be empty"
 	}
 
 	if len(fields) > 0 {

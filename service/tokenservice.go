@@ -30,9 +30,7 @@ func (ts tokenService) GetToken(ctx context.Context, tokenValue string, expected
 	defer span.End()
 	token, err := ts.tokenRepo.GetToken(ctx, tokenValue)
 	if err != nil {
-		evtString := fmt.Sprintf("failed to retreive token from token repo: %s - %s", tokenValue, expectedTokenType.String())
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanError(&span, err, "")
 		return token, err
 	}
 	span.AddEvent("token retreived from tokenRepo")
@@ -40,16 +38,14 @@ func (ts tokenService) GetToken(ctx context.Context, tokenValue string, expected
 	if now.After(token.Expiration) {
 		// TODO: do we want to delete the token incase the native store does not support auto delete on TTL like redis?
 		evtString := fmt.Sprintf("token expired on %s", token.Expiration.UTC().String())
-		span.AddEvent(evtString)
 		err := coreerrors.NewExpiredTokenError(tokenValue, token.TokenType.String(), token.Expiration, true)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return models.Token{}, err
 	} else if token.TokenType != expectedTokenType {
 		// TODO: Audit log this
 		evtString := fmt.Sprintf("token type %s does not match expected type %s", token.TokenType.String(), expectedTokenType.String())
-		span.AddEvent(evtString)
 		err := coreerrors.NewWrongTokenTypeError(token.Value, token.TokenType.String(), expectedTokenType.String(), true)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return models.Token{}, err
 	}
 	return token, nil
@@ -61,28 +57,22 @@ func (ts tokenService) PutToken(ctx context.Context, token models.Token) errors.
 	tokenErrorsMap := make(map[string]interface{})
 	if token.Value == "" {
 		// token value must be populated
-		span.AddEvent("token value is empty string")
 		tokenErrorsMap["value"] = "token valus is empty"
 	} else if token.TokenType == models.TokenTypeInvalid {
 		// cannot add invalid token
-		evtString := fmt.Sprintf("token type is invalid: %s", token.TokenType.String())
-		span.AddEvent(evtString)
 		tokenErrorsMap["tokenType"] = "token type is invalid"
 	} else if token.Expiration.Before(time.Now().UTC()) {
 		// cannot save a token that is already expired
-		evtString := fmt.Sprintf("token expiration is in the past: %s", token.Expiration.UTC().String())
-		span.AddEvent(evtString)
 		tokenErrorsMap["expiration"] = fmt.Sprintf("token is expired: %s", token.Expiration.String())
 	}
 	if len(tokenErrorsMap) > 0 {
-		span.AddEvent("token validation failed")
 		err := coreerrors.NewMalfomedTokenError(tokenErrorsMap, true)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, "token validation failed")
 		return err
 	}
 	err := ts.tokenRepo.PutToken(ctx, token)
 	if err != nil {
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanError(&span, err, "")
 		return err
 	}
 	return nil
@@ -93,9 +83,7 @@ func (ts tokenService) DeleteToken(ctx context.Context, tokenValue string) error
 	defer span.End()
 	err := ts.tokenRepo.DeleteToken(ctx, tokenValue)
 	if err != nil {
-		evtString := fmt.Sprintf("failed to delete token: %s", tokenValue)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanError(&span, err, "")
 		return err
 	}
 	evtString := fmt.Sprintf("token deleted: %s", tokenValue)

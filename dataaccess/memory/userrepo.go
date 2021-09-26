@@ -48,8 +48,7 @@ func (ur userRepo) GetUserByID(ctx context.Context, id string) (models.User, err
 		fields := map[string]interface{}{"id": id}
 		err := coreerrors.NewNoUserFoundError(fields, true)
 		evtString := fmt.Sprintf("no user found with id: %s", id)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return user, err
 	}
 	span.AddEvent("retreived user")
@@ -102,8 +101,7 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactPrincipal
 		}
 		err := coreerrors.NewNoUserFoundError(fields, true)
 		evtString := fmt.Sprintf("no user found with primary contact %s of type %s", contactPrincipal, contactPrincipalType)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return user, err
 	}
 	user, ok := (*ur.users)[contact.UserID]
@@ -116,8 +114,7 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactPrincipal
 		}
 		err := coreerrors.NewNoUserFoundError(fields, true)
 		evtString := fmt.Sprintf("no user found with primary contact %s of type %s", contactPrincipal, contactPrincipalType)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return user, err
 	}
 	span.AddEvent("user and primary contact retreived")
@@ -145,8 +142,7 @@ func (ur userRepo) GetUserAndContactByContact(ctx context.Context, contactType, 
 		}
 		err := coreerrors.NewNoUserFoundError(fields, true)
 		evtString := fmt.Sprintf("no user found with contact %s of type %s", contactPrincipal, contactType)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return user, contact, err
 	}
 	user, ok := (*ur.users)[contact.UserID]
@@ -158,8 +154,7 @@ func (ur userRepo) GetUserAndContactByContact(ctx context.Context, contactType, 
 		}
 		err := coreerrors.NewNoUserFoundError(fields, true)
 		evtString := fmt.Sprintf("no user found with contact %s of type %s", contactPrincipal, contactType)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return user, contact, err
 	}
 	span.AddEvent("user and contact retreived")

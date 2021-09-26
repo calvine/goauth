@@ -43,8 +43,7 @@ func (cr contactRepo) GetContactByID(ctx context.Context, id string) (models.Con
 		fields := map[string]interface{}{"id": id}
 		err := coreerrors.NewNoAppFoundError(fields, true)
 		evtString := fmt.Sprintf("contact id not found: %s", id)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanError(&span, err, evtString)
 		return contact, err
 	}
 	span.AddEvent("contact found")
@@ -70,8 +69,7 @@ func (cr contactRepo) GetPrimaryContactByUserID(ctx context.Context, userID stri
 		}
 		err := coreerrors.NewNoContactFoundError(fields, true)
 		evtString := fmt.Sprintf("no primary contact found for user: %s", userID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanError(&span, err, evtString)
 		return contact, err
 	}
 	span.AddEvent("primary contact found")
@@ -93,8 +91,7 @@ func (cr contactRepo) GetContactsByUserID(ctx context.Context, userID string) ([
 		}
 		err := coreerrors.NewNoContactFoundError(fields, true)
 		evtString := fmt.Sprintf("unable to find contact for user: %s", userID)
-		span.AddEvent(evtString)
-		apptelemetry.SetSpanError(&span, err)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return nil, err
 	}
 	span.AddEvent("contacts found")
