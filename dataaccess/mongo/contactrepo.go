@@ -110,7 +110,7 @@ func (ur userRepo) GetPrimaryContactByUserID(ctx context.Context, userID string)
 				"contacts.isPrimary": true,
 			}
 			rErr := coreerrors.NewNoContactFoundError(fields, true)
-			evtString := fmt.Sprintf("")
+			evtString := fmt.Sprintf("no primary contact found for user id: %s", userID)
 			span.AddEvent(evtString)
 			apptelemetry.SetSpanError(&span, rErr)
 			return emptyContact, rErr
@@ -124,6 +124,7 @@ func (ur userRepo) GetPrimaryContactByUserID(ctx context.Context, userID string)
 	// TODO: need to make sure business logic exists to ensure that there is only 1 primary contact...
 	contact := receiver.Contacts[0].ToCoreContact()
 	contact.UserID = userID
+	span.AddEvent("primary contact retreived")
 	return contact, nil
 }
 
@@ -155,7 +156,7 @@ func (ur userRepo) GetContactsByUserID(ctx context.Context, userID string) ([]mo
 				"_id": userID,
 			}
 			rErr := coreerrors.NewNoContactFoundError(fields, true)
-			evtString := fmt.Sprintf("")
+			evtString := fmt.Sprintf("no contact found for user id: %s", userID)
 			span.AddEvent(evtString)
 			apptelemetry.SetSpanError(&span, rErr)
 			return nil, rErr
@@ -171,6 +172,7 @@ func (ur userRepo) GetContactsByUserID(ctx context.Context, userID string) ([]mo
 		contact.UserID = userID
 		contacts[index] = contact.ToCoreContact()
 	}
+	span.AddEvent("contacts retreived")
 	return contacts, nil
 }
 
@@ -221,11 +223,12 @@ func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, crea
 			"_id": contact.UserID,
 		}
 		rErr := coreerrors.NewNoUserFoundError(fields, true)
-		evtString := fmt.Sprintf("")
+		evtString := fmt.Sprintf("no user found with id: %s", contact.UserID)
 		span.AddEvent(evtString)
 		apptelemetry.SetSpanError(&span, rErr)
 		return rErr
 	}
+	span.AddEvent("contact added")
 	return nil
 }
 
@@ -283,10 +286,11 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 			"contact.id": contact.ID,
 		}
 		rErr := coreerrors.NewNoContactFoundError(fields, true)
-		evtString := fmt.Sprintf("")
+		evtString := fmt.Sprintf("no contact found with id: %s", contact.ID)
 		span.AddEvent(evtString)
 		apptelemetry.SetSpanError(&span, rErr)
 		return rErr
 	}
+	span.AddEvent("contact updated")
 	return nil
 }

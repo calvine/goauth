@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/calvine/goauth/core/apptelemetry"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/richerror/errors"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type auditLogRepo struct {
@@ -31,13 +30,12 @@ func (auditLogRepo) GetType() string {
 }
 
 func (alr *auditLogRepo) LogMessage(ctx context.Context, message models.AuditLog) errors.RichError {
-	spanContext := trace.SpanFromContext(ctx)
-	_, span := spanContext.TracerProvider().Tracer(alr.GetName()).Start(ctx, "LogMessage")
-	span.SetAttributes(attribute.String("db", alr.GetType()))
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, alr.GetName(), "LogMessage", alr.GetType())
 	defer span.End()
 	alr.logMessages = append(alr.logMessages, message)
 	if alr.printToStdOut {
 		fmt.Printf("AUDIT LOG MESSAGE: %v\n\n", message)
 	}
+	span.AddEvent("log message stored")
 	return nil
 }
