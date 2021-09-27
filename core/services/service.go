@@ -47,7 +47,7 @@ type UserService interface {
 	// UpdateContact updates a contact for a user
 	UpdateContact(ctx context.Context, logger *zap.Logger, contact *models.Contact, initiator string) errors.RichError
 	// ConfirmContact takes a confirmation code and updates the users contact record to be confirmed.
-	ConfirmContact(ctx context.Context, logger *zap.Logger, confirmationCode string, initiator string) (bool, errors.RichError)
+	ConfirmContact(ctx context.Context, logger *zap.Logger, confirmationCode string, initiator string) errors.RichError
 
 	Service
 }
