@@ -9,6 +9,7 @@ import (
 	"github.com/calvine/goauth/core"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
+	"github.com/calvine/goauth/core/utilities/ctxpropagation"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -38,6 +39,7 @@ func (s *server) handleLoginGet() http.HandlerFunc {
 		}
 		// TODO: make CSRF token life span configurable
 		ctx := r.Context()
+		logger := ctxpropagation.GetLoggerFromContext(ctx)
 		span := trace.SpanFromContext(ctx)
 		token, err := models.NewToken("", models.TokenTypeCSRF, time.Minute*10)
 		if err != nil {
@@ -45,7 +47,7 @@ func (s *server) handleLoginGet() http.HandlerFunc {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		err = s.tokenService.PutToken(ctx, token)
+		err = s.tokenService.PutToken(ctx, logger, token)
 		if err != nil {
 			span.RecordError(err)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -76,16 +78,17 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		data := requestData{}
 		ctx := r.Context()
+		logger := ctxpropagation.GetLoggerFromContext(ctx)
 		data.CSRFToken = r.FormValue("csrf_token")
 		data.Email = r.FormValue("email")
 		data.Password = r.FormValue("password")
 
-		_, err := s.tokenService.GetToken(ctx, data.CSRFToken, models.TokenTypeCSRF)
+		_, err := s.tokenService.GetToken(ctx, logger, data.CSRFToken, models.TokenTypeCSRF)
 		if err != nil {
 			http.Error(rw, err.GetErrorMessage(), http.StatusBadRequest)
 			return
 		}
-		err = s.tokenService.DeleteToken(ctx, data.CSRFToken)
+		err = s.tokenService.DeleteToken(ctx, logger, data.CSRFToken)
 		if err != nil {
 			// uh of the token was not deleted! need to log this...
 		}
