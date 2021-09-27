@@ -11,6 +11,8 @@ import (
 	"go.uber.org/zap"
 )
 
+// TODO: need to refine service methods... like the add user method should also take a proposed primary contact...
+
 type userService struct {
 	userRepo     repo.UserRepo
 	contactRepo  repo.ContactRepo

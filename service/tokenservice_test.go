@@ -37,6 +37,10 @@ func TestTokenService(t *testing.T) {
 
 	setupTestTokens(t)
 
+	t.Run("GetName", func(t *testing.T) {
+		_testTokenServiceGetName(t, tokenService)
+	})
+
 	// put token
 	t.Run("PutToken", func(t *testing.T) {
 		_testPutToken(t, tokenService)
@@ -51,6 +55,14 @@ func TestTokenService(t *testing.T) {
 	t.Run("DeleteToken", func(t *testing.T) {
 		_testDeleteToken(t, tokenService)
 	})
+}
+
+func _testTokenServiceGetName(t *testing.T, tokenService services.TokenService) {
+	serviceName := tokenService.GetName()
+	expectedServiceName := "tokenService"
+	if serviceName != expectedServiceName {
+		t.Errorf("service name is not what was expected: got %s - expected %s", serviceName, expectedServiceName)
+	}
 }
 
 func setupTestTokens(t *testing.T) {

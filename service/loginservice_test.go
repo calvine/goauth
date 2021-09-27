@@ -56,6 +56,10 @@ const (
 func TestLoginService(t *testing.T) {
 	loginService := buildLoginService(t)
 
+	t.Run("GetName", func(t *testing.T) {
+		_testLoginServiceGetName(t, loginService)
+	})
+
 	t.Run("StartPasswordResetByPrimaryContact", func(t *testing.T) {
 		_testStartPasswordResetByPrimaryContact(t, loginService)
 	})
@@ -207,6 +211,14 @@ func buildLoginService(t *testing.T) services.LoginService {
 	}
 
 	return NewLoginService(options)
+}
+
+func _testLoginServiceGetName(t *testing.T, loginService services.LoginService) {
+	serviceName := loginService.GetName()
+	expectedServiceName := "loginService"
+	if serviceName != expectedServiceName {
+		t.Errorf("service name is not what was expected: got %s - expected %s", serviceName, expectedServiceName)
+	}
 }
 
 func _testStartPasswordResetByPrimaryContact(t *testing.T, loginService services.LoginService) {

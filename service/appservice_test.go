@@ -45,43 +45,60 @@ var (
 
 func TestAppService(t *testing.T) {
 	appService := buildAppService(t)
+
+	t.Run("GetName", func(t *testing.T) {
+		_testAppServiceGetName(t, appService)
+	})
+
 	t.Run("GetAppsByOwnerID", func(t *testing.T) {
 		_testGetAppsByOwnerID(t, appService)
 	})
+
 	t.Run("GetAppByID", func(t *testing.T) {
 		_testGetAppByID(t, appService)
 	})
+
 	t.Run("GetAppByClientID", func(t *testing.T) {
 		_testGetAppByClientID(t, appService)
 	})
+
 	t.Run("GetAppAndScopesByClientID", func(t *testing.T) {
 		_testGetAppAndScopesByClientID(t, appService)
 	})
+
 	t.Run("AddApp", func(t *testing.T) {
 		_testAddApp(t, appService)
 	})
+
 	t.Run("UpdateApp", func(t *testing.T) {
 		_testUpdateApp(t, appService)
 	})
+
 	t.Run("DeleteApp", func(t *testing.T) {
 		_testDeleteApp(t, appService)
 	})
+
 	t.Run("GetScopeByID", func(t *testing.T) {
 		_testGetScopeByID(t, appService)
 	})
+
 	t.Run("GetScopesByAppID", func(t *testing.T) {
 		_testGetScopesByAppID(t, appService)
 	})
+
 	// TODO: Determine if needed...
 	// t.Run("GetScopesByClientID", func(t *testing.T) {
 	// 	_testGetScopesByClientID(t, appService)
 	// })
+
 	t.Run("AddScopesToApp", func(t *testing.T) {
 		_testAddScopeToApp(t, appService)
 	})
+
 	t.Run("UpdateScope", func(t *testing.T) {
 		_testUpdateScope(t, appService)
 	})
+
 	t.Run("DeleteScope", func(t *testing.T) {
 		_testDeleteScope(t, appService)
 	})
@@ -170,6 +187,14 @@ func buildAppService(t *testing.T) services.AppService {
 	appService := NewAppService(appRepo, auditLogRepo)
 	setupAppServiceTestData(t, appRepo)
 	return appService
+}
+
+func _testAppServiceGetName(t *testing.T, appService services.AppService) {
+	serviceName := appService.GetName()
+	expectedServiceName := "appService"
+	if serviceName != expectedServiceName {
+		t.Errorf("service name is not what was expected: got %s - expected %s", serviceName, expectedServiceName)
+	}
 }
 
 func _testGetAppsByOwnerID(t *testing.T, appService services.AppService) {
