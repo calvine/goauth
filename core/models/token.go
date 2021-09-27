@@ -32,8 +32,11 @@ type Token struct {
 	MetaData map[string]string
 }
 
+// TODO: split into this function and an anonymous version that does not take a target id.
+
 func NewToken(targetID string, tokenType TokenType, validFor time.Duration) (Token, errors.RichError) {
 	var token Token
+	// TODO: once split make this return an error if no target id is provided.
 	value, err := utilities.NewTokenString()
 	if err != nil {
 		return token, err
