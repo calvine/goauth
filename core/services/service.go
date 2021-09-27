@@ -73,15 +73,15 @@ type AppService interface {
 }
 
 type EmailService interface {
-	SendPlainTextEmail(ctx context.Context, to []string, subject, body string) errors.RichError
+	SendPlainTextEmail(ctx context.Context, logger *zap.Logger, to []string, subject, body string) errors.RichError
 
 	Service
 }
 
 type TokenService interface {
-	GetToken(ctx context.Context, tokenValue string, expectedTokenType models.TokenType) (models.Token, errors.RichError)
-	PutToken(ctx context.Context, token models.Token) errors.RichError
-	DeleteToken(ctx context.Context, tokenValue string) errors.RichError
+	GetToken(ctx context.Context, logger *zap.Logger, tokenValue string, expectedTokenType models.TokenType) (models.Token, errors.RichError)
+	PutToken(ctx context.Context, logger *zap.Logger, token models.Token) errors.RichError
+	DeleteToken(ctx context.Context, logger *zap.Logger, tokenValue string) errors.RichError
 
 	Service
 }

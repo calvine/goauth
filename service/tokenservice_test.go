@@ -10,6 +10,7 @@ import (
 	"github.com/calvine/goauth/core/services"
 	"github.com/calvine/goauth/dataaccess/memory"
 	"github.com/calvine/richerror/errors"
+	"go.uber.org/zap/zaptest"
 )
 
 var (
@@ -110,27 +111,28 @@ func _testPutToken(t *testing.T, tokenService services.TokenService) {
 }
 
 func __testPutTokenSuccess(t *testing.T, tokenService services.TokenService) {
-	err := tokenService.PutToken(context.TODO(), csrfToken)
+	logger := zaptest.NewLogger(t)
+	err := tokenService.PutToken(context.TODO(), logger, csrfToken)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to add token %v got error: %s", csrfToken, err.GetErrorCode())
 	}
-	err = tokenService.PutToken(context.TODO(), confirmContactToken)
+	err = tokenService.PutToken(context.TODO(), logger, confirmContactToken)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to add token %v got error: %s", csrfToken, err.GetErrorCode())
 	}
-	err = tokenService.PutToken(context.TODO(), passwordResetToken)
+	err = tokenService.PutToken(context.TODO(), logger, passwordResetToken)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to add token %v got error: %s", csrfToken, err.GetErrorCode())
 	}
-	err = tokenService.PutToken(context.TODO(), sessionToken)
+	err = tokenService.PutToken(context.TODO(), logger, sessionToken)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to add token %v got error: %s", csrfToken, err.GetErrorCode())
 	}
-	err = tokenService.PutToken(context.TODO(), shortDurationSessionToken)
+	err = tokenService.PutToken(context.TODO(), logger, shortDurationSessionToken)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to add token %v got error: %s", csrfToken, err.GetErrorCode())
@@ -138,13 +140,14 @@ func __testPutTokenSuccess(t *testing.T, tokenService services.TokenService) {
 }
 
 func __testPutTokenFailureEmptyTokenValue(t *testing.T, tokenService services.TokenService) {
+	logger := zaptest.NewLogger(t)
 	emptyValueToken, err := models.NewToken("", models.TokenTypeCSRF, time.Minute*1)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("faiiled to create token for testing token service: %s", err.GetErrorCode())
 	}
 	emptyValueToken.Value = ""
-	err = tokenService.PutToken(context.TODO(), emptyValueToken)
+	err = tokenService.PutToken(context.TODO(), logger, emptyValueToken)
 	if err == nil {
 		t.Error("expected error because token expiration has passed")
 	}
@@ -155,7 +158,8 @@ func __testPutTokenFailureEmptyTokenValue(t *testing.T, tokenService services.To
 }
 
 func __testPutTokenFailureExpiredToken(t *testing.T, tokenService services.TokenService) {
-	err := tokenService.PutToken(context.TODO(), expiredSessionToken)
+	logger := zaptest.NewLogger(t)
+	err := tokenService.PutToken(context.TODO(), logger, expiredSessionToken)
 	if err == nil {
 		t.Error("expected error because token expiration has passed")
 	}
@@ -166,12 +170,13 @@ func __testPutTokenFailureExpiredToken(t *testing.T, tokenService services.Token
 }
 
 func __testPutTokenFailureInvalidTokenType(t *testing.T, tokenService services.TokenService) {
+	logger := zaptest.NewLogger(t)
 	invalidToken, err := models.NewToken("", models.TokenTypeInvalid, time.Minute*1)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("faiiled to create token for testing token service: %s", err.GetErrorCode())
 	}
-	err = tokenService.PutToken(context.TODO(), invalidToken)
+	err = tokenService.PutToken(context.TODO(), logger, invalidToken)
 	if err == nil {
 		t.Error("expected error because token expiration has passed")
 	}
@@ -201,7 +206,8 @@ func _testGetToken(t *testing.T, tokenService services.TokenService) {
 }
 
 func __testGetTokenSuccess(t *testing.T, tokenService services.TokenService) {
-	token, err := tokenService.GetToken(context.TODO(), csrfToken.Value, models.TokenTypeCSRF)
+	logger := zaptest.NewLogger(t)
+	token, err := tokenService.GetToken(context.TODO(), logger, csrfToken.Value, models.TokenTypeCSRF)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to get token got error: %s", err.GetErrorCode())
@@ -215,7 +221,8 @@ func __testGetTokenSuccess(t *testing.T, tokenService services.TokenService) {
 }
 
 func __testGetTokenSuccessWithMetadata(t *testing.T, tokenService services.TokenService) {
-	token, err := tokenService.GetToken(context.TODO(), sessionToken.Value, models.TokenTypeSession)
+	logger := zaptest.NewLogger(t)
+	token, err := tokenService.GetToken(context.TODO(), logger, sessionToken.Value, models.TokenTypeSession)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to get token got error: %s", err.GetErrorCode())
@@ -236,7 +243,8 @@ func __testGetTokenSuccessWithMetadata(t *testing.T, tokenService services.Token
 
 func __testGetTokenFailureTokenExpired(t *testing.T, tokenService services.TokenService) {
 	time.Sleep(sesssionTokenExpirationDuration)
-	_, err := tokenService.GetToken(context.TODO(), shortDurationSessionToken.Value, models.TokenTypeSession)
+	logger := zaptest.NewLogger(t)
+	_, err := tokenService.GetToken(context.TODO(), logger, shortDurationSessionToken.Value, models.TokenTypeSession)
 	if err == nil {
 		t.Error("expected error because the token is expired")
 	}
@@ -247,7 +255,8 @@ func __testGetTokenFailureTokenExpired(t *testing.T, tokenService services.Token
 }
 
 func __testGetTokenFailureWrongTokenType(t *testing.T, tokenService services.TokenService) {
-	_, err := tokenService.GetToken(context.TODO(), sessionToken.Value, models.TokenTypeCSRF)
+	logger := zaptest.NewLogger(t)
+	_, err := tokenService.GetToken(context.TODO(), logger, sessionToken.Value, models.TokenTypeCSRF)
 	if err == nil {
 		t.Error("expected error because the token is expired")
 	}
@@ -270,7 +279,8 @@ func _testDeleteToken(t *testing.T, tokenService services.TokenService) {
 }
 
 func __testDeleteTokenSuccess(t *testing.T, tokenService services.TokenService) {
-	err := tokenService.DeleteToken(context.TODO(), csrfToken.Value)
+	logger := zaptest.NewLogger(t)
+	err := tokenService.DeleteToken(context.TODO(), logger, csrfToken.Value)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to delete token got error: %s", err.GetErrorCode())

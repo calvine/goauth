@@ -34,6 +34,7 @@ func (as appService) GetAppsByOwnerID(ctx context.Context, logger *zap.Logger, o
 	defer span.End()
 	apps, err := as.appRepo.GetAppsByOwnerID(ctx, ownerID)
 	if err != nil {
+		logger.Error("appRepo.GetAppsByOwnerID call failed", zap.Any("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return nil, err
 	}
@@ -46,6 +47,7 @@ func (as appService) GetAppByID(ctx context.Context, logger *zap.Logger, id stri
 	defer span.End()
 	app, err := as.appRepo.GetAppByID(ctx, id)
 	if err != nil {
+		logger.Error("appRepo.GetAppByID call failed", zap.Any("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return models.App{}, err
 	}
@@ -58,6 +60,7 @@ func (as appService) GetAppByClientID(ctx context.Context, logger *zap.Logger, c
 	defer span.End()
 	app, err := as.appRepo.GetAppByClientID(ctx, clientID)
 	if err != nil {
+		logger.Error("appRepo.GetAppByClientID call failed", zap.Any("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return models.App{}, err
 	}
@@ -70,6 +73,7 @@ func (as appService) GetAppAndScopesByClientID(ctx context.Context, logger *zap.
 	defer span.End()
 	app, scopes, err := as.appRepo.GetAppAndScopesByClientID(ctx, clientID)
 	if err != nil {
+		logger.Error("appRepo.GetAppAndScopesByClientID call failed", zap.Any("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return models.App{}, nil, err
 	}
@@ -82,11 +86,15 @@ func (as appService) AddApp(ctx context.Context, logger *zap.Logger, app *models
 	defer span.End()
 	err := models.ValidateApp(false, *app)
 	if err != nil {
-		apptelemetry.SetSpanOriginalError(&span, err, "app data failed validation")
+		evtString := "app data failed validation"
+		logger.Error(evtString, zap.Any("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}
+	span.AddEvent("app validated")
 	err = as.appRepo.AddApp(ctx, app, initiator)
 	if err != nil {
+		logger.Error("appRepo.appRepo call failed", zap.Any("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return err
 	}
@@ -99,11 +107,15 @@ func (as appService) UpdateApp(ctx context.Context, logger *zap.Logger, app *mod
 	defer span.End()
 	err := models.ValidateApp(true, *app)
 	if err != nil {
-		apptelemetry.SetSpanOriginalError(&span, err, "app data failed validation")
+		evtString := "app data failed validation"
+		logger.Error(evtString, zap.Any("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}
+	span.AddEvent("app validated")
 	err = as.appRepo.UpdateApp(ctx, app, initiator)
 	if err != nil {
+		logger.Error("appRepo.UpdateApp call failed", zap.Any("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return err
 	}
@@ -116,6 +128,7 @@ func (as appService) DeleteApp(ctx context.Context, logger *zap.Logger, app *mod
 	defer span.End()
 	err := as.appRepo.DeleteApp(ctx, app, initiator)
 	if err != nil {
+		logger.Error("appRepo.DeleteApp call failed", zap.Any("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return err
 	}
@@ -128,6 +141,7 @@ func (as appService) GetScopeByID(ctx context.Context, logger *zap.Logger, id st
 	defer span.End()
 	scope, err := as.appRepo.GetScopeByID(ctx, id)
 	if err != nil {
+		logger.Error("appRepo.GetScopeByID call failed", zap.Any("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return models.Scope{}, err
 	}
@@ -140,6 +154,7 @@ func (as appService) GetScopesByAppID(ctx context.Context, logger *zap.Logger, a
 	defer span.End()
 	scopes, err := as.appRepo.GetScopesByAppID(ctx, appID)
 	if err != nil {
+		logger.Error("appRepo.GetScopesByAppID call failed", zap.Any("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return nil, err
 	}
@@ -157,11 +172,15 @@ func (as appService) AddScopeToApp(ctx context.Context, logger *zap.Logger, scop
 	defer span.End()
 	err := models.ValidateScope(false, *scope)
 	if err != nil {
-		apptelemetry.SetSpanOriginalError(&span, err, "scope failed validation")
+		evtString := "scope failed validation"
+		logger.Error(evtString, zap.Any("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}
+	span.AddEvent("scope validated")
 	err = as.appRepo.AddScope(ctx, scope, initiator)
 	if err != nil {
+		logger.Error("appRepo.AddScope call failed", zap.Any("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return err
 	}
@@ -174,11 +193,15 @@ func (as appService) UpdateScope(ctx context.Context, logger *zap.Logger, scope 
 	defer span.End()
 	err := models.ValidateScope(false, *scope)
 	if err != nil {
-		apptelemetry.SetSpanOriginalError(&span, err, "app scope failed validation")
+		evtString := "app scope failed validation"
+		logger.Error(evtString, zap.Any("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}
+	span.AddEvent("scope validated")
 	err = as.appRepo.UpdateScope(ctx, scope, initiator)
 	if err != nil {
+		logger.Error("appRepo.UpdateScope call failed", zap.Any("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return err
 	}
@@ -191,6 +214,7 @@ func (as appService) DeleteScope(ctx context.Context, logger *zap.Logger, scope 
 	defer span.End()
 	err := as.appRepo.DeleteScope(ctx, scope, initiator)
 	if err != nil {
+		logger.Error("appRepo.DeleteScope call failed", zap.Any("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return err
 	}

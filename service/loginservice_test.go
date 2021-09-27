@@ -178,7 +178,8 @@ func setupLoginServiceTestData(t *testing.T, userRepo repo.UserRepo, contactRepo
 		t.Log(err.Error())
 		t.Errorf("failed to add non password reset token with error: %s", err.GetErrorCode())
 	}
-	tokenService.PutToken(context.TODO(), nonPasswordResetToken)
+	logger := zaptest.NewLogger(t)
+	tokenService.PutToken(context.TODO(), logger, nonPasswordResetToken)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("failed to add non password reset token with error: %s", err.GetErrorCode())
