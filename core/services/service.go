@@ -31,23 +31,23 @@ type LoginService interface {
 // UserService is a service that facilitates access to user related data.
 type UserService interface {
 	// GetUserByConfirmedContact gets a user record via a confirmed contact
-	GetUserByConfirmedContact(ctx context.Context, contactPrincipal string, initiator string) (models.User, errors.RichError)
+	GetUserByConfirmedContact(ctx context.Context, logger *zap.Logger, contactPrincipal string, initiator string) (models.User, errors.RichError)
 	// AddUser adds a user record to the database
-	AddUser(ctx context.Context, user *models.User, initiator string) errors.RichError
+	AddUser(ctx context.Context, logger *zap.Logger, user *models.User, initiator string) errors.RichError
 	// UpdateUser updates a use record in the database
-	UpdateUser(ctx context.Context, user *models.User, initiator string) errors.RichError
+	UpdateUser(ctx context.Context, logger *zap.Logger, user *models.User, initiator string) errors.RichError
 	// GetUserPrimaryContact gets a users primary contact
-	GetUserPrimaryContact(ctx context.Context, userID string, initiator string) (models.Contact, errors.RichError)
+	GetUserPrimaryContact(ctx context.Context, logger *zap.Logger, userID string, initiator string) (models.Contact, errors.RichError)
 	// GetUsersContacts gets all of a users contacts
-	GetUsersContacts(ctx context.Context, userID string, initiator string) ([]models.Contact, errors.RichError)
+	GetUsersContacts(ctx context.Context, logger *zap.Logger, userID string, initiator string) ([]models.Contact, errors.RichError)
 	// GetUsersConfirmedContacts gets all of a users confirmed contacts
-	GetUsersConfirmedContacts(ctx context.Context, userID string, initiator string) ([]models.Contact, errors.RichError)
+	GetUsersConfirmedContacts(ctx context.Context, logger *zap.Logger, userID string, initiator string) ([]models.Contact, errors.RichError)
 	// AddContact adds a contact to a user
-	AddContact(ctx context.Context, contact *models.Contact, initiator string) errors.RichError
+	AddContact(ctx context.Context, logger *zap.Logger, contact *models.Contact, initiator string) errors.RichError
 	// UpdateContact updates a contact for a user
-	UpdateContact(ctx context.Context, contact *models.Contact, initiator string) errors.RichError
+	UpdateContact(ctx context.Context, logger *zap.Logger, contact *models.Contact, initiator string) errors.RichError
 	// ConfirmContact takes a confirmation code and updates the users contact record to be confirmed.
-	ConfirmContact(ctx context.Context, confirmationCode string, initiator string) (bool, errors.RichError)
+	ConfirmContact(ctx context.Context, logger *zap.Logger, confirmationCode string, initiator string) (bool, errors.RichError)
 
 	Service
 }

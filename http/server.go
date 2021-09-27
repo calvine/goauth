@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/calvine/goauth/core/services"
+	mymiddleware "github.com/calvine/goauth/http/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -31,23 +32,11 @@ func (hh *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hh.Mux.ServeHTTP(w, r)
 }
 
-// func addTrace(h http.HandlerFunc, name string) http.HandlerFunc {
-// 	return func(rw http.ResponseWriter, r *http.Request) {
-// 		// ol.Start(r.Context(), name)
-// 		span := trace.SpanFromContext(r.Context())
-// 		// trace.
-// 		span.SetName(name)
-// 		defer span.End()
-// 		otelhttp.NewHandler
-// 		h(rw, r)
-// 	}
-// }
-
 func (hh *server) BuildRoutes() {
 	hh.Mux.Use(
 		// middleware.Recoverer,
+		mymiddleware.InitializeRequest(hh.logger),
 		middleware.Timeout(time.Second*5),
-		middleware.RequestID,
 		middleware.RealIP,
 	)
 	hh.Mux.Route("/auth", func(r chi.Router) {
@@ -56,27 +45,26 @@ func (hh *server) BuildRoutes() {
 			// this is the route for the login page
 			r.Get("/", otelhttp.NewHandler(hh.handleLoginGet(), "GET /auth/login").ServeHTTP) //addTrace(hh.handleLoginGet(), "GET /auth/login"))
 			// this is the post target for the login page
-			r.Post("/", hh.handleLoginPost())
+			r.Post("/", otelhttp.NewHandler(hh.handleLoginPost(), "POST /auth/login").ServeHTTP)
 		})
 		r.Route("/resetpassword", func(r chi.Router) {
 			// this is the route for the password reset page
-			r.Get("/{passwordResetToken}", hh.handlePasswordResetGet())
+			r.Get("/{passwordResetToken}", otelhttp.NewHandler(hh.handlePasswordResetGet(), "GET /resetpassword/{passwordResetToken}").ServeHTTP)
 			// this is the post endpoint for the password reset page
-			r.Post("/{passwordResetToken}", hh.handlePasswordResetPost())
+			r.Post("/submitpasswordreset", otelhttp.NewHandler(hh.handlePasswordResetPost(), "POST /resetpassword/submitpasswordreset").ServeHTTP)
 		})
 	})
 	hh.Mux.Route("/user", func(r chi.Router) {
-		r.Get("/register", hh.handleRegisterGet())
-		r.Post("/register", hh.handleRegisterPost())
+		r.Get("/register", otelhttp.NewHandler(hh.handleRegisterGet(), "GET /user/register").ServeHTTP)
+		r.Post("/register", otelhttp.NewHandler(hh.handleRegisterPost(), "POST /user/register").ServeHTTP)
 
-		r.Get("/confirmcontact/{confirmationToken}", hh.handleConfirmContactGet())
+		r.Get("/confirmcontact/{confirmationToken}", otelhttp.NewHandler(hh.handleConfirmContactGet(), "GET /user/confirmcontact/{confirmationToken}").ServeHTTP)
 	})
 	hh.Mux.Route("/app", func(r chi.Router) {
-		r.Get("/manage", nil)
-		r.Post("/manage", nil)
+		r.Get("/manage", otelhttp.NewHandler(nil, "GET /app/manage").ServeHTTP)
 
-		r.Get("/manage/{appID}", nil)
-		r.Post("/manage/{appID}", nil)
+		r.Get("/manage/{appID}", otelhttp.NewHandler(nil, "GET /app/manage/{appID}").ServeHTTP)
+		r.Post("/manage/{appID}", otelhttp.NewHandler(nil, "POST /app/manage/{appID}").ServeHTTP)
 	})
 	fs := http.FileServer(*hh.staticFS)
 	// static files
