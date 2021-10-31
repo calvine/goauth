@@ -18,13 +18,13 @@ func TestUserService(t *testing.T) {
 		_testGetUserByConfirmedContact(t, userService)
 	})
 
-	t.Run("AddUser", func(t *testing.T) {
-		_testAddUser(t, userService)
-	})
+	// t.Run("AddUser", func(t *testing.T) {
+	// 	_testAddUser(t, userService)
+	// })
 
-	t.Run("UpdateUser", func(t *testing.T) {
-		_testUpdateUser(t, userService)
-	})
+	// t.Run("UpdateUser", func(t *testing.T) {
+	// 	_testUpdateUser(t, userService)
+	// })
 
 	t.Run("GetUserPrimaryContact", func(t *testing.T) {
 		_testGetUserPrimaryContact(t, userService)
@@ -74,13 +74,13 @@ func _testGetUserByConfirmedContact(t *testing.T, userService services.UserServi
 
 }
 
-func _testAddUser(t *testing.T, userService services.UserService) {
+// func _testAddUser(t *testing.T, userService services.UserService) {
 
-}
+// }
 
-func _testUpdateUser(t *testing.T, userService services.UserService) {
+// func _testUpdateUser(t *testing.T, userService services.UserService) {
 
-}
+// }
 
 func _testGetUserPrimaryContact(t *testing.T, userService services.UserService) {
 

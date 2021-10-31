@@ -102,6 +102,15 @@
         ]
     },
     {
+        "code": "InvalidContactType",
+        "message": "the contact type provided is not valid",
+        "includeMap": false,
+        "metaData": [
+            { "name": "principal", "dataType": "string"},
+            { "name": "principalType", "dataType": "string"}
+        ]
+    },
+    {
         "code": "UserLockedOut",
         "message": "attempted login by locked out user",
         "includeMap": false,

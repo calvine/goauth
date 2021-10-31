@@ -37,13 +37,13 @@ func (us userService) GetUserByConfirmedContact(ctx context.Context, logger *zap
 	return models.User{}, coreerrors.NewNotImplementedError(true)
 }
 
-func (us userService) AddUser(ctx context.Context, logger *zap.Logger, user *models.User, initiator string) errors.RichError {
-	return coreerrors.NewNotImplementedError(true)
-}
+// func (us userService) AddUser(ctx context.Context, logger *zap.Logger, user *models.User, initiator string) errors.RichError {
+// 	return coreerrors.NewNotImplementedError(true)
+// }
 
-func (us userService) UpdateUser(ctx context.Context, logger *zap.Logger, user *models.User, initiator string) errors.RichError {
-	return coreerrors.NewNotImplementedError(true)
-}
+// func (us userService) UpdateUser(ctx context.Context, logger *zap.Logger, user *models.User, initiator string) errors.RichError {
+// 	return coreerrors.NewNotImplementedError(true)
+// }
 
 func (us userService) GetUserPrimaryContact(ctx context.Context, logger *zap.Logger, userID string, initiator string) (models.Contact, errors.RichError) {
 	return models.Contact{}, coreerrors.NewNotImplementedError(true)
