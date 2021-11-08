@@ -3,6 +3,7 @@ package service
 import (
 	"testing"
 
+	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/services"
 	"github.com/calvine/goauth/dataaccess/memory"
 )
@@ -25,6 +26,10 @@ func TestUserService(t *testing.T) {
 	// t.Run("UpdateUser", func(t *testing.T) {
 	// 	_testUpdateUser(t, userService)
 	// })
+
+	t.Run("RegisterUserAndPrimaryContact", func(t *testing.T) {
+		_testRegisterUserAndPrimaryContact(t, userService)
+	})
 
 	t.Run("GetUserPrimaryContact", func(t *testing.T) {
 		_testGetUserPrimaryContact(t, userService)
@@ -71,37 +76,51 @@ func _testUserServiceGetName(t *testing.T, userService services.UserService) {
 }
 
 func _testGetUserByConfirmedContact(t *testing.T, userService services.UserService) {
+	t.Error(coreerrors.NewNotImplementedError(true))
+	t.Fail()
+}
 
+func _testRegisterUserAndPrimaryContact(t *testing.T, userService services.UserService) {
+	t.Error(coreerrors.NewNotImplementedError(true))
+	t.Fail()
 }
 
 // func _testAddUser(t *testing.T, userService services.UserService) {
-
+// t.Error(coreerrors.NewNotImplementedError(true))
+// t.Fail()
 // }
 
 // func _testUpdateUser(t *testing.T, userService services.UserService) {
-
+// t.Error(coreerrors.NewNotImplementedError(true))
+// t.Fail()
 // }
 
 func _testGetUserPrimaryContact(t *testing.T, userService services.UserService) {
-
+	t.Error(coreerrors.NewNotImplementedError(true))
+	t.Fail()
 }
 
 func _testGetUsersContacts(t *testing.T, userService services.UserService) {
-
+	t.Error(coreerrors.NewNotImplementedError(true))
+	t.Fail()
 }
 
 func _testGetUsersConfirmedContacts(t *testing.T, userService services.UserService) {
-
+	t.Error(coreerrors.NewNotImplementedError(true))
+	t.Fail()
 }
 
 func _testAddContact(t *testing.T, userService services.UserService) {
-
+	t.Error(coreerrors.NewNotImplementedError(true))
+	t.Fail()
 }
 
 func _testUpdateContact(t *testing.T, userService services.UserService) {
-
+	t.Error(coreerrors.NewNotImplementedError(true))
+	t.Fail()
 }
 
 func _testConfirmContact(t *testing.T, userService services.UserService) {
-
+	t.Error(coreerrors.NewNotImplementedError(true))
+	t.Fail()
 }

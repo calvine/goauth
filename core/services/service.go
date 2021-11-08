@@ -32,14 +32,14 @@ type LoginService interface {
 type UserService interface {
 	// GetUserByConfirmedContact gets a user record via a confirmed contact
 	GetUserByConfirmedContact(ctx context.Context, logger *zap.Logger, contactPrincipal string, initiator string) (models.User, errors.RichError)
-	// RegisterUserAndPrimaryContact registers a new user. it has several responsibilities.
-	//	1. ensure no other user has the contact provided as a confirmed contact.
-	//	2. send notification to user with link to confirm contact and set password
-	RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactPrincipal, contactType string) (models.User, models.Contact, errors.RichError)
 	// // AddUser adds a user record to the database
 	// AddUser(ctx context.Context, logger *zap.Logger, user *models.User, initiator string) errors.RichError
 	// // UpdateUser updates a use record in the database
 	// UpdateUser(ctx context.Context, logger *zap.Logger, user *models.User, initiator string) errors.RichError
+	// RegisterUserAndPrimaryContact registers a new user. it has several responsibilities.
+	//	1. ensure no other user has the contact provided as a confirmed contact.
+	//	2. send notification to user with link to confirm contact and set password
+	RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactPrincipal, contactType string) (models.User, models.Contact, errors.RichError)
 	// GetUserPrimaryContact gets a users primary contact
 	GetUserPrimaryContact(ctx context.Context, logger *zap.Logger, userID string, initiator string) (models.Contact, errors.RichError)
 	// GetUsersContacts gets all of a users contacts
