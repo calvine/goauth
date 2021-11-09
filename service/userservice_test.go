@@ -1,11 +1,43 @@
 package service
 
 import (
+	"context"
 	"testing"
 
+	"github.com/calvine/goauth/core"
 	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/models"
+	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/core/services"
 	"github.com/calvine/goauth/dataaccess/memory"
+)
+
+var (
+	userServiceTest_ConfirmedUser models.User
+
+	userServiceTest_ConfirmedUserConfirmedContact   models.Contact
+	userServiceTest_ConfirmedUserUnconfirmedContact models.Contact
+
+	userServiceTest_UnconfirmedUser models.User
+
+	userServiceTest_UnconfirmedUserConfirmedContact   models.Contact
+	userServiceTest_UnconfirmedUserUnconfirmedContact models.Contact
+
+	userServiceTest_UserToRegister models.User
+
+	userServiceTest_UserToRegisterContact models.Contact
+)
+
+const (
+	userServiceTest_CreatedBy = "user service tests"
+
+	userServiceTest_ConfirmedPrimaryEmail   = "userserviceconprim@email.com"
+	userServiceTest_ConfirmedSecondaryEmail = "userserviceconsec@email.com"
+
+	userServiceTest_UnconfirmedPrimaryEmail   = "userserviceunconprim@email.com"
+	userServiceTest_UnconfirmedSecondaryEmail = "userserviceunconsec@email.com"
+
+	userServiceTest_UserToRegisterPrimaryEmail = "userserviceunconprim@email.com"
 )
 
 func TestUserService(t *testing.T) {
@@ -56,6 +88,26 @@ func TestUserService(t *testing.T) {
 	})
 }
 
+func setupTestUserServiceData(t *testing.T, userRepo repo.UserRepo, contactRepo repo.ContactRepo) {
+	userServiceTest_ConfirmedUser = models.User{
+		PasswordHash: "does not matter",
+	}
+	err := userRepo.AddUser(context.TODO(), &userServiceTest_ConfirmedUser, userServiceTest_CreatedBy)
+	if err != nil {
+		t.Log(err.Error())
+		t.Errorf("failed to create user with confirmed contact for tests: %s", err.GetErrorCode())
+		t.FailNow()
+	}
+
+	userServiceTest_ConfirmedUserConfirmedContact = models.NewContact(userServiceTest_ConfirmedUser.ID, "", userServiceTest_ConfirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, true)
+	err = contactRepo.AddContact(context.TODO(), &userServiceTest_ConfirmedUserConfirmedContact, userServiceTest_CreatedBy)
+	if err != nil {
+		t.Log(err.Error())
+		t.Errorf("failed to create primary contact of user with confirmed contact for tests: %s", err.GetErrorCode())
+		t.FailNow()
+	}
+}
+
 func buildUserService(t *testing.T) services.UserService {
 	userRepo := memory.NewMemoryUserRepo()
 	contactRepo := memory.NewMemoryContactRepo()
@@ -63,7 +115,7 @@ func buildUserService(t *testing.T) services.UserService {
 	tokenService := NewTokenService(tokenRepo)
 	emailService, _ := NewEmailService(NoOpEmailService, nil)
 	userService := NewUserService(userRepo, contactRepo, tokenService, emailService)
-	// TODO: set up test data.
+	setupTestUserServiceData(t, userRepo, contactRepo)
 	return userService
 }
 
