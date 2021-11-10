@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/calvine/goauth/core/nullable"
 )
 
@@ -28,4 +30,10 @@ func NewContact(userID, name, principal, contactType string, isPrimary bool) Con
 		Type:      contactType,
 		IsPrimary: isPrimary,
 	}
+}
+
+func (c *Contact) IsConfirmed() bool {
+	now := time.Now()
+	return !c.ConfirmedDate.Value.IsZero() &&
+		c.ConfirmedDate.Value.Before(now)
 }

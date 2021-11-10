@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
@@ -11,8 +12,6 @@ import (
 	"github.com/calvine/richerror/errors"
 	"go.uber.org/zap"
 )
-
-// TODO: need to refine service methods... like the add user method should also take a proposed primary contact...
 
 type userService struct {
 	userRepo     repo.UserRepo
@@ -34,10 +33,23 @@ func (us userService) GetName() string {
 	return "userService"
 }
 
-func (us userService) GetUserByConfirmedContact(ctx context.Context, logger *zap.Logger, contactPrincipal string, initiator string) (models.User, errors.RichError) {
-	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "GetUserByConfirmedContact")
+func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, logger *zap.Logger, contactType string, contactPrincipal string, initiator string) (models.User, models.Contact, errors.RichError) {
+	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "GetUserAndContactByConfirmedContact")
 	defer span.End()
-	return models.User{}, coreerrors.NewNotImplementedError(true)
+	user, contact, err := us.userRepo.GetUserAndContactByContact(ctx, contactType, contactPrincipal)
+	if err != nil {
+		logger.Error("userRepo.GetUserAndContactByContact call failed", zap.Any("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, "")
+		return models.User{}, models.Contact{}, err
+	}
+	if !contact.IsConfirmed() {
+		evtString := fmt.Sprintf("contact found is not confirmed: ID = %s", contact.ID)
+		err := coreerrors.NewContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
+		logger.Error(evtString, zap.Any("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
+		return models.User{}, models.Contact{}, err
+	}
+	return user, contact, nil
 }
 
 func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactPrincipal, contactType string) (models.User, models.Contact, errors.RichError) {

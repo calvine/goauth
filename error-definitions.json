@@ -28,6 +28,15 @@
         "metaData": []
     },
     {
+        "code": "ContactNotConfirmed",
+        "message": "contact provided is not confirmed",
+        "includeMap": true,
+        "metaData": [
+            { "name": "principal", "value": "string" },
+            { "name": "principalType", "value": "string" }
+        ]
+    },
+    {
         "code": "NoContactFound",
         "message": "no contact found for given query",
         "includeMap": true,
