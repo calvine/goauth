@@ -52,7 +52,7 @@ func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, l
 	return user, contact, nil
 }
 
-func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactPrincipal, contactType string) (models.User, models.Contact, errors.RichError) {
+func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "RegisterUserAndPrimaryContact")
 	defer span.End()
 	// check to see if a user is registered with the confirmed contact info provided
