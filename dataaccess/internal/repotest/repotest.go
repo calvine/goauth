@@ -45,9 +45,15 @@ type RepoTestHarnessInput struct {
 	AppRepo               *repo.AppRepo
 	TokenRepo             *repo.TokenRepo
 	AuditLogRepo          *repo.AuditLogRepo
+	IDGenerator           func(getZeroId bool) string
 	SetupTestDataSource   func(t *testing.T, input RepoTestHarnessInput)
 	CleanupTestDataSource func(t *testing.T, input RepoTestHarnessInput)
 }
+
+// NOTE: The way I created the repo test harness the tests need to run
+// in the order specified so that the data is there for the tests as they run.
+// In heindsight I do not like this. I want to come back and improve this
+// at some point, but for now it works...
 
 func RunReposTestHarness(t *testing.T, implementationName string, input RepoTestHarnessInput) {
 
@@ -62,7 +68,7 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 	// functionality tests
 	t.Run(fmt.Sprintf("%s - userRepo", implementationName), func(t *testing.T) {
 		if input.UserRepo != nil {
-			testUserRepo(t, *input.UserRepo)
+			testUserRepo(t, input)
 		} else {
 			t.Skipf("no implementation for %s provided for userRepo", implementationName)
 		}
@@ -70,7 +76,7 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 
 	t.Run(fmt.Sprintf("%s - contactRepo", implementationName), func(t *testing.T) {
 		if input.ContactRepo != nil {
-			testContactRepo(t, *input.ContactRepo)
+			testContactRepo(t, input)
 		} else {
 			t.Skipf("no implementation for %s provided for contactRepo", implementationName)
 		}
@@ -78,7 +84,7 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 
 	t.Run(fmt.Sprintf("%s - addressRepo", implementationName), func(t *testing.T) {
 		if input.AddressRepo != nil {
-			testAddressRepo(t, *input.AddressRepo)
+			testAddressRepo(t, input)
 		} else {
 			t.Skipf("no implementation for %s provided for addressRepo", implementationName)
 		}
@@ -86,7 +92,7 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 
 	t.Run(fmt.Sprintf("%s - profileRepo", implementationName), func(t *testing.T) {
 		if input.ProfileRepo != nil {
-			testProfileRepo(t, *input.ProfileRepo)
+			testProfileRepo(t, input)
 		} else {
 			t.Skipf("no implementation for %s provided for profileRepo", implementationName)
 		}
@@ -94,7 +100,7 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 
 	t.Run(fmt.Sprintf("%s - appRepo", implementationName), func(t *testing.T) {
 		if input.AppRepo != nil {
-			testAppRepo(t, *input.AppRepo)
+			testAppRepo(t, input)
 		} else {
 			t.Skipf("no implementation for %s provided for appRepo", implementationName)
 		}
@@ -102,7 +108,7 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 
 	t.Run(fmt.Sprintf("%s - tokenRepo", implementationName), func(t *testing.T) {
 		if input.TokenRepo != nil {
-			testTokenRepo(t, *input.TokenRepo)
+			testTokenRepo(t, input)
 		} else {
 			t.Skipf("no implementation for %s provided for tokenRepo", implementationName)
 		}
@@ -110,7 +116,7 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 
 	t.Run(fmt.Sprintf("%s - auditLogRepo", implementationName), func(t *testing.T) {
 		if input.AuditLogRepo != nil {
-			testAuditLogRepo(t, *input.AuditLogRepo)
+			testAuditLogRepo(t, input)
 		} else {
 			t.Skipf("no implementation for %s provided for auditLogRepo", implementationName)
 		}

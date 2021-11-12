@@ -19,17 +19,17 @@ type userRepo struct {
 	contacts *map[string]models.Contact
 }
 
-func NewMemoryUserRepo() repo.UserRepo {
+func NewMemoryUserRepo(users *map[string]models.User, contacts *map[string]models.Contact) (repo.UserRepo, errors.RichError) {
 	if users == nil {
-		users = make(map[string]models.User)
+		return userRepo{}, coreerrors.NewNilNotAllowedError(true)
 	}
 	if contacts == nil {
-		contacts = make(map[string]models.Contact)
+		return userRepo{}, coreerrors.NewNilNotAllowedError(true)
 	}
 	return userRepo{
-		users:    &users,
-		contacts: &contacts,
-	}
+		users:    users,
+		contacts: contacts,
+	}, nil
 }
 
 func (userRepo) GetName() string {

@@ -44,7 +44,7 @@ func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, l
 	}
 	if !contact.IsConfirmed() {
 		evtString := fmt.Sprintf("contact found is not confirmed: ID = %s", contact.ID)
-		err := coreerrors.NewContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
+		err := coreerrors.NewRegisteredContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
 		logger.Error(evtString, zap.Any("error", err))
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return models.User{}, models.Contact{}, err
@@ -55,6 +55,16 @@ func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, l
 func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "RegisterUserAndPrimaryContact")
 	defer span.End()
+	// canRegister := false
+	// TODO: need a repo call that will reutrn all contacts witha given principal and type...
+	// _, contact, err := us.userRepo.GetUserAndContactByContact(ctx, contactType, contactPrincipal)
+	// if err != nil {
+
+	// }
+
+	// if canRegister {
+	// 	// TODO: Register
+	// }
 	// check to see if a user is registered with the confirmed contact info provided
 	// existingUser, existingContact, err := us.userRepo.GetUserAndContactByContact(ctx, contactType, contactPrincipal)
 	// if err != nil {

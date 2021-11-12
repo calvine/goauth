@@ -93,7 +93,7 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.
 		return models.User{}, err
 	}
 	if !contact.ConfirmedDate.HasValue { // || contact.ConfirmedDate.Value.After(now)
-		err := coreerrors.NewContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
+		err := coreerrors.NewLoginPrimaryContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
 		logger.Error(err.GetErrorMessage(), zap.Any("error", err))
 		evtString := fmt.Sprintf("contact is not confirmed: %s of type %s", contact.Principal, contact.Type)
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)

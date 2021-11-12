@@ -61,9 +61,9 @@ func TestUserService(t *testing.T) {
 	// 	_testUpdateUser(t, userService)
 	// })
 
-	t.Run("RegisterUserAndPrimaryContact", func(t *testing.T) {
-		_testRegisterUserAndPrimaryContact(t, userService)
-	})
+	// t.Run("RegisterUserAndPrimaryContact", func(t *testing.T) {
+	// 	_testRegisterUserAndPrimaryContact(t, userService)
+	// })
 
 	// t.Run("GetUserPrimaryContact", func(t *testing.T) {
 	// 	_testGetUserPrimaryContact(t, userService)
@@ -155,8 +155,18 @@ func setupTestUserServiceData(t *testing.T, userRepo repo.UserRepo, contactRepo 
 }
 
 func buildUserService(t *testing.T) services.UserService {
-	userRepo := memory.NewMemoryUserRepo()
-	contactRepo := memory.NewMemoryContactRepo()
+	users := make(map[string]models.User)
+	contacts := make(map[string]models.Contact)
+	userRepo, err := memory.NewMemoryUserRepo(&users, &contacts)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	contactRepo, err := memory.NewMemoryContactRepo(&users, &contacts)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
 	tokenRepo := memory.NewMemoryTokenRepo()
 	tokenService := NewTokenService(tokenRepo)
 	emailService, _ := NewEmailService(NoOpEmailService, nil)
@@ -202,7 +212,7 @@ func _testGetUserAndContactByConfirmedContact(t *testing.T, userService services
 			name:              "Given unconfirmed contact Return No Confirmed Contact Error",
 			contactPrincipal:  userServiceTest_ConfirmedUser_UnconfirmedSecondaryEmail,
 			contactType:       core.CONTACT_TYPE_EMAIL,
-			expectedErrorCode: coreerrors.ErrCodeContactNotConfirmed,
+			expectedErrorCode: coreerrors.ErrCodeRegisteredContactNotConfirmed,
 		},
 		{
 			name:              "Given non existant contact Return No User Found Error",
@@ -211,27 +221,28 @@ func _testGetUserAndContactByConfirmedContact(t *testing.T, userService services
 			expectedErrorCode: coreerrors.ErrCodeNoUserFound,
 		},
 	}
-	for i, tc := range testCases {
-		t.Logf("running test case %d: %s", i+1, tc.name)
-		user, contact, err := userService.GetUserAndContactByConfirmedContact(context.TODO(), logger, tc.contactType, tc.contactPrincipal, userServiceTest_CreatedBy)
-		if err != nil {
-			if tc.expectedErrorCode == "" {
-				t.Errorf("\tunexpected error encountered: %s - %s", err.GetErrorCode(), err.Error())
-				continue
-			} else if tc.expectedErrorCode != err.GetErrorCode() {
-				t.Errorf("\terror code did not match expected: got - %s expected - %s", err.GetErrorCode(), tc.expectedErrorCode)
-				continue
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			user, contact, err := userService.GetUserAndContactByConfirmedContact(context.TODO(), logger, tc.contactType, tc.contactPrincipal, userServiceTest_CreatedBy)
+			if err != nil {
+				if tc.expectedErrorCode == "" {
+					t.Errorf("\tunexpected error encountered: %s - %s", err.GetErrorCode(), err.Error())
+					t.Fail()
+				} else if tc.expectedErrorCode != err.GetErrorCode() {
+					t.Errorf("\terror code did not match expected: got - %s expected - %s", err.GetErrorCode(), tc.expectedErrorCode)
+					t.Fail()
+				}
+			} else {
+				if user.ID != tc.expectedUserID {
+					t.Errorf("\tuser id did not match expected: got - %s expected - %s", user.ID, tc.expectedUserID)
+					t.Fail()
+				}
+				if contact.ID != tc.expectedContactID {
+					t.Errorf("\tcontact id did not match expected: got - %s expected - %s", contact.ID, tc.expectedContactID)
+					t.Fail()
+				}
 			}
-		} else {
-			if user.ID != tc.expectedUserID {
-				t.Errorf("\tuser id did not match expected: got - %s expected - %s", user.ID, tc.expectedUserID)
-				continue
-			}
-			if contact.ID != tc.expectedContactID {
-				t.Errorf("\tcontact id did not match expected: got - %s expected - %s", contact.ID, tc.expectedContactID)
-				continue
-			}
-		}
+		})
 	}
 }
 
@@ -245,38 +256,56 @@ func _testGetUserAndContactByConfirmedContact(t *testing.T, userService services
 // // t.Fail()
 // // }
 
-func _testRegisterUserAndPrimaryContact(t *testing.T, userService services.UserService) {
-	logger := zaptest.NewLogger(t)
-	type testCase struct {
-		name              string
-		contactPrincipal  string
-		contactType       string
-		expectedErrorCode string
-	}
-	testCases := []testCase{}
-	for i, tc := range testCases {
-		t.Logf("running test case %d: %s", i+1, tc.name)
-		user, contact, err := userService.GetUserAndContactByConfirmedContact(context.TODO(), logger, tc.contactType, tc.contactPrincipal, userServiceTest_CreatedBy)
-		if err != nil {
-			if tc.expectedErrorCode == "" {
-				t.Errorf("\tunexpected error encountered: %s - %s", err.GetErrorCode(), err.Error())
-				continue
-			} else if tc.expectedErrorCode != err.GetErrorCode() {
-				t.Errorf("\terror code did not match expected: got - %s expected - %s", err.GetErrorCode(), tc.expectedErrorCode)
-				continue
-			}
-		} else {
-			if user.ID == "" {
-				t.Error("\treturned user id is blank")
-				continue
-			}
-			if contact.ID == "" {
-				t.Error("\treturned contact id is blank")
-				continue
-			}
-		}
-	}
-}
+// func _testRegisterUserAndPrimaryContact(t *testing.T, userService services.UserService) {
+// 	logger := zaptest.NewLogger(t)
+// 	type testCase struct {
+// 		name              string
+// 		contactPrincipal  string
+// 		contactType       string
+// 		expectedErrorCode string
+// 	}
+// 	testCases := []testCase{
+// 		{
+// 			name:             "Given unregistered contact Return Successful registration new user and contact",
+// 			contactPrincipal: userServiceTest_UserToRegisterEmail,
+// 			contactType:      core.CONTACT_TYPE_EMAIL,
+// 		},
+// 		{
+// 			name:             "Given previously registered unconfirmed contact Return successful registration new user and contact",
+// 			contactPrincipal: userServiceTest_ConfirmedUser_UnconfirmedSecondaryEmail,
+// 			contactType:      core.CONTACT_TYPE_EMAIL,
+// 		},
+// 		{
+// 			name:              "Given the provided contact is already confirmed in the data store Return error contact already confirmed",
+// 			contactPrincipal:  userServiceTest_UserToRegisterEmail,
+// 			contactType:       core.CONTACT_TYPE_EMAIL,
+// 			expectedErrorCode: coreerrors.ErrCodeRegistrationContactAlreadyRegistered,
+// 		},
+// 	}
+// 	for _, tc := range testCases {
+// 		t.Run(tc.name, func(t *testing.T) {
+// 			user, contact, err := userService.GetUserAndContactByConfirmedContact(context.TODO(), logger, tc.contactType, tc.contactPrincipal, userServiceTest_CreatedBy)
+// 			if err != nil {
+// 				if tc.expectedErrorCode == "" {
+// 					t.Errorf("\tunexpected error encountered: %s - %s", err.GetErrorCode(), err.Error())
+// 					t.Fail()
+// 				} else if tc.expectedErrorCode != err.GetErrorCode() {
+// 					t.Errorf("\terror code did not match expected: got - %s expected - %s", err.GetErrorCode(), tc.expectedErrorCode)
+// 					t.Fail()
+// 				}
+// 			} else {
+// 				if user.ID == "" {
+// 					t.Error("\treturned user id is blank")
+// 					t.Fail()
+// 				}
+// 				if contact.ID == "" {
+// 					t.Error("\treturned contact id is blank")
+// 					t.Fail()
+// 				}
+// 			}
+// 		})
+// 	}
+// }
 
 // func _testGetUserPrimaryContact(t *testing.T, userService services.UserService) {
 // 	t.Error(coreerrors.NewNotImplementedError(true))

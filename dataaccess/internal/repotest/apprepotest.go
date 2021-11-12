@@ -19,40 +19,40 @@ const (
 	appRepoCreatedByID = "app repos tests"
 )
 
-func testAppRepo(t *testing.T, appRepo repo.AppRepo) {
+func testAppRepo(t *testing.T, testHarness RepoTestHarnessInput) {
 	t.Run("GetAppByID", func(t *testing.T) {
-		_testGetAppByID(t, appRepo)
+		_testGetAppByID(t, *testHarness.AppRepo)
 	})
 	t.Run("GetAppsByOwnerID", func(t *testing.T) {
-		_testGetAppsByOwnerID(t, appRepo)
+		_testGetAppsByOwnerID(t, *testHarness.AppRepo)
 	})
 	t.Run("GetAppsByClientID", func(t *testing.T) {
-		_testGetAppsByClientID(t, appRepo)
+		_testGetAppsByClientID(t, *testHarness.AppRepo)
 	})
 	t.Run("AddApp", func(t *testing.T) {
-		_testAddApp(t, appRepo)
+		_testAddApp(t, *testHarness.AppRepo)
 	})
 	t.Run("UpdateApp", func(t *testing.T) {
-		_testUpdateApp(t, appRepo)
+		_testUpdateApp(t, *testHarness.AppRepo)
 	})
 	t.Run("DeleteApp", func(t *testing.T) {
-		_testDeleteApp(t, appRepo)
+		_testDeleteApp(t, *testHarness.AppRepo)
 	})
 
 	t.Run("GetScopeByID", func(t *testing.T) {
-		_testGetScopeByID(t, appRepo)
+		_testGetScopeByID(t, *testHarness.AppRepo)
 	})
 	t.Run("GetScopesByAppID", func(t *testing.T) {
-		_testGetScopesByAppID(t, appRepo)
+		_testGetScopesByAppID(t, *testHarness.AppRepo)
 	})
 	t.Run("AddScope", func(t *testing.T) {
-		_testAddScope(t, appRepo)
+		_testAddScope(t, *testHarness.AppRepo)
 	})
 	t.Run("UpdateScope", func(t *testing.T) {
-		_testUpdateScope(t, appRepo)
+		_testUpdateScope(t, *testHarness.AppRepo)
 	})
 	t.Run("DeleteScope", func(t *testing.T) {
-		_testDeleteScope(t, appRepo)
+		_testDeleteScope(t, *testHarness.AppRepo)
 	})
 }
 

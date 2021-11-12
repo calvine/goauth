@@ -11,6 +11,7 @@ import (
 	"github.com/calvine/goauth/dataaccess/internal/repotest"
 
 	"github.com/calvine/goauth/core/utilities"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -54,6 +55,12 @@ func TestMongoRepos(t *testing.T) {
 			UserRepo:            &userRepo,
 			ContactRepo:         &contactRepo,
 			SetupTestDataSource: cleanUpDataSource,
+			IDGenerator: func(getZeroId bool) string {
+				if getZeroId {
+					return primitive.NilObjectID.Hex()
+				}
+				return primitive.NewObjectID().Hex()
+			},
 		}
 		repotest.RunReposTestHarness(t, "mongodb", testHarnessInput)
 	} else {

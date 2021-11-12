@@ -21,4 +21,7 @@ The idea here is to primarily lean on tracing, and add metrics after the fact. E
 
 ## Notes
 
-* To run mail dev server `docker run --rm -p 1080:1080 -p 1025:1025 -p 8087:8087 maildev/maildev bin/maildev --web 1080 --smtp 1025`
+* To run mail dev server:
+  * `docker run --rm -p 1080:1080 -p 1025:1025 -p 8087:8087 maildev/maildev bin/maildev --web 1080 --smtp 1025`
+* Tocreate mongo container for tests or local development:
+  * `docker container create --name mongo -p 27017:27017 --env MONGO_INITDB_ROOT_USERNAME=root --env MONGO_INITDB_ROOT_PASSWORD=password --env MONGO_INITDB_DATABASE=testdb mongo:latest`

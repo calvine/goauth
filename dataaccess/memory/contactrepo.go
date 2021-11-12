@@ -15,16 +15,21 @@ import (
 )
 
 type contactRepo struct {
+	users    *map[string]models.User
 	contacts *map[string]models.Contact
 }
 
-func NewMemoryContactRepo() repo.ContactRepo {
+func NewMemoryContactRepo(users *map[string]models.User, contacts *map[string]models.Contact) (repo.ContactRepo, errors.RichError) {
+	if users == nil {
+		return contactRepo{}, coreerrors.NewNilParameterNotAllowedError("NewMemoryContactRepo", "users", true)
+	}
 	if contacts == nil {
-		contacts = make(map[string]models.Contact)
+		return contactRepo{}, coreerrors.NewNilNotAllowedError(true)
 	}
 	return contactRepo{
-		contacts: &contacts,
-	}
+		users:    users,
+		contacts: contacts,
+	}, nil
 }
 
 func (contactRepo) GetName() string {
@@ -41,7 +46,7 @@ func (cr contactRepo) GetContactByID(ctx context.Context, id string) (models.Con
 	contact, ok := (*cr.contacts)[id]
 	if !ok {
 		fields := map[string]interface{}{"id": id}
-		err := coreerrors.NewNoAppFoundError(fields, true)
+		err := coreerrors.NewNoContactFoundError(fields, true)
 		evtString := fmt.Sprintf("contact id not found: %s", id)
 		apptelemetry.SetSpanError(&span, err, evtString)
 		return contact, err
@@ -101,6 +106,17 @@ func (cr contactRepo) GetContactsByUserID(ctx context.Context, userID string) ([
 func (cr contactRepo) AddContact(ctx context.Context, contact *models.Contact, createdByID string) errors.RichError {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, cr.GetName(), "AddContact", cr.GetType())
 	defer span.End()
+	_, userFound := (*cr.users)[contact.UserID]
+	if !userFound {
+		fields := map[string]interface{}{
+			"UserID":    contact.UserID,
+			"IsPrimary": true,
+		}
+		err := coreerrors.NewNoUserFoundError(fields, true)
+		evtString := fmt.Sprintf("no user found for id: %s", contact.UserID)
+		apptelemetry.SetSpanError(&span, err, evtString)
+		return err
+	}
 	contact.AuditData.CreatedByID = createdByID
 	contact.AuditData.CreatedOnDate = time.Now().UTC()
 	if contact.ID == "" {

@@ -2,10 +2,8 @@ package repotest
 
 import (
 	"testing"
-
-	repo "github.com/calvine/goauth/core/repositories"
 )
 
-func testAddressRepo(t *testing.T, addressRepo repo.AddressRepo) {
+func testAddressRepo(t *testing.T, testHarness RepoTestHarnessInput) {
 	t.Error("tests not implemented")
 }

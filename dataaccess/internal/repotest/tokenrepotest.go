@@ -25,16 +25,16 @@ const (
 
 // TODO: encapsulate sub tests so the run more coherently...
 
-func testTokenRepo(t *testing.T, tokenRepo repo.TokenRepo) {
+func testTokenRepo(t *testing.T, testHarness RepoTestHarnessInput) {
 	_makeTokens(t)
 	t.Run("PutToken", func(t *testing.T) {
-		_testPutToken(t, tokenRepo)
+		_testPutToken(t, *testHarness.TokenRepo)
 	})
 	t.Run("DeleteToken", func(t *testing.T) {
-		_testDeleteToken(t, tokenRepo)
+		_testDeleteToken(t, *testHarness.TokenRepo)
 	})
 	t.Run("GetToken", func(t *testing.T) {
-		_testGetToken(t, tokenRepo)
+		_testGetToken(t, *testHarness.TokenRepo)
 	})
 }
 

@@ -10,9 +10,9 @@ import (
 const ErrCodeContactNotConfirmed = "ContactNotConfirmed"
 
 // NewContactNotConfirmedError creates a new specific error
-func NewContactNotConfirmedError(contactId string, principal string, principalType string, includeStack bool) errors.RichError {
+func NewContactNotConfirmedError(principal string, principalType string, fields map[string]interface{}, includeStack bool) errors.RichError {
 	msg := "contact is not confirmed"
-	err := errors.NewRichError(ErrCodeContactNotConfirmed, msg).AddMetaData("contactId", contactId).AddMetaData("principal", principal).AddMetaData("principalType", principalType)
+	err := errors.NewRichError(ErrCodeContactNotConfirmed, msg).WithMetaData(fields).AddMetaData("principal", principal).AddMetaData("principalType", principalType)
 	if includeStack {
 		err = err.WithStack(1)
 	}

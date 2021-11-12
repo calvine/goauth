@@ -16,22 +16,22 @@ var (
 	}
 )
 
-func testUserRepo(t *testing.T, userRepo repo.UserRepo) {
+func testUserRepo(t *testing.T, testHarness RepoTestHarnessInput) {
 	// functionality tests
 	t.Run("AddUser", func(t *testing.T) {
-		_testAddUser(t, userRepo)
+		_testAddUser(t, *testHarness.UserRepo)
 	})
 	t.Run("UpdateUser", func(t *testing.T) {
-		_testUpdateUser(t, userRepo)
+		_testUpdateUser(t, *testHarness.UserRepo)
 	})
 	t.Run("GetUserByID", func(t *testing.T) {
-		_testGetUserByID(t, userRepo)
+		_testGetUserByID(t, *testHarness.UserRepo)
 	})
 	t.Run("GetUserByPrimaryContact", func(t *testing.T) {
-		_testGetUserByPrimaryContact(t, userRepo)
+		_testGetUserByPrimaryContact(t, *testHarness.UserRepo)
 	})
 	t.Run("GetUserAndContactByContact", func(t *testing.T) {
-		_testGetUserAndContactByContact(t, userRepo)
+		_testGetUserAndContactByContact(t, *testHarness.UserRepo)
 	})
 }
 

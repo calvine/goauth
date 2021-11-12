@@ -204,8 +204,18 @@ func setupLoginServiceTestData(t *testing.T, userRepo repo.UserRepo, contactRepo
 
 func buildLoginService(t *testing.T) services.LoginService {
 	auditLogRepo := memory.NewMemoryAuditLogRepo(false)
-	userRepo := memory.NewMemoryUserRepo()
-	contactRepo := memory.NewMemoryContactRepo()
+	users := make(map[string]models.User)
+	contacts := make(map[string]models.Contact)
+	userRepo, err := memory.NewMemoryUserRepo(&users, &contacts)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	contactRepo, err := memory.NewMemoryContactRepo(&users, &contacts)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
 	tokenRepo := memory.NewMemoryTokenRepo()
 	emailService, _ := NewEmailService(NoOpEmailService, nil)
 	tokenService := NewTokenService(tokenRepo)
@@ -401,7 +411,7 @@ func __testFailedLoginPrimaryContactNotConfirmed(t *testing.T, loginService serv
 	if err == nil {
 		t.Error("expected failed login wrong password error bug got no error")
 	}
-	if err.GetErrorCode() != errors.ErrCodeContactNotConfirmed {
+	if err.GetErrorCode() != errors.ErrCodeLoginPrimaryContactNotConfirmed {
 		t.Log(err.Error())
 		t.Errorf("expected failed login wrong password error bug got another error: %s", err.GetErrorCode())
 	}

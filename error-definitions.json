@@ -28,12 +28,50 @@
         "metaData": []
     },
     {
-        "code": "ContactNotConfirmed",
-        "message": "contact provided is not confirmed",
+        "code": "NilParameterNotAllowed",
+        "message": "a nil value was encountered for a parameter, but not allowed",
+        "includeMap": false,
+        "metaData": [
+            { "name": "functionName", "dataType": "string"},
+            { "name": "parameterName", "dataType": "string"}
+        ]
+    },
+    {
+        "code": "RegistrationContactAlreadyConfirmed",
+        "message": "contact for registration is already confirmed",
         "includeMap": true,
         "metaData": [
-            { "name": "principal", "value": "string" },
-            { "name": "principalType", "value": "string" }
+            { "name": "principal", "dataType": "string" },
+            { "name": "principalType", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "ContactToAddAlreadyConfirmed",
+        "message": "contact to add to account is already confirmed",
+        "includeMap": true,
+        "metaData": [
+            { "name": "userId", "dataType": "string" },
+            { "name": "principal", "dataType": "string" },
+            { "name": "principalType", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "ContactNotConfirmed",
+        "message": "contact is not confirmed",
+        "includeMap": true,
+        "metaData": [
+            { "name": "principal", "dataType": "string" },
+            { "name": "principalType", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "ExistingContactNotConfirmed",
+        "message": "existing contact is not confirmed",
+        "includeMap": false,
+        "metaData": [
+            { "name": "contactId", "dataType": "string"},
+            { "name": "principal", "dataType": "string"},
+            { "name": "principalType", "dataType": "string"}
         ]
     },
     {
@@ -81,8 +119,8 @@
         ]
     },
     {
-        "code": "ContactNotConfirmed",
-        "message": "contact is not confirmed",
+        "code": "LoginContactNotPrimary",
+        "message": "contact for login is not a primary contact",
         "includeMap": false,
         "metaData": [
             { "name": "contactId", "dataType": "string"},
@@ -91,8 +129,8 @@
         ]
     },
     {
-        "code": "LoginContactNotPrimary",
-        "message": "contact for login is not a primary contact",
+        "code": "LoginPrimaryContactNotConfirmed",
+        "message": "primary contact for login is not confirmed",
         "includeMap": false,
         "metaData": [
             { "name": "contactId", "dataType": "string"},
