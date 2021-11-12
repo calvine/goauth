@@ -338,37 +338,61 @@ func _testGetContactsByUserID(t *testing.T, contactRepo repo.ContactRepo) {
 func _testUpdateContact(t *testing.T, contactRepo repo.ContactRepo) {
 	type testCase struct {
 		name              string
+		contactToUpdate   *models.Contact
+		newPrincipal      string
+		markConfirmed     bool
 		expectedErrorCode string
 	}
-	testCases := []testCase{}
+	testCases := []testCase{
+		{
+			name:            "GIVEN a contact to update EXPECT contact to be updated",
+			contactToUpdate: &newContact3,
+			newPrincipal:    "a_different_email@mail.org",
+			markConfirmed:   true,
+		},
+	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-
+			preUpdateTime := time.Now().UTC().Add(time.Second * -1)
+			tc.contactToUpdate.Principal = tc.newPrincipal
+			if tc.markConfirmed {
+				tc.contactToUpdate.ConfirmedDate.Set(time.Now().UTC())
+			}
+			err := contactRepo.UpdateContact(context.TODO(), tc.contactToUpdate, contactRepoCreatedBy)
+			if err != nil {
+				if tc.expectedErrorCode == "" {
+					t.Errorf("\tunexpected error encountered: %s - %s", err.GetErrorCode(), err.Error())
+					t.Fail()
+				} else if tc.expectedErrorCode != err.GetErrorCode() {
+					t.Errorf("\terror code did not match expected: got - %s expected - %s", err.GetErrorCode(), tc.expectedErrorCode)
+					t.Fail()
+				}
+			} else {
+				if tc.contactToUpdate.Principal != tc.newPrincipal {
+					t.Errorf("\tupdated contact principal was not expected: got - %s expected - %s", tc.contactToUpdate.Principal, tc.newPrincipal)
+					t.Fail()
+				}
+				if tc.markConfirmed {
+					if !tc.contactToUpdate.ConfirmedDate.HasValue {
+						t.Error("\tupdated contact confirmed date does not have a value even thought test case markConfirmed was true")
+						t.Fail()
+					}
+					if tc.contactToUpdate.ConfirmedDate.Value.Before(preUpdateTime) {
+						t.Errorf("\tupdated contact confirmed date not after pre update time when markConfirmed was set: preUpdateTime - %s confirmedDate - %s", preUpdateTime.Format(time.RFC3339), tc.contactToUpdate.ConfirmedDate.Value.Format(time.RFC3339))
+						t.Fail()
+					}
+				}
+				if tc.contactToUpdate.AuditData.ModifiedOnDate.HasValue &&
+					tc.contactToUpdate.AuditData.ModifiedOnDate.Value.Before(preUpdateTime) {
+					t.Error("\texpected updated contact ModifiedOnDate to be after the preUpdateTime")
+					t.Fail()
+				}
+				if tc.contactToUpdate.AuditData.ModifiedByID.HasValue &&
+					tc.contactToUpdate.AuditData.ModifiedByID.Value != contactRepoCreatedBy {
+					t.Errorf("\tupdated contact ModifiedByID not expected: got %s - expected: %s", tc.contactToUpdate.AuditData.ModifiedByID.Value, contactRepoCreatedBy)
+					t.Fail()
+				}
+			}
 		})
-	}
-	modifiedByID := "test update contact"
-	preUpdateTime := time.Now().UTC()
-	newEmail := "a_different_email@mail.org"
-	newConfirmedDate := time.Now().UTC()
-	newContact3.Principal = newEmail
-	newContact3.ConfirmedDate = nullable.NullableTime{}
-	newContact3.ConfirmedDate.Set(newConfirmedDate)
-
-	err := contactRepo.UpdateContact(context.TODO(), &newContact3, modifiedByID)
-	if err != nil {
-		t.Log(err.Error())
-		t.Error("failed to update contact", err.GetErrorCode())
-	}
-	if newContact3.Principal != newEmail {
-		t.Error("expected principal to be updated", newEmail, newContact3.Principal)
-	}
-	if !newContact3.ConfirmedDate.HasValue {
-		t.Error("expected ConfirmedDate to be have a value")
-	}
-	if !newContact3.AuditData.ModifiedOnDate.Value.After(preUpdateTime) {
-		t.Error("expected ModifiedOnDate to be after the preUpdateTime")
-	}
-	if newContact3.AuditData.ModifiedByID.Value != modifiedByID {
-		t.Error("expected ModifiedByID to be updated", modifiedByID, newContact3.AuditData.ModifiedByID.Value)
 	}
 }
