@@ -199,61 +199,120 @@ func _testGetContactByID(t *testing.T, contactRepo repo.ContactRepo) {
 			}
 		})
 	}
-	_, err := contactRepo.GetContactByID(context.TODO(), newContact1.ID)
-	if err != nil {
-		t.Log(err.Error())
-		t.Error("failed to get contact by given id", newContact1.ID, err.GetErrorCode())
-	}
 }
 
 func _testGetPrimaryContactByUserID(t *testing.T, contactRepo repo.ContactRepo) {
 	type testCase struct {
 		name              string
+		userID            string
+		expectedContactID string
 		expectedErrorCode string
 	}
-	testCases := []testCase{}
+	testCases := []testCase{
+		{
+			name:              "GIVEN an existing user id with a primary contact EXPECT the primary contact to be returned",
+			userID:            testUser1.ID,
+			expectedContactID: newContact1.ID,
+		},
+		{
+			name:              "GIVEN an nonexistant user id EXPECT error no user found",
+			userID:            nonExistantUserID,
+			expectedErrorCode: coreerrors.ErrCodeNoUserFound,
+		},
+	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-
+			contact, err := contactRepo.GetPrimaryContactByUserID(context.TODO(), tc.userID)
+			if err != nil {
+				if tc.expectedErrorCode == "" {
+					t.Errorf("\tunexpected error encountered: %s - %s", err.GetErrorCode(), err.Error())
+					t.Fail()
+				} else if tc.expectedErrorCode != err.GetErrorCode() {
+					t.Errorf("\terror code did not match expected: got - %s expected - %s", err.GetErrorCode(), tc.expectedErrorCode)
+					t.Fail()
+				}
+			} else {
+				if !contact.IsPrimary {
+					t.Errorf("\t contact returned is not primary contact: %v", contact)
+				}
+				if tc.expectedContactID != contact.ID {
+					t.Errorf("\tcontact id was not expected: got - %s expected - %s", contact.ID, tc.expectedContactID)
+					t.Fail()
+				}
+				if contact.ID == "" {
+					t.Error("\tcontact id is blank")
+					t.Fail()
+				}
+			}
 		})
 	}
-	userID := testUser1.ID
-	contact, err := contactRepo.GetPrimaryContactByUserID(context.TODO(), userID)
-	if err != nil {
-		t.Log(err.Error())
-		t.Error("failed to get primary contact for user", userID, err.GetErrorCode())
-	}
-	if contact.UserID != testUser1.ID {
-		t.Error("expected contact.UserID and testUser1.ID to match", testUser1.ID, contact.UserID)
-	}
-	if !contact.IsPrimary {
-		t.Error("expected contact.IsPriamay to be true")
-	}
-	if contact.Principal != newContact1.Principal {
-		t.Error("expected contact.Principal to be equal to newContact1.Principal", newContact1.Principal, contact.Principal)
-	}
-
 }
 
 func _testGetContactsByUserID(t *testing.T, contactRepo repo.ContactRepo) {
 	type testCase struct {
-		name              string
-		expectedErrorCode string
+		name               string
+		userID             string
+		expectedContactIds []string
+		expectedErrorCode  string
 	}
-	testCases := []testCase{}
+	testCases := []testCase{
+		{
+			name:   "GIVEN a user id for a user with one or more contacts EXPECT the contacts for that user to be returned",
+			userID: testUser1.ID,
+			expectedContactIds: []string{
+				newContact1.ID,
+				newContact2.ID,
+				newContact3.ID,
+				newContact4.ID,
+			},
+		},
+		{
+			name:              "GIVEN a nonexistant user id EXPECT error no user found",
+			userID:            nonExistantUserID,
+			expectedErrorCode: coreerrors.ErrCodeNoUserFound,
+		},
+	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-
+			numExpectedContacts := len(tc.expectedContactIds)
+			contacts, err := contactRepo.GetContactsByUserID(context.TODO(), tc.userID)
+			if err != nil {
+				if tc.expectedErrorCode == "" {
+					t.Errorf("\tunexpected error encountered: %s - %s", err.GetErrorCode(), err.Error())
+					t.Fail()
+				} else if tc.expectedErrorCode != err.GetErrorCode() {
+					t.Errorf("\terror code did not match expected: got - %s expected - %s", err.GetErrorCode(), tc.expectedErrorCode)
+					t.Fail()
+				}
+			} else {
+				numContactsFound := len(contacts)
+				if numContactsFound != numExpectedContacts {
+					t.Errorf("\tnumber of contacts returned not expected amount: got - %d expected - %d", numContactsFound, numExpectedContacts)
+					t.Fail()
+				} else {
+					numPrimary := 0
+					for _, c := range contacts {
+						contactFound := false
+						if c.IsPrimary {
+							numPrimary++
+						}
+						for _, ecid := range tc.expectedContactIds {
+							if c.ID == ecid {
+								contactFound = true
+								break
+							}
+						}
+						if !contactFound {
+							t.Errorf("\tcontact with id %swas not found in results", c.ID)
+							t.Fail()
+						}
+					}
+					if numPrimary != 1 {
+						t.Errorf("\texpected 1 primary contact but got %d", numPrimary)
+					}
+				}
+			}
 		})
-	}
-	userID := testUser1.ID
-	contacts, err := contactRepo.GetContactsByUserID(context.TODO(), userID)
-	if err != nil {
-		t.Log(err.Error())
-		t.Error("failed to get contacts by user id", userID, err.GetErrorCode())
-	}
-	if len(contacts) != 4 {
-		t.Error("wrong number of contacts returned", 3, len(contacts))
 	}
 }
 

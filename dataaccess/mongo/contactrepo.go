@@ -105,7 +105,7 @@ func (ur userRepo) GetPrimaryContactByUserID(ctx context.Context, userID string)
 				"_id":                userID,
 				"contacts.isPrimary": true,
 			}
-			rErr := coreerrors.NewNoContactFoundError(fields, true)
+			rErr := coreerrors.NewNoUserFoundError(fields, true)
 			evtString := fmt.Sprintf("no primary contact found for user id: %s", userID)
 			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 			return emptyContact, rErr
@@ -148,7 +148,7 @@ func (ur userRepo) GetContactsByUserID(ctx context.Context, userID string) ([]mo
 			fields := map[string]interface{}{
 				"_id": userID,
 			}
-			rErr := coreerrors.NewNoContactFoundError(fields, true)
+			rErr := coreerrors.NewNoUserFoundError(fields, true)
 			evtString := fmt.Sprintf("no contact found for user id: %s", userID)
 			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 			return nil, rErr

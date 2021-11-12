@@ -14,9 +14,15 @@ var (
 	testUser1 = models.User{
 		PasswordHash: "passwordhash1",
 	}
+	nonExistantUserID string
 )
 
+func setupUserRepoTestData(_ *testing.T, testingHarness RepoTestHarnessInput) {
+	nonExistantUserID = testingHarness.IDGenerator(false)
+}
+
 func testUserRepo(t *testing.T, testHarness RepoTestHarnessInput) {
+	setupUserRepoTestData(t, testHarness)
 	// functionality tests
 	t.Run("AddUser", func(t *testing.T) {
 		_testAddUser(t, *testHarness.UserRepo)
