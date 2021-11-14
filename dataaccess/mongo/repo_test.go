@@ -3,10 +3,8 @@ package mongo
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
-	"github.com/calvine/goauth/core/normalization"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/dataaccess/internal/repotest"
 
@@ -28,9 +26,9 @@ var (
 )
 
 func TestMongoRepos(t *testing.T) {
-	value, exists := os.LookupEnv(ENV_RUN_MONGO_TESTS)
-	shouldRun, _ := normalization.ReadBoolValue(value, true)
-	if exists && shouldRun {
+	// value, exists := os.LookupEnv(ENV_RUN_MONGO_TESTS)
+	// shouldRun, _ := normalization.ReadBoolValue(value, true)
+	if true { //exists && shouldRun {
 		// setup code for mongo user repo tests.
 		connectionString := utilities.GetEnv(ENV_MONGO_TEST_CONNECTION_STRING, DEFAULT_TEST_MONGO_CONNECTION_STRING)
 		client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(connectionString))

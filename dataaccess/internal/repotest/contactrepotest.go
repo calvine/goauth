@@ -10,6 +10,7 @@ import (
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/nullable"
 	repo "github.com/calvine/goauth/core/repositories"
+	"github.com/calvine/goauth/internal/testutils"
 )
 
 const (
@@ -98,6 +99,9 @@ func testContactRepo(t *testing.T, testHarness RepoTestHarnessInput) {
 	// t.Run("ConfirmContact", func(t *testing.T) {
 	// 	_testConfirmContact(t, contactRepo)
 	// })
+	t.Run("GetExistingConfirmedContactsCountByPrincipalAndType", func(t *testing.T) {
+		_testGetExistingConfirmedContactsCountByPrincipalAndType(t, *testHarness.ContactRepo)
+	})
 }
 
 func _testAddContact(t *testing.T, contactRepo repo.ContactRepo) {
@@ -138,13 +142,7 @@ func _testAddContact(t *testing.T, contactRepo repo.ContactRepo) {
 		t.Run(tc.name, func(t *testing.T) {
 			err := contactRepo.AddContact(context.TODO(), tc.contactToAdd, contactRepoCreatedBy)
 			if err != nil {
-				if tc.expectedErrorCode == "" {
-					t.Errorf("\tunexpected error encountered: %s - %s", err.GetErrorCode(), err.Error())
-					t.Fail()
-				} else if tc.expectedErrorCode != err.GetErrorCode() {
-					t.Errorf("\terror code did not match expected: got - %s expected - %s", err.GetErrorCode(), tc.expectedErrorCode)
-					t.Fail()
-				}
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else {
 				if tc.expectedUserID != tc.contactToAdd.UserID {
 					t.Errorf("\tuser id expected: got - %s expected - %s", tc.contactToAdd.UserID, tc.expectedUserID)
@@ -180,13 +178,7 @@ func _testGetContactByID(t *testing.T, contactRepo repo.ContactRepo) {
 		t.Run(tc.name, func(t *testing.T) {
 			contact, err := contactRepo.GetContactByID(context.TODO(), tc.contactID)
 			if err != nil {
-				if tc.expectedErrorCode == "" {
-					t.Errorf("\tunexpected error encountered: %s - %s", err.GetErrorCode(), err.Error())
-					t.Fail()
-				} else if tc.expectedErrorCode != err.GetErrorCode() {
-					t.Errorf("\terror code did not match expected: got - %s expected - %s", err.GetErrorCode(), tc.expectedErrorCode)
-					t.Fail()
-				}
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else {
 				if tc.contactID != contact.ID {
 					t.Errorf("\tcontact id expected: got - %s expected - %s", contact.ID, tc.contactID)
@@ -224,13 +216,7 @@ func _testGetPrimaryContactByUserID(t *testing.T, contactRepo repo.ContactRepo) 
 		t.Run(tc.name, func(t *testing.T) {
 			contact, err := contactRepo.GetPrimaryContactByUserID(context.TODO(), tc.userID)
 			if err != nil {
-				if tc.expectedErrorCode == "" {
-					t.Errorf("\tunexpected error encountered: %s - %s", err.GetErrorCode(), err.Error())
-					t.Fail()
-				} else if tc.expectedErrorCode != err.GetErrorCode() {
-					t.Errorf("\terror code did not match expected: got - %s expected - %s", err.GetErrorCode(), tc.expectedErrorCode)
-					t.Fail()
-				}
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else {
 				if !contact.IsPrimary {
 					t.Errorf("\t contact returned is not primary contact: %v", contact)
@@ -277,13 +263,7 @@ func _testGetContactsByUserID(t *testing.T, contactRepo repo.ContactRepo) {
 			numExpectedContacts := len(tc.expectedContactIds)
 			contacts, err := contactRepo.GetContactsByUserID(context.TODO(), tc.userID)
 			if err != nil {
-				if tc.expectedErrorCode == "" {
-					t.Errorf("\tunexpected error encountered: %s - %s", err.GetErrorCode(), err.Error())
-					t.Fail()
-				} else if tc.expectedErrorCode != err.GetErrorCode() {
-					t.Errorf("\terror code did not match expected: got - %s expected - %s", err.GetErrorCode(), tc.expectedErrorCode)
-					t.Fail()
-				}
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else {
 				numContactsFound := len(contacts)
 				if numContactsFound != numExpectedContacts {
@@ -360,13 +340,7 @@ func _testUpdateContact(t *testing.T, contactRepo repo.ContactRepo) {
 			}
 			err := contactRepo.UpdateContact(context.TODO(), tc.contactToUpdate, contactRepoCreatedBy)
 			if err != nil {
-				if tc.expectedErrorCode == "" {
-					t.Errorf("\tunexpected error encountered: %s - %s", err.GetErrorCode(), err.Error())
-					t.Fail()
-				} else if tc.expectedErrorCode != err.GetErrorCode() {
-					t.Errorf("\terror code did not match expected: got - %s expected - %s", err.GetErrorCode(), tc.expectedErrorCode)
-					t.Fail()
-				}
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else {
 				if tc.contactToUpdate.Principal != tc.newPrincipal {
 					t.Errorf("\tupdated contact principal was not expected: got - %s expected - %s", tc.contactToUpdate.Principal, tc.newPrincipal)
@@ -390,6 +364,43 @@ func _testUpdateContact(t *testing.T, contactRepo repo.ContactRepo) {
 				if tc.contactToUpdate.AuditData.ModifiedByID.HasValue &&
 					tc.contactToUpdate.AuditData.ModifiedByID.Value != contactRepoCreatedBy {
 					t.Errorf("\tupdated contact ModifiedByID not expected: got %s - expected: %s", tc.contactToUpdate.AuditData.ModifiedByID.Value, contactRepoCreatedBy)
+					t.Fail()
+				}
+			}
+		})
+	}
+}
+
+func _testGetExistingConfirmedContactsCountByPrincipalAndType(t *testing.T, contactRepo repo.ContactRepo) {
+	type testCase struct {
+		name                     string
+		contactPrincipal         string
+		contactType              string
+		expectedNumberOfContacts int64
+		expectedErrorCode        string
+	}
+	testCases := []testCase{
+		{
+			name:                     "GIVEN a confirmed contact EXPECT 1 to be returned",
+			contactPrincipal:         initialTestConfirmedPrimaryContact.Principal,
+			contactType:              initialTestConfirmedPrimaryContact.Type,
+			expectedNumberOfContacts: 1,
+		},
+		{
+			name:                     "GIVEN an unconfirmed contact EXPECT 0 to be returned",
+			contactPrincipal:         initialTestUnconfirmedContact.Principal,
+			contactType:              initialTestUnconfirmedContact.Type,
+			expectedNumberOfContacts: 0,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			numContacts, err := contactRepo.GetExistingConfirmedContactsCountByPrincipalAndType(context.TODO(), tc.contactType, tc.contactPrincipal)
+			if err != nil {
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else {
+				if numContacts != tc.expectedNumberOfContacts {
+					t.Errorf("\tnumber of contacts returned does not match expected: got - %d expected - %d", numContacts, tc.expectedNumberOfContacts)
 					t.Fail()
 				}
 			}

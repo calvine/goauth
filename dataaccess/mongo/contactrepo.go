@@ -278,3 +278,34 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 	span.AddEvent("contact updated")
 	return nil
 }
+
+func (ur userRepo) GetExistingConfirmedContactsCountByPrincipalAndType(ctx context.Context, contactType, contactPrincipal string) (int64, errors.RichError) {
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetExistingConfirmedContactsCountByPrincipalAndType", ur.GetType())
+	defer span.End()
+	filter := bson.M{
+		"contacts": bson.D{
+			{
+				Key: "$elemMatch", Value: bson.D{
+					{Key: "type", Value: contactType},
+					{Key: "principal", Value: contactPrincipal},
+					{Key: "confirmedDate", Value: bson.M{
+						"$ne": nil,
+					}},
+				},
+			},
+		},
+	}
+	numConfirmedContacts, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).CountDocuments(ctx, filter)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			span.AddEvent("no contacts found")
+			return 0, nil
+		}
+		rErr := coreerrors.NewRepoQueryFailedError(err, true)
+		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
+		return 0, rErr
+	}
+	span.AddEvent("number of confirmed contacts retreived")
+	return numConfirmedContacts, nil
+}

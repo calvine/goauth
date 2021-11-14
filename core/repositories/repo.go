@@ -63,6 +63,8 @@ type ContactRepo interface {
 	UpdateContact(ctx context.Context, contact *models.Contact, modifiedByID string) errors.RichError
 	// ConfirmContact sets a contact to confirmed based on the received confirmation code.
 	// ConfirmContact(ctx context.Context, confirmationCode, modifiedByID string) errors.RichError
+	// GetExistingConfirmedContactsCountByPrincipalAndType gets the count of all contact with the given principal and type which are confrimed.
+	GetExistingConfirmedContactsCountByPrincipalAndType(ctx context.Context, contactType, contactPrincipal string) (int64, errors.RichError)
 
 	Repo
 }

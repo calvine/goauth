@@ -136,3 +136,18 @@ func (cr contactRepo) UpdateContact(ctx context.Context, contact *models.Contact
 	span.AddEvent("contact updated")
 	return nil
 }
+
+func (cr contactRepo) GetExistingConfirmedContactsCountByPrincipalAndType(ctx context.Context, contactType, contactPrincipal string) (int64, errors.RichError) {
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, cr.GetName(), "GetExistingConfirmedContactsCountByPrincipalAndType", cr.GetType())
+	defer span.End()
+	numConfirmedContacts := int64(0)
+	for _, c := range *cr.contacts {
+		if c.IsConfirmed() &&
+			c.Type == contactType &&
+			c.Principal == contactPrincipal {
+			numConfirmedContacts++
+		}
+	}
+	span.AddEvent("number of confirmed contacts retreived")
+	return numConfirmedContacts, nil
+}
