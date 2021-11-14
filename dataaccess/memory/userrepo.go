@@ -121,15 +121,16 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactPrincipal
 	return user, nil
 }
 
-func (ur userRepo) GetUserAndContactByContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
-	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetUserAndContactByContact", ur.GetType())
+func (ur userRepo) GetUserAndContactByConfirmedContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetUserAndContactByConfirmedContact", ur.GetType())
 	defer span.End()
 	var user models.User
 	var contact models.Contact
 	contactFound := false
 	for _, c := range *ur.contacts {
 		if c.Principal == contactPrincipal &&
-			c.Type == contactType {
+			c.Type == contactType &&
+			c.IsConfirmed() {
 			contact = c
 			contactFound = true
 			break

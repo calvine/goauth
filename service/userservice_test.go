@@ -209,10 +209,10 @@ func _testGetUserAndContactByConfirmedContact(t *testing.T, userService services
 			expectedContactID: userServiceTest_ConfirmedUser_ConfirmedSecondaryContact.ID,
 		},
 		{
-			name:              "Given unconfirmed contact Return No Confirmed Contact Error",
+			name:              "Given unconfirmed contact Return error code no user found",
 			contactPrincipal:  userServiceTest_ConfirmedUser_UnconfirmedSecondaryEmail,
 			contactType:       core.CONTACT_TYPE_EMAIL,
-			expectedErrorCode: coreerrors.ErrCodeRegisteredContactNotConfirmed,
+			expectedErrorCode: coreerrors.ErrCodeNoUserFound,
 		},
 		{
 			name:              "Given non existant contact Return No User Found Error",

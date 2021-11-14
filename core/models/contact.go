@@ -32,8 +32,9 @@ func NewContact(userID, name, principal, contactType string, isPrimary bool) Con
 	}
 }
 
+// TOOD: write unit tests
 func (c *Contact) IsConfirmed() bool {
 	now := time.Now()
-	return !c.ConfirmedDate.Value.IsZero() &&
+	return c.ConfirmedDate.HasValue &&
 		c.ConfirmedDate.Value.Before(now)
 }

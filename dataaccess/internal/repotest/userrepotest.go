@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/calvine/goauth/core"
+	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
 )
@@ -36,8 +37,8 @@ func testUserRepo(t *testing.T, testHarness RepoTestHarnessInput) {
 	t.Run("GetUserByPrimaryContact", func(t *testing.T) {
 		_testGetUserByPrimaryContact(t, *testHarness.UserRepo)
 	})
-	t.Run("GetUserAndContactByContact", func(t *testing.T) {
-		_testGetUserAndContactByContact(t, *testHarness.UserRepo)
+	t.Run("GetUserAndContactByConfirmedContact", func(t *testing.T) {
+		_testGetUserAndContactByConfrimedContact(t, *testHarness.UserRepo)
 	})
 }
 
@@ -89,7 +90,7 @@ func _testGetUserByID(t *testing.T, userRepo repo.UserRepo) {
 }
 
 func _testGetUserByPrimaryContact(t *testing.T, userRepo repo.UserRepo) {
-	contactType, principal := core.CONTACT_TYPE_EMAIL, initialTestContact.Principal
+	contactType, principal := core.CONTACT_TYPE_EMAIL, initialTestConfirmedPrimaryContact.Principal
 	retreivedUser, err := userRepo.GetUserByPrimaryContact(context.TODO(), contactType, principal)
 	if err != nil {
 		t.Log(err.Error())
@@ -100,20 +101,57 @@ func _testGetUserByPrimaryContact(t *testing.T, userRepo repo.UserRepo) {
 	}
 }
 
-func _testGetUserAndContactByContact(t *testing.T, userRepo repo.UserRepo) {
-	contactType, principal := core.CONTACT_TYPE_EMAIL, initialTestContact.Principal
-	retreivedUser, retreivedContact, err := userRepo.GetUserAndContactByContact(context.TODO(), contactType, principal)
-	if err != nil {
-		t.Log(err.Error())
-		t.Error("failed to retreive user via primary contact info", contactType, principal, err.GetErrorCode())
+func _testGetUserAndContactByConfrimedContact(t *testing.T, userRepo repo.UserRepo) {
+	type testCase struct {
+		name              string
+		contactPrincipal  string
+		contactType       string
+		expectedContactID string
+		expectedUserID    string
+		expectedErrorCode string
 	}
-	if retreivedUser.ID != initialTestUser.ID {
-		t.Error("expected retreivedUser and initialTestUser ID to match", retreivedUser.ID, initialTestUser.ID)
+	testCases := []testCase{
+		{
+			name:              "GIVEN a confirmed contact principal and type EXPECT user and contact to be returned",
+			contactPrincipal:  initialTestConfirmedPrimaryContact.Principal,
+			contactType:       initialTestConfirmedPrimaryContact.Type,
+			expectedContactID: initialTestConfirmedPrimaryContact.ID,
+			expectedUserID:    initialTestConfirmedPrimaryContact.UserID,
+		},
+		{
+			name:              "GIVEN a unconfirmed contact principal and type EXPECT error code no user found",
+			contactPrincipal:  initialTestUnconfirmedContact.Principal,
+			contactType:       initialTestUnconfirmedContact.Type,
+			expectedErrorCode: coreerrors.ErrCodeNoUserFound,
+		},
+		{
+			name:              "GIVEN a non existant contact principal and a valid contact type EXPECT error code no user found",
+			contactPrincipal:  "NOT_A_REAL_EMAIL_456yhgtyTUHG@email.org",
+			contactType:       core.CONTACT_TYPE_EMAIL,
+			expectedErrorCode: coreerrors.ErrCodeNoUserFound,
+		},
 	}
-	if retreivedContact.Principal != principal {
-		t.Error("expected retreivedContact.Principal and the test principal to be the same", retreivedContact.Principal, principal)
-	}
-	if retreivedContact.UserID != retreivedUser.ID {
-		t.Error("expected user.ID and contact.userID to match", retreivedContact.UserID, retreivedUser.ID)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			retreivedUser, retreivedContact, err := userRepo.GetUserAndContactByConfirmedContact(context.TODO(), tc.contactType, tc.contactPrincipal)
+			if err != nil {
+				if tc.expectedErrorCode == "" {
+					t.Errorf("\tunexpected error encountered: %s - %s", err.GetErrorCode(), err.Error())
+					t.Fail()
+				} else if tc.expectedErrorCode != err.GetErrorCode() {
+					t.Errorf("\terror code did not match expected: got - %s expected - %s", err.GetErrorCode(), tc.expectedErrorCode)
+					t.Fail()
+				}
+			} else {
+				if tc.expectedUserID != retreivedUser.ID {
+					t.Errorf("\tuser id expected: got - %s expected - %s", retreivedUser.ID, tc.expectedUserID)
+					t.Fail()
+				}
+				if tc.expectedContactID != retreivedContact.ID {
+					t.Errorf("\tcontact id expected: got - %s expected - %s", retreivedContact.ID, tc.expectedContactID)
+					t.Fail()
+				}
+			}
+		})
 	}
 }

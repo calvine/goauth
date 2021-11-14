@@ -55,7 +55,7 @@ func (t *Token) WithMetaData(metaData map[string]string) {
 
 func (t *Token) AddMetaData(key, value string) {
 	if t.MetaData == nil {
-		t.MetaData = make(map[string]string, 0)
+		t.MetaData = make(map[string]string)
 	}
 	t.MetaData[key] = value
 }

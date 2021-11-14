@@ -95,8 +95,8 @@ func (ur userRepo) GetUserByID(ctx context.Context, id string) (models.User, err
 	return user, nil
 }
 
-func (ur userRepo) GetUserAndContactByContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
-	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetUserAndContactByContact", ur.GetType())
+func (ur userRepo) GetUserAndContactByConfirmedContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetUserAndContactByConfirmedContact", ur.GetType())
 	defer span.End()
 	var receiver struct {
 		User    repoModels.RepoUser      `bson:",inline"`
@@ -114,6 +114,9 @@ func (ur userRepo) GetUserAndContactByContact(ctx context.Context, contactType, 
 				Key: "$elemMatch", Value: bson.D{
 					{Key: "type", Value: contactType},
 					{Key: "principal", Value: contactPrincipal},
+					{Key: "confirmedDate", Value: bson.M{
+						"$ne": nil,
+					}},
 				},
 			},
 		},

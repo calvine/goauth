@@ -36,7 +36,7 @@ func (us userService) GetName() string {
 func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, logger *zap.Logger, contactType string, contactPrincipal string, initiator string) (models.User, models.Contact, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "GetUserAndContactByConfirmedContact")
 	defer span.End()
-	user, contact, err := us.userRepo.GetUserAndContactByContact(ctx, contactType, contactPrincipal)
+	user, contact, err := us.userRepo.GetUserAndContactByConfirmedContact(ctx, contactType, contactPrincipal)
 	if err != nil {
 		logger.Error("userRepo.GetUserAndContactByContact call failed", zap.Any("error", err))
 		apptelemetry.SetSpanOriginalError(&span, err, "")

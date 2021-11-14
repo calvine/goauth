@@ -409,11 +409,11 @@ func __testFailedLoginPrimaryContactNotConfirmed(t *testing.T, loginService serv
 	logger := zaptest.NewLogger(t)
 	_, err := loginService.LoginWithPrimaryContact(context.TODO(), logger, loginServiceTest_UnconfirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, "not the right password 12345678904321234567", loginServiceTest_CreatedBy)
 	if err == nil {
-		t.Error("expected failed login wrong password error bug got no error")
+		t.Error("expected failed login no user found got no error")
 	}
-	if err.GetErrorCode() != errors.ErrCodeLoginPrimaryContactNotConfirmed {
+	if err.GetErrorCode() != errors.ErrCodeNoUserFound {
 		t.Log(err.Error())
-		t.Errorf("expected failed login wrong password error bug got another error: %s", err.GetErrorCode())
+		t.Errorf("expected failed login no user found another error: %s", err.GetErrorCode())
 	}
 }
 

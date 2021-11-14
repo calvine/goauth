@@ -18,7 +18,9 @@ import (
 var (
 	initialTestUser models.User
 
-	initialTestContact models.Contact
+	initialTestUnconfirmedContact models.Contact
+
+	initialTestConfirmedPrimaryContact models.Contact
 
 	initialTestApp models.App
 
@@ -138,9 +140,17 @@ func setupTestHarnessData(t *testing.T, input RepoTestHarnessInput) {
 	}
 
 	// create test contact
-	initialTestContact = models.NewContact(initialTestUser.ID, "", "InitialTestUser@email.com", core.CONTACT_TYPE_EMAIL, true)
+	initialTestConfirmedPrimaryContact = models.NewContact(initialTestUser.ID, "", "InitialTestUser@email.com", core.CONTACT_TYPE_EMAIL, true)
+	initialTestConfirmedPrimaryContact.ConfirmedDate.Set(time.Now().UTC().Add(time.Second * -1))
 	// add a test contact for the test user.
-	err = (*input.ContactRepo).AddContact(context.TODO(), &initialTestContact, createdByID)
+	err = (*input.ContactRepo).AddContact(context.TODO(), &initialTestConfirmedPrimaryContact, createdByID)
+	if err != nil {
+		t.Log(err.Error())
+		t.Errorf("setup failed to add contact to database: %s", err.GetErrorCode())
+	}
+	initialTestUnconfirmedContact = models.NewContact(initialTestUser.ID, "", "InitialTestUser2@email.com", core.CONTACT_TYPE_EMAIL, false)
+	// add a test contact for the test user.
+	err = (*input.ContactRepo).AddContact(context.TODO(), &initialTestUnconfirmedContact, createdByID)
 	if err != nil {
 		t.Log(err.Error())
 		t.Errorf("setup failed to add contact to database: %s", err.GetErrorCode())

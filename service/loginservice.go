@@ -69,9 +69,9 @@ func (loginService) GetName() string {
 func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.Logger, principal, principalType, password string, initiator string) (models.User, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, ls.GetName(), "LoginWithPrimaryContact")
 	defer span.End()
-	user, contact, err := ls.userRepo.GetUserAndContactByContact(ctx, principalType, principal)
+	user, contact, err := ls.userRepo.GetUserAndContactByConfirmedContact(ctx, principalType, principal)
 	if err != nil {
-		logger.Error("userRepo.GetUserAndContactByContact call failed", zap.Any("error", err))
+		logger.Error("userRepo.GetUserAndContactByConfirmedContact call failed", zap.Any("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return models.User{}, err
 	}
@@ -92,7 +92,8 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return models.User{}, err
 	}
-	if !contact.ConfirmedDate.HasValue { // || contact.ConfirmedDate.Value.After(now)
+	// TODO: remove this I guess because if the contact is not confirmed then GetUserAndContactByConfirmedContact will not return anything
+	if !contact.IsConfirmed() { // || contact.ConfirmedDate.Value.After(now)
 		err := coreerrors.NewLoginPrimaryContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
 		logger.Error(err.GetErrorMessage(), zap.Any("error", err))
 		evtString := fmt.Sprintf("contact is not confirmed: %s of type %s", contact.Principal, contact.Type)
@@ -143,7 +144,7 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.
 func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, logger *zap.Logger, principal, principalType string, initiator string) (string, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, ls.GetName(), "StartPasswordResetByPrimaryContact")
 	defer span.End()
-	user, contact, err := ls.userRepo.GetUserAndContactByContact(ctx, principalType, principal)
+	user, contact, err := ls.userRepo.GetUserAndContactByConfirmedContact(ctx, principalType, principal)
 	if err != nil {
 		logger.Error("userRepo.GetUserAndContactByContact call failed", zap.Any("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
