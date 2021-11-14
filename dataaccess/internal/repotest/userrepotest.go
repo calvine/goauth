@@ -9,6 +9,7 @@ import (
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
+	"github.com/calvine/goauth/internal/testutils"
 )
 
 var (
@@ -135,13 +136,7 @@ func _testGetUserAndContactByConfrimedContact(t *testing.T, userRepo repo.UserRe
 		t.Run(tc.name, func(t *testing.T) {
 			retreivedUser, retreivedContact, err := userRepo.GetUserAndContactByConfirmedContact(context.TODO(), tc.contactType, tc.contactPrincipal)
 			if err != nil {
-				if tc.expectedErrorCode == "" {
-					t.Errorf("\tunexpected error encountered: %s - %s", err.GetErrorCode(), err.Error())
-					t.Fail()
-				} else if tc.expectedErrorCode != err.GetErrorCode() {
-					t.Errorf("\terror code did not match expected: got - %s expected - %s", err.GetErrorCode(), tc.expectedErrorCode)
-					t.Fail()
-				}
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else {
 				if tc.expectedUserID != retreivedUser.ID {
 					t.Errorf("\tuser id expected: got - %s expected - %s", retreivedUser.ID, tc.expectedUserID)

@@ -11,6 +11,7 @@ import (
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/core/services"
 	"github.com/calvine/goauth/dataaccess/memory"
+	"github.com/calvine/goauth/internal/testutils"
 	"go.uber.org/zap/zaptest"
 )
 
@@ -225,13 +226,7 @@ func _testGetUserAndContactByConfirmedContact(t *testing.T, userService services
 		t.Run(tc.name, func(t *testing.T) {
 			user, contact, err := userService.GetUserAndContactByConfirmedContact(context.TODO(), logger, tc.contactType, tc.contactPrincipal, userServiceTest_CreatedBy)
 			if err != nil {
-				if tc.expectedErrorCode == "" {
-					t.Errorf("\tunexpected error encountered: %s - %s", err.GetErrorCode(), err.Error())
-					t.Fail()
-				} else if tc.expectedErrorCode != err.GetErrorCode() {
-					t.Errorf("\terror code did not match expected: got - %s expected - %s", err.GetErrorCode(), tc.expectedErrorCode)
-					t.Fail()
-				}
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else {
 				if user.ID != tc.expectedUserID {
 					t.Errorf("\tuser id did not match expected: got - %s expected - %s", user.ID, tc.expectedUserID)
