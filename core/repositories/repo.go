@@ -14,7 +14,6 @@ type Repo interface {
 	core.NamedComponent
 }
 
-//TODO: Make "ID" consistent through code base...
 type AuditLogRepo interface {
 	LogMessage(ctx context.Context, message models.AuditLog) errors.RichError
 

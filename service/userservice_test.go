@@ -16,6 +16,8 @@ import (
 )
 
 var (
+	userServiceTest_EmailService services.EmailService
+
 	userServiceTest_ConfirmedUser models.User
 
 	userServiceTest_ConfirmedUser_ConfirmedPrimaryContact     models.Contact
@@ -170,8 +172,8 @@ func buildUserService(t *testing.T) services.UserService {
 	}
 	tokenRepo := memory.NewMemoryTokenRepo()
 	tokenService := NewTokenService(tokenRepo)
-	emailService, _ := NewEmailService(NoOpEmailService, nil)
-	userService := NewUserService(userRepo, contactRepo, tokenService, emailService)
+	userServiceTest_EmailService, _ = NewEmailService(StackEmailService, nil)
+	userService := NewUserService(userRepo, contactRepo, tokenService, userServiceTest_EmailService)
 	setupTestUserServiceData(t, userRepo, contactRepo)
 	return userService
 }
@@ -290,7 +292,20 @@ func _testRegisterUserAndPrimaryContact(t *testing.T, userService services.UserS
 					t.Fail()
 				}
 			} else {
-
+				ses, ok := userServiceTest_EmailService.(*stackEmailService)
+				if !ok {
+					t.Errorf("\texpected stackEmailService instance of email service but got %s", userServiceTest_EmailService.GetName())
+					t.FailNow()
+				}
+				lastMessage, ok := ses.PopMessage()
+				if !ok {
+					t.Error("\tno message found in email stack from user registration")
+					t.Fail()
+				}
+				if lastMessage.To[0] != tc.contactPrincipal {
+					t.Errorf("\tto value not expected: got - %s expected - %s", lastMessage.To[0], tc.contactPrincipal)
+				}
+				// TODO: check subject and body once I write those....
 			}
 		})
 	}

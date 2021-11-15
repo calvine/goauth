@@ -17,7 +17,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// TODO: finish telemetry error evtStrings
 var (
 	emptyContact = models.Contact{}
 
@@ -229,7 +228,6 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 	contact.AuditData.ModifiedOnDate.Set(time.Now().UTC())
 	contactID, err := primitive.ObjectIDFromHex(contact.ID)
 	if err != nil {
-		// TODO: specific error here?
 		rErr := coreerrors.NewFailedToParseObjectIDError(contact.ID, err, true)
 		evtString := fmt.Sprintf("%s contact id: %s", rErr.GetErrorMessage(), contact.ID)
 		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
@@ -237,7 +235,6 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 	}
 	oid, err := primitive.ObjectIDFromHex(contact.UserID)
 	if err != nil {
-		// TODO: specific error here?
 		rErr := coreerrors.NewFailedToParseObjectIDError(contact.UserID, err, true)
 		evtString := fmt.Sprintf("%s user id: %s", rErr.GetErrorMessage(), contact.UserID)
 		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)

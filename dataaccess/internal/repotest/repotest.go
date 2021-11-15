@@ -13,7 +13,7 @@ import (
 	"github.com/calvine/richerror/errors"
 )
 
-// TODO: improve repo tests to cover fail conditions, confirm data is manipulated properly in the underlying data store.
+// TODO: improve repo tests to cover fail conditions, confirm data is manipulated properly in the underlying data store. Migrate to table tests
 
 var (
 	initialTestUser models.User

@@ -36,7 +36,7 @@ type Token struct {
 
 func NewToken(targetID string, tokenType TokenType, validFor time.Duration) (Token, errors.RichError) {
 	var token Token
-	// TODO: once split make this return an error if no target id is provided.
+	// TODO: once split make this returns an error if no target id is provided.
 	value, err := utilities.NewTokenString()
 	if err != nil {
 		return token, err

@@ -23,7 +23,7 @@ const (
 	ARBITRARY_DATA_VALUE = "1234"
 )
 
-// TODO: encapsulate sub tests so the run more coherently...
+// TODO: encapsulate sub tests so the run more coherently... move to table tests
 
 func testTokenRepo(t *testing.T, testHarness RepoTestHarnessInput) {
 	_makeTokens(t)

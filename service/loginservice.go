@@ -64,7 +64,7 @@ func (loginService) GetName() string {
 	return "loginService"
 }
 
-//TODO: Add audit logging
+// TODO: Add audit logging
 
 func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.Logger, principal, principalType, password string, initiator string) (models.User, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, ls.GetName(), "LoginWithPrimaryContact")
@@ -141,6 +141,7 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.
 	return user, nil
 }
 
+// TODO: remove string from return and make work like rgistration call. test with stackemailservice
 func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, logger *zap.Logger, principal, principalType string, initiator string) (string, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, ls.GetName(), "StartPasswordResetByPrimaryContact")
 	defer span.End()
