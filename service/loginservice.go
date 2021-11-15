@@ -182,9 +182,9 @@ func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, l
 		body := fmt.Sprintf("A Password reset has been initiated. Your password reset token is: %s", token.Value)
 		err = ls.emailService.SendPlainTextEmail(ctx, logger, []string{contact.Principal}, "Password reset", body)
 		if err != nil {
-			evtString := "failed to send notification error occurred"
+			evtString := "failed to send password reset notification error occurred"
 			logger.Error(evtString, zap.Any("error", err))
-			apptelemetry.SetSpanOriginalError(&span, err, evtString)
+			apptelemetry.SetSpanError(&span, err, evtString)
 			return token.Value, err // TODO: what should we do here???
 		}
 	default:

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
@@ -82,12 +83,36 @@ func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger 
 		return err
 	}
 	// create new user and contact in datastore
+	// TODO: implement this!
 
+	// generate confirmation code
+	// TODO: make token valid time configurable
+	confirmationToken, err := models.NewToken("", models.TokenTypeConfirmContact, time.Hour*2)
+	if err != nil {
+		evtString := "failed to create new contact confirmation token"
+		logger.Error(evtString, zap.Any("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
+		return err
+	}
+	err = us.tokenService.PutToken(ctx, logger, confirmationToken)
+	if err != nil {
+		evtString := "failed to store new contact confirmation token"
+		logger.Error(evtString, zap.Any("error", err))
+		apptelemetry.SetSpanError(&span, err, evtString)
+		return err
+	}
 	// send confirmation email
-
+	to := []string{contactPrincipal}
+	err = us.emailService.SendPlainTextEmail(ctx, logger, to, "contact confirmation link", confirmationToken.Value)
+	if err != nil {
+		evtString := "failed to send contact confirmation notification error occurred"
+		logger.Error(evtString, zap.Any("error", err))
+		apptelemetry.SetSpanError(&span, err, evtString)
+		return err // TODO: what should we do here???
+	}
 	// NOTE: allow user to set password on confirmation link click.
 
-	return coreerrors.NewNotImplementedError(true)
+	return nil
 }
 
 // func (us userService) AddUser(ctx context.Context, logger *zap.Logger, user *models.User, initiator string) errors.RichError {
