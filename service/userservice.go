@@ -39,7 +39,7 @@ func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, l
 	user, contact, err := us.userRepo.GetUserAndContactByConfirmedContact(ctx, contactType, contactPrincipal)
 	if err != nil {
 		logger.Error("userRepo.GetUserAndContactByContact call failed", zap.Any("error", err))
-		apptelemetry.SetSpanOriginalError(&span, err, "")
+		apptelemetry.SetSpanError(&span, err, "")
 		return models.User{}, models.Contact{}, err
 	}
 	if !contact.IsConfirmed() {
@@ -52,25 +52,42 @@ func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, l
 	return user, contact, nil
 }
 
-func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
+func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType, contactPrincipal string, initiator string) errors.RichError {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "RegisterUserAndPrimaryContact")
 	defer span.End()
-	// canRegister := false
-	// TODO: need a repo call that will reutrn all contacts witha given principal and type...
-	// _, contact, err := us.userRepo.GetUserAndContactByContact(ctx, contactType, contactPrincipal)
-	// if err != nil {
+	// check that email address does not already exist as a confirmed contact.
+	numExistingConfirmedContacts, err := us.contactRepo.GetExistingConfirmedContactsCountByPrincipalAndType(ctx, contactType, contactPrincipal)
+	if err != nil {
+		logger.Error("contactRepo.GetExistingConfirmedContactsCountByPrincipalAndType call failed", zap.Any("error", err))
+		apptelemetry.SetSpanError(&span, err, "")
+		return err
+	}
+	if numExistingConfirmedContacts != 0 {
+		var err errors.RichError
+		if numExistingConfirmedContacts > 1 {
+			// This is really bad and we need to know about it asap!
+			errMsg := "critical issue here more than one contact is confirmed with this info"
+			err = coreerrors.NewMultipleConfirmedInstancesOfContactError(contactPrincipal, contactType, numExistingConfirmedContacts, true)
+			logger.Error(errMsg, zap.Any("error", err))
+			apptelemetry.SetSpanOriginalError(&span, err, errMsg)
+		} else {
+			errMsg := "a contact already exists and is confirmed with the data provided"
+			errorFields := make(map[string]interface{})
+			errorFields["numExistingConfirmedContacts"] = numExistingConfirmedContacts
+			err = coreerrors.NewRegistrationContactAlreadyConfirmedError(contactPrincipal, contactType, errorFields, true)
+			logger.Error(errMsg,
+				zap.Any("error", err))
+			apptelemetry.SetSpanOriginalError(&span, err, errMsg)
+		}
+		return err
+	}
+	// create new user and contact in datastore
 
-	// }
+	// send confirmation email
 
-	// if canRegister {
-	// 	// TODO: Register
-	// }
-	// check to see if a user is registered with the confirmed contact info provided
-	// existingUser, existingContact, err := us.userRepo.GetUserAndContactByContact(ctx, contactType, contactPrincipal)
-	// if err != nil {
-	// 	logger.Error("", zap.Error(err))
-	// }
-	return models.User{}, models.Contact{}, coreerrors.NewNotImplementedError(true)
+	// NOTE: allow user to set password on confirmation link click.
+
+	return coreerrors.NewNotImplementedError(true)
 }
 
 // func (us userService) AddUser(ctx context.Context, logger *zap.Logger, user *models.User, initiator string) errors.RichError {

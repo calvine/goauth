@@ -56,6 +56,16 @@
         ]
     },
     {
+        "code": "MultipleConfirmedInstancesOfContact",
+        "message": "multiple confirmed instance of contact found",
+        "includeMap": false,
+        "metaData": [
+            { "name": "principal", "dataType": "string" },
+            { "name": "principalType", "dataType": "string" },
+            { "name": "numOccurances", "dataType": "int64" }
+        ]
+    },
+    {
         "code": "ContactNotConfirmed",
         "message": "contact is not confirmed",
         "includeMap": true,

@@ -12,10 +12,17 @@ import (
 )
 
 const (
-	MockEmailService = "mock"
-	NoOpEmailService = "noop"
-	SMTPEmailService = "smtp"
+	MockEmailService  = "mock"
+	NoOpEmailService  = "noop"
+	StackEmailService = "stack"
+	SMTPEmailService  = "smtp"
 )
+
+type TestEmailMessage struct {
+	To      []string
+	Subject string
+	Body    string
+}
 
 func NewEmailService(serviceType string, options interface{}) (coreServices.EmailService, errors.RichError) {
 	switch serviceType {
@@ -23,6 +30,8 @@ func NewEmailService(serviceType string, options interface{}) (coreServices.Emai
 		return mockEmailService{}, nil
 	case NoOpEmailService:
 		return noopEmailService{}, nil
+	case StackEmailService:
+		return NewStackEmailService(), nil
 	// case SMTPEmailService: // TODO: implement this...
 	default:
 		return nil, coreerrors.NewComponentNotImplementedError("email service", serviceType, true)
@@ -47,8 +56,8 @@ func (mockEmailService) GetName() string {
 	return "mockEmailService"
 }
 
-func (mse mockEmailService) SendPlainTextEmail(ctx context.Context, logger *zap.Logger, to []string, subject, body string) errors.RichError {
-	span := apptelemetry.CreateFunctionSpan(ctx, mse.GetName(), "SendPlainTextEmail")
+func (mes mockEmailService) SendPlainTextEmail(ctx context.Context, logger *zap.Logger, to []string, subject, body string) errors.RichError {
+	span := apptelemetry.CreateFunctionSpan(ctx, mes.GetName(), "SendPlainTextEmail")
 	defer span.End()
 	fmt.Println("********** BEGIN EMAIL  **********")
 
@@ -60,4 +69,42 @@ func (mse mockEmailService) SendPlainTextEmail(ctx context.Context, logger *zap.
 
 	fmt.Println("********** END EMAIL  **********")
 	return nil
+}
+
+type stackEmailService struct {
+	messages []TestEmailMessage
+}
+
+func NewStackEmailService() *stackEmailService {
+	messages := make([]TestEmailMessage, 0)
+	return &stackEmailService{
+		messages: messages,
+	}
+}
+
+func (stackEmailService) GetName() string {
+	return "stackEmailService"
+}
+
+func (ses *stackEmailService) SendPlainTextEmail(ctx context.Context, logger *zap.Logger, to []string, subject, body string) errors.RichError {
+	span := apptelemetry.CreateFunctionSpan(ctx, ses.GetName(), "SendPlainTextEmail")
+	defer span.End()
+	message := TestEmailMessage{
+		To:      to,
+		Subject: subject,
+		Body:    body,
+	}
+	ses.messages = append(ses.messages, message)
+	return nil
+}
+
+func (ses *stackEmailService) PopMessage() (TestEmailMessage, bool) {
+	numMessages := len(ses.messages)
+	if numMessages == 0 {
+		return TestEmailMessage{}, false
+	}
+	message := ses.messages[numMessages-1]      // get the last message
+	ses.messages = ses.messages[:numMessages-1] // save the array with the poped message clipped off
+	return message, true
+
 }
