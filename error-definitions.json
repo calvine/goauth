@@ -56,6 +56,16 @@
         ]
     },
     {
+        "code": "ContactToAddMarkedAsPrimary",
+        "message": "cannot add contact that is marked as primary must go through primary contact reassignment flow",
+        "includeMap": false,
+        "metaData": [
+            { "name": "userId", "dataType": "string" },
+            { "name": "principal", "dataType": "string" },
+            { "name": "principalType", "dataType": "string" }
+        ]
+    },
+    {
         "code": "MultipleConfirmedInstancesOfContact",
         "message": "multiple confirmed instance of contact found",
         "includeMap": false,
@@ -82,6 +92,15 @@
             { "name": "contactId", "dataType": "string"},
             { "name": "principal", "dataType": "string"},
             { "name": "principalType", "dataType": "string"}
+        ]
+    },
+    {
+        "code": "UserIDsDoNotMatch",
+        "message": "existing contact is not confirmed",
+        "includeMap": false,
+        "metaData": [
+            { "name": "userID1", "dataType": "string"},
+            { "name": "userID2", "dataType": "string"}
         ]
     },
     {

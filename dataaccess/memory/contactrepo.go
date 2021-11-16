@@ -55,27 +55,33 @@ func (cr contactRepo) GetContactByID(ctx context.Context, id string) (models.Con
 	return contact, nil
 }
 
-func (cr contactRepo) GetPrimaryContactByUserID(ctx context.Context, userID string) (models.Contact, errors.RichError) {
+func (cr contactRepo) GetPrimaryContactByUserID(ctx context.Context, userID string, contactType string) (models.Contact, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, cr.GetName(), "GetPrimaryContactByUserID", cr.GetType())
 	defer span.End()
 	var contact models.Contact
 	contactFound := false
 	for _, c := range *cr.contacts {
-		if c.UserID == userID && c.IsPrimary {
+		if c.UserID == userID &&
+			c.IsPrimary &&
+			c.Type == contactType {
 			contact = c
 			contactFound = true
 			break
 		}
 	}
 	if !contactFound {
-		fields := map[string]interface{}{
-			"UserID":    userID,
-			"IsPrimary": true,
+		// what if there is no primary contact of the type found? new error?
+		_, ok := (*cr.users)[userID]
+		if !ok {
+			fields := map[string]interface{}{
+				"UserID":    userID,
+				"IsPrimary": true,
+			}
+			err := coreerrors.NewNoUserFoundError(fields, true)
+			evtString := fmt.Sprintf("no primary contact found for user: %s", userID)
+			apptelemetry.SetSpanError(&span, err, evtString)
+			return contact, err
 		}
-		err := coreerrors.NewNoUserFoundError(fields, true)
-		evtString := fmt.Sprintf("no primary contact found for user: %s", userID)
-		apptelemetry.SetSpanError(&span, err, evtString)
-		return contact, err
 	}
 	span.AddEvent("primary contact found")
 	return contact, nil
@@ -100,6 +106,33 @@ func (cr contactRepo) GetContactsByUserID(ctx context.Context, userID string) ([
 		return nil, err
 	}
 	span.AddEvent("contacts found")
+	return contacts, nil
+}
+
+func (cr contactRepo) GetContactsByUserIDAndType(ctx context.Context, userID string, contactType string) ([]models.Contact, errors.RichError) {
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, cr.GetName(), "GetContactsByUserID", cr.GetType())
+	defer span.End()
+	contacts := make([]models.Contact, 0)
+	for _, c := range *cr.contacts {
+		if c.UserID == userID &&
+			c.Type == contactType {
+			contacts = append(contacts, c)
+		}
+	}
+	if len(contacts) == 0 {
+		_, ok := (*cr.users)[userID]
+		if !ok {
+			// if we get here the user does not exist
+			fields := map[string]interface{}{
+				"UserID": userID,
+			}
+			err := coreerrors.NewNoUserFoundError(fields, true)
+			evtString := fmt.Sprintf("unable to find contact for user: %s", userID)
+			apptelemetry.SetSpanOriginalError(&span, err, evtString)
+			return nil, err
+		}
+	}
+	span.AddEvent("contacts retreived")
 	return contacts, nil
 }
 

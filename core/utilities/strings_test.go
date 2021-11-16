@@ -24,7 +24,7 @@ func TestUpperCaseFirstChar(t *testing.T) {
 	for _, test := range testCases {
 		output := UpperCaseFirstChar(test.input)
 		if output != test.expectedOutput {
-			t.Errorf("%s test failed: output not expected: (expected: %s) (actual: %s)", test.name, test.expectedOutput, output)
+			t.Errorf("\t%s test failed: output not expected: (expected: %s) (actual: %s)", test.name, test.expectedOutput, output)
 		}
 	}
 }
@@ -45,7 +45,7 @@ func TestLowerCaseFirstChar(t *testing.T) {
 	for _, test := range testCases {
 		output := LowerCaseFirstChar(test.input)
 		if output != test.expectedOutput {
-			t.Errorf("%s test failed: output not expected: (expected: %s) (actual: %s)", test.name, test.expectedOutput, output)
+			t.Errorf("\t%s test failed: output not expected: (expected: %s) (actual: %s)", test.name, test.expectedOutput, output)
 		}
 	}
 }

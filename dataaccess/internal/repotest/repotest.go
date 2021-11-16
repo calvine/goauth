@@ -57,8 +57,7 @@ type RepoTestHarnessInput struct {
 // In heindsight I do not like this. I want to come back and improve this
 // at some point, but for now it works...
 
-func RunReposTestHarness(t *testing.T, implementationName string, input RepoTestHarnessInput) {
-
+func RunReposTestHarness(t *testing.T, input RepoTestHarnessInput) {
 	if input.SetupTestDataSource != nil {
 		input.SetupTestDataSource(t, input)
 	}
@@ -68,59 +67,59 @@ func RunReposTestHarness(t *testing.T, implementationName string, input RepoTest
 	setupTestHarnessData(t, input)
 
 	// functionality tests
-	t.Run(fmt.Sprintf("%s - userRepo", implementationName), func(t *testing.T) {
+	t.Run("userRepo", func(t *testing.T) {
 		if input.UserRepo != nil {
 			testUserRepo(t, input)
 		} else {
-			t.Skipf("no implementation for %s provided for userRepo", implementationName)
+			t.Skip("no implementation for provided for userRepo")
 		}
 	})
 
-	t.Run(fmt.Sprintf("%s - contactRepo", implementationName), func(t *testing.T) {
+	t.Run("contactRepo", func(t *testing.T) {
 		if input.ContactRepo != nil {
 			testContactRepo(t, input)
 		} else {
-			t.Skipf("no implementation for %s provided for contactRepo", implementationName)
+			t.Skip("no implementation for provided for contactRepo")
 		}
 	})
 
-	t.Run(fmt.Sprintf("%s - addressRepo", implementationName), func(t *testing.T) {
+	t.Run("addressRepo", func(t *testing.T) {
 		if input.AddressRepo != nil {
 			testAddressRepo(t, input)
 		} else {
-			t.Skipf("no implementation for %s provided for addressRepo", implementationName)
+			t.Skip("no implementation for provided for addressRepo")
 		}
 	})
 
-	t.Run(fmt.Sprintf("%s - profileRepo", implementationName), func(t *testing.T) {
+	t.Run("profileRepo", func(t *testing.T) {
 		if input.ProfileRepo != nil {
 			testProfileRepo(t, input)
 		} else {
-			t.Skipf("no implementation for %s provided for profileRepo", implementationName)
+			t.Skip("no implementation for provided for profileRepo")
 		}
 	})
 
-	t.Run(fmt.Sprintf("%s - appRepo", implementationName), func(t *testing.T) {
+	t.Run("appRepo", func(t *testing.T) {
 		if input.AppRepo != nil {
 			testAppRepo(t, input)
 		} else {
-			t.Skipf("no implementation for %s provided for appRepo", implementationName)
+			t.Skip("no implementation for provided for appRepo")
 		}
 	})
 
-	t.Run(fmt.Sprintf("%s - tokenRepo", implementationName), func(t *testing.T) {
+	t.Run("tokenRepo", func(t *testing.T) {
 		if input.TokenRepo != nil {
 			testTokenRepo(t, input)
 		} else {
-			t.Skipf("no implementation for %s provided for tokenRepo", implementationName)
+			t.Skip("no implementation for provided for tokenRepo")
 		}
 	})
 
-	t.Run(fmt.Sprintf("%s - auditLogRepo", implementationName), func(t *testing.T) {
+	t.Run("auditLogRepo", func(t *testing.T) {
 		if input.AuditLogRepo != nil {
 			testAuditLogRepo(t, input)
 		} else {
-			t.Skipf("no implementation for %s provided for auditLogRepo", implementationName)
+			t.Skip("no implementation for provided for auditLogRepo")
 		}
 	})
 }

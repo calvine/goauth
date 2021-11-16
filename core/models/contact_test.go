@@ -42,7 +42,7 @@ func TestContactIsConfirmed(t *testing.T) {
 			}
 			isConfirmed := contact.IsConfirmed()
 			if isConfirmed != tc.expectedIsConfirmed {
-				t.Errorf("confirmed status is not what was expected: got - %v expected - %v", isConfirmed, tc.expectedIsConfirmed)
+				t.Errorf("\tconfirmed status is not what was expected: got - %v expected - %v", isConfirmed, tc.expectedIsConfirmed)
 				t.Fail()
 			}
 		})

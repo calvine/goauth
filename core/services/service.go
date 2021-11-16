@@ -30,24 +30,25 @@ type LoginService interface {
 type UserService interface {
 	// GetUserAndContactByConfirmedContact gets a user and specified contact record via a confirmed contact
 	GetUserAndContactByConfirmedContact(ctx context.Context, logger *zap.Logger, contactType string, contactPrincipal string, initiator string) (models.User, models.Contact, errors.RichError)
-	// // AddUser adds a user record to the database
-	// AddUser(ctx context.Context, logger *zap.Logger, user *models.User, initiator string) errors.RichError
-	// // UpdateUser updates a use record in the database
-	// UpdateUser(ctx context.Context, logger *zap.Logger, user *models.User, initiator string) errors.RichError
 	// RegisterUserAndPrimaryContact registers a new user. it has several responsibilities.
 	//	1. ensure no other user has the contact provided as a confirmed contact.
 	//	2. send notification to user with link to confirm contact and set password
 	RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType, contactPrincipal string, initiator string) errors.RichError
 	// GetUserPrimaryContact gets a users primary contact
-	GetUserPrimaryContact(ctx context.Context, logger *zap.Logger, userID string, initiator string) (models.Contact, errors.RichError)
+	GetUserPrimaryContact(ctx context.Context, logger *zap.Logger, userID string, contactType string, initiator string) (models.Contact, errors.RichError)
 	// GetUsersContacts gets all of a users contacts
 	GetUsersContacts(ctx context.Context, logger *zap.Logger, userID string, initiator string) ([]models.Contact, errors.RichError)
 	// GetUsersConfirmedContacts gets all of a users confirmed contacts
 	GetUsersConfirmedContacts(ctx context.Context, logger *zap.Logger, userID string, initiator string) ([]models.Contact, errors.RichError)
-	// AddContact adds a contact to a user
-	AddContact(ctx context.Context, logger *zap.Logger, contact *models.Contact, initiator string) errors.RichError
-	// UpdateContact updates a contact for a user
-	UpdateContact(ctx context.Context, logger *zap.Logger, contact *models.Contact, initiator string) errors.RichError
+	// GetUsersContactsOfType gets all of a users contacts of the given type
+	GetUsersContactsOfType(ctx context.Context, logger *zap.Logger, userID string, contactType string, initiator string) ([]models.Contact, errors.RichError)
+	// GetUsersConfirmedContactsOfType gets all of a users confirmed contacts of the given type
+	GetUsersConfirmedContactsOfType(ctx context.Context, logger *zap.Logger, userID string, contactType string, initiator string) ([]models.Contact, errors.RichError)
+	// AddContact adds a contact to a user. The userID parameter MUST be the same as the UserID on the contact provided
+	AddContact(ctx context.Context, logger *zap.Logger, userID string, contact *models.Contact, initiator string) errors.RichError
+	// SetContactAsPrimary takes the users current primary contact and the one to make the new primary contact
+	// The two contacts passed in must have the same contact type for example email or mobile
+	SetContactAsPrimary(ctx context.Context, logger *zap.Logger, userID string, newPrimaryContactID string, initiator string) errors.RichError
 	// ConfirmContact takes a confirmation code and updates the users contact record to be confirmed.
 	ConfirmContact(ctx context.Context, logger *zap.Logger, confirmationCode string, initiator string) errors.RichError
 

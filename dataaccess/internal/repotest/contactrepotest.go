@@ -18,10 +18,10 @@ const (
 )
 
 var (
-	newContact1           models.Contact
-	newContact2           models.Contact
-	newContact3           models.Contact
-	newContact4           models.Contact
+	newEmailContact1      models.Contact
+	newEmailContact2      models.Contact
+	newMobileContact1     models.Contact
+	newMobileContact2     models.Contact
 	noMatchingUserContact models.Contact
 
 	nonExistantContactID string
@@ -33,7 +33,7 @@ var (
 // }
 
 func setupContactTestData(t *testing.T, testHarness RepoTestHarnessInput) {
-	newContact1 = models.Contact{
+	newEmailContact1 = models.Contact{
 		Principal:     "testuser1@domain.org",
 		UserID:        testUser1.ID,
 		IsPrimary:     true,
@@ -41,7 +41,7 @@ func setupContactTestData(t *testing.T, testHarness RepoTestHarnessInput) {
 		ConfirmedDate: nullable.NullableTime{HasValue: true, Value: time.Now().UTC()},
 	}
 
-	newContact2 = models.Contact{
+	newEmailContact2 = models.Contact{
 		Principal:     "frank@app.space",
 		UserID:        testUser1.ID,
 		IsPrimary:     false,
@@ -49,7 +49,7 @@ func setupContactTestData(t *testing.T, testHarness RepoTestHarnessInput) {
 		ConfirmedDate: nullable.NullableTime{},
 	}
 
-	newContact3 = models.Contact{
+	newMobileContact1 = models.Contact{
 		Principal:     "555-555-5555",
 		UserID:        testUser1.ID,
 		IsPrimary:     false,
@@ -57,7 +57,7 @@ func setupContactTestData(t *testing.T, testHarness RepoTestHarnessInput) {
 		ConfirmedDate: nullable.NullableTime{HasValue: true, Value: time.Now().UTC()},
 	}
 
-	newContact4 = models.Contact{
+	newMobileContact2 = models.Contact{
 		Principal:     "email@email.email",
 		UserID:        testUser1.ID,
 		IsPrimary:     false,
@@ -90,15 +90,12 @@ func testContactRepo(t *testing.T, testHarness RepoTestHarnessInput) {
 	t.Run("GetContactsByUserID", func(t *testing.T) {
 		_testGetContactsByUserID(t, *testHarness.ContactRepo)
 	})
-	// t.Run("GetContactByConfirmationCode", func(t *testing.T) {
-	// 	_testGetContactByConfirmationCode(t, contactRepo)
-	// })
+	t.Run("GetContactsByUserIDAndType", func(t *testing.T) {
+		_testGetContactsByUserIDAndType(t, *testHarness.ContactRepo)
+	})
 	t.Run("UpdateContact", func(t *testing.T) {
 		_testUpdateContact(t, *testHarness.ContactRepo)
 	})
-	// t.Run("ConfirmContact", func(t *testing.T) {
-	// 	_testConfirmContact(t, contactRepo)
-	// })
 	t.Run("GetExistingConfirmedContactsCountByPrincipalAndType", func(t *testing.T) {
 		_testGetExistingConfirmedContactsCountByPrincipalAndType(t, *testHarness.ContactRepo)
 	})
@@ -114,22 +111,22 @@ func _testAddContact(t *testing.T, contactRepo repo.ContactRepo) {
 	testCases := []testCase{
 		{
 			name:           "GIVEN contact to insert EXPECT contact to be inserted",
-			contactToAdd:   &newContact1,
+			contactToAdd:   &newEmailContact1,
 			expectedUserID: testUser1.ID,
 		},
 		{
 			name:           "GIVEN contact to insert EXPECT contact to be inserted",
-			contactToAdd:   &newContact2,
+			contactToAdd:   &newEmailContact2,
 			expectedUserID: testUser1.ID,
 		},
 		{
 			name:           "GIVEN contact to insert EXPECT contact to be inserted",
-			contactToAdd:   &newContact3,
+			contactToAdd:   &newMobileContact1,
 			expectedUserID: testUser1.ID,
 		},
 		{
 			name:           "GIVEN contact to insert EXPECT contact to be inserted",
-			contactToAdd:   &newContact4,
+			contactToAdd:   &newMobileContact2,
 			expectedUserID: testUser1.ID,
 		},
 		{
@@ -166,7 +163,7 @@ func _testGetContactByID(t *testing.T, contactRepo repo.ContactRepo) {
 	testCases := []testCase{
 		{
 			name:      "GIVEN an existing contact id EXPECT the contact to be returned",
-			contactID: newContact1.ID,
+			contactID: newEmailContact1.ID,
 		},
 		{
 			name:              "GIVEN a nonexistant contact id EXPECT error no contact found",
@@ -197,6 +194,7 @@ func _testGetPrimaryContactByUserID(t *testing.T, contactRepo repo.ContactRepo) 
 	type testCase struct {
 		name              string
 		userID            string
+		contactType       string
 		expectedContactID string
 		expectedErrorCode string
 	}
@@ -204,22 +202,24 @@ func _testGetPrimaryContactByUserID(t *testing.T, contactRepo repo.ContactRepo) 
 		{
 			name:              "GIVEN an existing user id with a primary contact EXPECT the primary contact to be returned",
 			userID:            testUser1.ID,
-			expectedContactID: newContact1.ID,
+			contactType:       core.CONTACT_TYPE_EMAIL,
+			expectedContactID: newEmailContact1.ID,
 		},
 		{
 			name:              "GIVEN an nonexistant user id EXPECT error no user found",
 			userID:            nonExistantUserID,
+			contactType:       core.CONTACT_TYPE_EMAIL,
 			expectedErrorCode: coreerrors.ErrCodeNoUserFound,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			contact, err := contactRepo.GetPrimaryContactByUserID(context.TODO(), tc.userID)
+			contact, err := contactRepo.GetPrimaryContactByUserID(context.TODO(), tc.userID, tc.contactType)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else {
 				if !contact.IsPrimary {
-					t.Errorf("\t contact returned is not primary contact: %v", contact)
+					t.Errorf("\tcontact returned is not primary contact: %v", contact)
 				}
 				if tc.expectedContactID != contact.ID {
 					t.Errorf("\tcontact id was not expected: got - %s expected - %s", contact.ID, tc.expectedContactID)
@@ -246,10 +246,10 @@ func _testGetContactsByUserID(t *testing.T, contactRepo repo.ContactRepo) {
 			name:   "GIVEN a user id for a user with one or more contacts EXPECT the contacts for that user to be returned",
 			userID: testUser1.ID,
 			expectedContactIds: []string{
-				newContact1.ID,
-				newContact2.ID,
-				newContact3.ID,
-				newContact4.ID,
+				newEmailContact1.ID,
+				newEmailContact2.ID,
+				newMobileContact1.ID,
+				newMobileContact2.ID,
 			},
 		},
 		{
@@ -270,12 +270,8 @@ func _testGetContactsByUserID(t *testing.T, contactRepo repo.ContactRepo) {
 					t.Errorf("\tnumber of contacts returned not expected amount: got - %d expected - %d", numContactsFound, numExpectedContacts)
 					t.Fail()
 				} else {
-					numPrimary := 0
 					for _, c := range contacts {
 						contactFound := false
-						if c.IsPrimary {
-							numPrimary++
-						}
 						for _, ecid := range tc.expectedContactIds {
 							if c.ID == ecid {
 								contactFound = true
@@ -283,12 +279,9 @@ func _testGetContactsByUserID(t *testing.T, contactRepo repo.ContactRepo) {
 							}
 						}
 						if !contactFound {
-							t.Errorf("\tcontact with id %swas not found in results", c.ID)
+							t.Errorf("\tcontact with id %s was not found in results", c.ID)
 							t.Fail()
 						}
-					}
-					if numPrimary != 1 {
-						t.Errorf("\texpected 1 primary contact but got %d", numPrimary)
 					}
 				}
 			}
@@ -296,24 +289,73 @@ func _testGetContactsByUserID(t *testing.T, contactRepo repo.ContactRepo) {
 	}
 }
 
-// func _testGetContactByConfirmationCode(t *testing.T, userRepo repo.ContactRepo) {
-// 	confirmationCode := newContact2.ConfirmationCode.Value
-// 	expectedPrincipal := newContact2.Principal
-// 	expectedIsPrimary := newContact2.IsPrimary
-// 	contact, err := userRepo.GetContactByConfirmationCode(context.TODO(), confirmationCode)
-// 	if err != nil {
-// 		t.Error("failed to get contact by confirmation code", err)
-// 	}
-// 	if contact.Principal != expectedPrincipal {
-// 		t.Error("unexpected value of Principal", expectedPrincipal, contact.Principal)
-// 	}
-// 	if contact.IsPrimary != expectedIsPrimary {
-// 		t.Error("unexpected value of IsPrimary", expectedIsPrimary, contact.IsPrimary)
-// 	}
-// 	if contact.ConfirmationCode.Value != confirmationCode {
-// 		t.Error("expected retreived confirmation code to match passed in confirmation code.", confirmationCode, contact.ConfirmationCode.Value)
-// 	}
-// }
+func _testGetContactsByUserIDAndType(t *testing.T, contactRepo repo.ContactRepo) {
+	type testCase struct {
+		name               string
+		userID             string
+		contactType        string
+		expectedContactIds []string
+		expectedErrorCode  string
+	}
+	testCases := []testCase{
+		{
+			name:        "GIVEN a valid user id and contact type EXPECT contacts of that type returned",
+			userID:      testUser1.ID,
+			contactType: core.CONTACT_TYPE_EMAIL,
+			expectedContactIds: []string{
+				newEmailContact1.ID,
+				newEmailContact2.ID,
+			},
+		},
+		{
+			name:        "GIVEN a valid user id and contact type #2 EXPECT contacts of that type returned",
+			userID:      testUser1.ID,
+			contactType: core.CONTACT_TYPE_MOBILE,
+			expectedContactIds: []string{
+				newMobileContact1.ID,
+				newMobileContact2.ID,
+			},
+		},
+		{
+			name:               "GIVEN a valid user id and contact type that has no contacts of that type EXPECT 0 contacts to be returned",
+			userID:             testUser1.ID,
+			contactType:        "not a valid type", // TODO: need to make a case useing a valid contact type...
+			expectedContactIds: []string{},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			numExpectedContacts := len(tc.expectedContactIds)
+			contacts, err := contactRepo.GetContactsByUserIDAndType(context.TODO(), tc.userID, tc.contactType)
+			if err != nil {
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else {
+				numContactsFound := len(contacts)
+				if numContactsFound != numExpectedContacts {
+					t.Errorf("\tnumber of contacts returned not expected amount: got - %d expected - %d", numContactsFound, numExpectedContacts)
+					t.Fail()
+				} else {
+					for _, c := range contacts {
+						contactFound := false
+						for _, ecid := range tc.expectedContactIds {
+							if c.ID == ecid {
+								contactFound = true
+								break
+							}
+						}
+						if !contactFound {
+							t.Errorf("\tcontact with id %s was not found in results", c.ID)
+							t.Fail()
+						} else if c.Type != tc.contactType {
+							t.Errorf("\tcontact type not expected: got - %s expected - %s", c.Type, tc.contactType)
+							t.Fail()
+						}
+					}
+				}
+			}
+		})
+	}
+}
 
 func _testUpdateContact(t *testing.T, contactRepo repo.ContactRepo) {
 	type testCase struct {
@@ -326,7 +368,7 @@ func _testUpdateContact(t *testing.T, contactRepo repo.ContactRepo) {
 	testCases := []testCase{
 		{
 			name:            "GIVEN a contact to update EXPECT contact to be updated",
-			contactToUpdate: &newContact3,
+			contactToUpdate: &newMobileContact1,
 			newPrincipal:    "a_different_email@mail.org",
 			markConfirmed:   true,
 		},

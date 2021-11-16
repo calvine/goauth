@@ -35,5 +35,5 @@ func TestMemoryRepos(t *testing.T) {
 			return uuid.Must(uuid.NewRandom()).String()
 		},
 	}
-	repotest.RunReposTestHarness(t, "memory", testHarnessInput)
+	repotest.RunReposTestHarness(t, testHarnessInput)
 }

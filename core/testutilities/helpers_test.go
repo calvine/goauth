@@ -202,7 +202,7 @@ func TestThingsValuesAreEqual(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := Equals(tt.input1, tt.input2)
 			if result.AreEqual != tt.expectedOutput {
-				t.Errorf("equality comparison not expected output: got: %t - expected: %t", result.AreEqual, tt.expectedOutput)
+				t.Errorf("\tequality comparison not expected output: got: %t - expected: %t", result.AreEqual, tt.expectedOutput)
 			}
 		})
 	}

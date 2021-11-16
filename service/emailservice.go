@@ -106,5 +106,4 @@ func (ses *stackEmailService) PopMessage() (TestEmailMessage, bool) {
 	message := ses.messages[numMessages-1]      // get the last message
 	ses.messages = ses.messages[:numMessages-1] // save the array with the poped message clipped off
 	return message, true
-
 }

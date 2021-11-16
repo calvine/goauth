@@ -73,7 +73,7 @@ func (ur userRepo) GetContactByID(ctx context.Context, id string) (models.Contac
 	return receiver.Contact[0].ToCoreContact(), nil
 }
 
-func (ur userRepo) GetPrimaryContactByUserID(ctx context.Context, userID string) (models.Contact, errors.RichError) {
+func (ur userRepo) GetPrimaryContactByUserID(ctx context.Context, userID string, contactType string) (models.Contact, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetPrimaryContactByUserID", ur.GetType())
 	defer span.End()
 	var receiver struct {
@@ -92,9 +92,14 @@ func (ur userRepo) GetPrimaryContactByUserID(ctx context.Context, userID string)
 		return emptyContact, rErr
 	}
 	filter := bson.M{
-		"$and": bson.A{
-			bson.M{"_id": oid},
-			bson.M{"contacts.isPrimary": true},
+		"_id": oid,
+		"contacts": bson.D{
+			{
+				Key: "$elemMatch", Value: bson.D{
+					{Key: "type", Value: contactType},
+					{Key: "isPrimary", Value: true},
+				},
+			},
 		},
 	}
 	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
@@ -103,6 +108,7 @@ func (ur userRepo) GetPrimaryContactByUserID(ctx context.Context, userID string)
 			fields := map[string]interface{}{
 				"_id":                userID,
 				"contacts.isPrimary": true,
+				"contacts.type":      contactType,
 			}
 			rErr := coreerrors.NewNoUserFoundError(fields, true)
 			evtString := fmt.Sprintf("no primary contact found for user id: %s", userID)
@@ -163,6 +169,57 @@ func (ur userRepo) GetContactsByUserID(ctx context.Context, userID string) ([]mo
 		contacts[index] = contact.ToCoreContact()
 	}
 	span.AddEvent("contacts retreived")
+	return contacts, nil
+}
+
+func (ur userRepo) GetContactsByUserIDAndType(ctx context.Context, userID string, contactType string) ([]models.Contact, errors.RichError) {
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetContactsByUserID", ur.GetType())
+	defer span.End()
+	var receiver struct {
+		Contacts []repoModels.RepoContact `bson:"contacts"`
+	}
+	options := options.FindOneOptions{
+		Projection: bson.D{
+			{Key: "_id", Value: 0},
+			{Key: "contacts", Value: 1},
+		},
+	}
+	oid, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		rErr := coreerrors.NewFailedToParseObjectIDError(userID, err, true)
+		evtString := fmt.Sprintf("%s user id: %s", rErr.GetErrorMessage(), userID)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
+		return nil, rErr
+	}
+	filter := bson.M{
+		"_id":           oid,
+		"contacts.type": contactType,
+	}
+	err = ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).FindOne(ctx, filter, &options).Decode(&receiver)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			// fields := map[string]interface{}{
+			// 	"_id": userID,
+			// }
+			// rErr := coreerrors.NewNoUserFoundError(fields, true)
+			// evtString := fmt.Sprintf("no contact found for user id: %s", userID)
+			// apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
+			span.AddEvent("no contacts of type found")
+			return []models.Contact{}, nil
+		}
+		rErr := coreerrors.NewRepoQueryFailedError(err, true)
+		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
+		return nil, rErr
+	}
+	contacts := make([]models.Contact, 0, len(receiver.Contacts))
+	for _, contact := range receiver.Contacts {
+		if contact.Type == contactType {
+			contact.UserID = userID
+			contacts = append(contacts, contact.ToCoreContact())
+		}
+	}
+	span.AddEvent("contacts of type retreived")
 	return contacts, nil
 }
 

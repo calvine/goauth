@@ -47,21 +47,21 @@ type UserRepo interface {
 	Repo
 }
 
+// TODO: add GetPrimaryContacts method?
+
 type ContactRepo interface {
 	// GetContactByContactID gets a contact by its id
 	GetContactByID(ctx context.Context, id string) (models.Contact, errors.RichError)
 	// GetPrimaryContactByUserID gets a users primary contact by user id
-	GetPrimaryContactByUserID(ctx context.Context, userID string) (models.Contact, errors.RichError)
+	GetPrimaryContactByUserID(ctx context.Context, userID string, contactType string) (models.Contact, errors.RichError)
 	// GetContactsByUserID get all of a users contacts by user id
 	GetContactsByUserID(ctx context.Context, userID string) ([]models.Contact, errors.RichError)
-	// GetContactByConfirmationCode get user contact by confirmation code
-	// GetContactByConfirmationCode(ctx context.Context, confirmationCode string) (models.Contact, errors.RichError)
+	// GetContactsByUserIDAndType get all contacts belonging to the user based on the userID of the given type
+	GetContactsByUserIDAndType(ctx context.Context, userID string, contactType string) ([]models.Contact, errors.RichError)
 	// AddContact adds a user contact
 	AddContact(ctx context.Context, contact *models.Contact, createdByID string) errors.RichError
 	// UpdateContact updates a users contact
 	UpdateContact(ctx context.Context, contact *models.Contact, modifiedByID string) errors.RichError
-	// ConfirmContact sets a contact to confirmed based on the received confirmation code.
-	// ConfirmContact(ctx context.Context, confirmationCode, modifiedByID string) errors.RichError
 	// GetExistingConfirmedContactsCountByPrincipalAndType gets the count of all contact with the given principal and type which are confrimed.
 	GetExistingConfirmedContactsCountByPrincipalAndType(ctx context.Context, contactType, contactPrincipal string) (int64, errors.RichError)
 
