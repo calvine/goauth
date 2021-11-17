@@ -245,6 +245,7 @@ func (us userService) AddContact(ctx context.Context, logger *zap.Logger, userID
 		apptelemetry.SetSpanError(&span, err, evtString)
 		return err
 	}
+	// TODO: send confirmation message?
 	span.AddEvent("contact added for user")
 	return nil
 }

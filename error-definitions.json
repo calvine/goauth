@@ -85,22 +85,21 @@
         ]
     },
     {
-        "code": "ExistingContactNotConfirmed",
-        "message": "existing contact is not confirmed",
+        "code": "ContactAlreadyMarkedPrimary",
+        "message": "contact is already marked as primary",
         "includeMap": false,
         "metaData": [
-            { "name": "contactId", "dataType": "string"},
-            { "name": "principal", "dataType": "string"},
-            { "name": "principalType", "dataType": "string"}
+            { "name": "principal", "dataType": "string" },
+            { "name": "principalType", "dataType": "string" }
         ]
     },
     {
-        "code": "UserIDsDoNotMatch",
-        "message": "existing contact is not confirmed",
+        "code": "InvalidContactType",
+        "message": "the contact type provided is not valid",
         "includeMap": false,
         "metaData": [
-            { "name": "userID1", "dataType": "string"},
-            { "name": "userID2", "dataType": "string"}
+            { "name": "principal", "dataType": "string"},
+            { "name": "principalType", "dataType": "string"}
         ]
     },
     {
@@ -108,6 +107,15 @@
         "message": "no contact found for given query",
         "includeMap": true,
         "metaData": []
+    },
+    {
+        "code": "UserIDsDoNotMatch",
+        "message": "user id provided do not match",
+        "includeMap": false,
+        "metaData": [
+            { "name": "userID1", "dataType": "string"},
+            { "name": "userID2", "dataType": "string"}
+        ]
     },
     {
         "code": "NoUserFound",
@@ -173,15 +181,6 @@
         "includeMap": false,
         "metaData": [
             { "name": "contactId", "dataType": "string"},
-            { "name": "principal", "dataType": "string"},
-            { "name": "principalType", "dataType": "string"}
-        ]
-    },
-    {
-        "code": "InvalidContactType",
-        "message": "the contact type provided is not valid",
-        "includeMap": false,
-        "metaData": [
             { "name": "principal", "dataType": "string"},
             { "name": "principalType", "dataType": "string"}
         ]

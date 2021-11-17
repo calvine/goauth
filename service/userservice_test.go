@@ -30,6 +30,8 @@ var (
 	userServiceTest_UnconfirmedUser models.User
 
 	userServiceTest_UnconfirmedUser_UnconfirmedPrimaryContact models.Contact
+
+	userServiceText_ContactRepo repo.ContactRepo
 )
 
 const (
@@ -87,7 +89,7 @@ func TestUserService(t *testing.T) {
 	})
 
 	// t.Run("SetContactAsPrimary", func(t *testing.T) {
-	// 	_testSetContactAsPrimary(t, userService)
+	// 	_testSetContactAsPrimary(t, userService, userServiceText_ContactRepo)
 	// })
 
 	// t.Run("ConfirmContact", func(t *testing.T) {
@@ -187,7 +189,7 @@ func buildUserService(t *testing.T) services.UserService {
 		t.Error(err)
 		t.FailNow()
 	}
-	contactRepo, err := memory.NewMemoryContactRepo(&users, &contacts)
+	userServiceText_ContactRepo, err = memory.NewMemoryContactRepo(&users, &contacts)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -195,8 +197,8 @@ func buildUserService(t *testing.T) services.UserService {
 	tokenRepo := memory.NewMemoryTokenRepo()
 	tokenService := NewTokenService(tokenRepo)
 	userServiceTest_EmailService, _ = NewEmailService(StackEmailService, nil)
-	userService := NewUserService(userRepo, contactRepo, tokenService, userServiceTest_EmailService)
-	setupTestUserServiceData(t, userRepo, contactRepo)
+	userService := NewUserService(userRepo, userServiceText_ContactRepo, tokenService, userServiceTest_EmailService)
+	setupTestUserServiceData(t, userRepo, userServiceText_ContactRepo)
 	return userService
 }
 
@@ -710,13 +712,15 @@ func _testAddContact(t *testing.T, userService services.UserService) {
 	}
 }
 
-func _testSetContactAsPrimary(t *testing.T, userService services.UserService) {
+func _testSetContactAsPrimary(t *testing.T, userService services.UserService, contactRepo repo.ContactRepo) {
 	logger := zaptest.NewLogger(t)
 	type testCase struct {
-		name                string
-		userID              string
-		newPrimaryContactID string
-		expectedErrorCode   string
+		name                            string
+		userID                          string
+		contactType                     string
+		newPrimaryContactID             string
+		expectedCurrentPrimaryContactID string
+		expectedErrorCode               string
 	}
 	testCases := []testCase{
 		{
@@ -726,21 +730,27 @@ func _testSetContactAsPrimary(t *testing.T, userService services.UserService) {
 			name: "GIVEN a proper contact id EXPECT new primary contact to be set as primary, and the old primary to be set as not primary",
 		},
 		{
-			name: "GIVEN a contact id that is not confirmed EXPECT error code contact not confirmed",
+			name:              "GIVEN a contact id that is not confirmed EXPECT error code contact not confirmed",
+			expectedErrorCode: coreerrors.ErrCodeContactNotConfirmed,
 		},
 		{
-			name: "GIVEN a contact id is already marked as primary EXPECT error code contact already marked as primary",
+			name:              "GIVEN a contact id is already marked as primary EXPECT error code contact already marked as primary",
+			expectedErrorCode: coreerrors.ErrCodeContactAlreadyMarkedPrimary,
 		},
 		{
-			name: "GIVEN a contact id thats associated user id does not match EXPECT error code user ids do not match",
-		},
-		{
-			name: "GIVEN a contact id that is not confirmed EXPECT error code contact not confirmed",
+			name:              "GIVEN a contact id thats associated user id does not match EXPECT error code user ids do not match",
+			expectedErrorCode: coreerrors.ErrCodeUserIDsDoNotMatch,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := userService.SetContactAsPrimary(context.TODO(), logger, tc.userID, tc.newPrimaryContactID, userServiceTest_CreatedBy)
+			currentPrimaryContact, err := contactRepo.GetPrimaryContactByUserID(context.TODO(), tc.userID, tc.contactType)
+			if err != nil {
+				t.Errorf("failed to retreive current primary contact for user")
+				t.Fail()
+				return
+			}
+			err = userService.SetContactAsPrimary(context.TODO(), logger, tc.userID, tc.newPrimaryContactID, userServiceTest_CreatedBy)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
@@ -748,6 +758,34 @@ func _testSetContactAsPrimary(t *testing.T, userService services.UserService) {
 				t.Fail()
 			} else {
 				// TODO: check that data store state is correct (only one primary contact)
+				previousPrimaryContact, err := contactRepo.GetContactByID(context.TODO(), currentPrimaryContact.ID)
+				if err != nil {
+					t.Errorf("failed to retreive previous primary contact for user")
+					t.Fail()
+					return
+				}
+				newPrimaryContact, err := contactRepo.GetPrimaryContactByUserID(context.TODO(), tc.userID, tc.contactType)
+				if err != nil {
+					t.Errorf("failed to retreive new primary contact for user")
+					t.Fail()
+					return
+				}
+				if previousPrimaryContact.IsPrimary {
+					t.Error("previous primary contact should not still be marked as primary")
+					t.Fail()
+				}
+				if !newPrimaryContact.IsPrimary {
+					t.Error("new primary contact should be marked as primary")
+					t.Fail()
+				}
+				if currentPrimaryContact.ID != tc.expectedCurrentPrimaryContactID {
+					t.Errorf("previous contact id not expected value: got - %s expected - %s", currentPrimaryContact.ID, tc.expectedCurrentPrimaryContactID)
+					t.Fail()
+				}
+				if newPrimaryContact.ID != tc.newPrimaryContactID {
+					t.Errorf("previous contact id not expected value: got - %s expected - %s", newPrimaryContact.ID, tc.newPrimaryContactID)
+					t.Fail()
+				}
 			}
 		})
 	}
