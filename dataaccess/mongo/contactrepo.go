@@ -24,6 +24,7 @@ var (
 		"id":            1,
 		"name":          1,
 		"principal":     1,
+		"rawPrincipal":  1,
 		"type":          1,
 		"isPrimary":     1,
 		"confirmedDate": 1,
@@ -110,7 +111,7 @@ func (ur userRepo) GetPrimaryContactByUserID(ctx context.Context, userID string,
 				"contacts.isPrimary": true,
 				"contacts.type":      contactType,
 			}
-			rErr := coreerrors.NewNoUserFoundError(fields, true)
+			rErr := coreerrors.NewNoContactFoundError(fields, true)
 			evtString := fmt.Sprintf("no primary contact found for user id: %s", userID)
 			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 			return emptyContact, rErr
@@ -246,6 +247,7 @@ func (ur userRepo) AddContact(ctx context.Context, contact *models.Contact, crea
 				{Key: "id", Value: repoContact.ObjectID},
 				{Key: "name", Value: repoContact.CoreContact.Name.GetPointerCopy()},
 				{Key: "principal", Value: repoContact.CoreContact.Principal},
+				{Key: "rawPrincipal", Value: repoContact.CoreContact.RawPrincipal},
 				{Key: "type", Value: repoContact.CoreContact.Type},
 				{Key: "isPrimary", Value: repoContact.CoreContact.IsPrimary},
 				{Key: "confirmedDate", Value: repoContact.CoreContact.ConfirmedDate.GetPointerCopy()},
@@ -305,6 +307,7 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 		{Key: "$set", Value: bson.D{
 			{Key: "contacts.$.name", Value: contact.Name.GetPointerCopy()},
 			{Key: "contacts.$.principal", Value: contact.Principal},
+			{Key: "contacts.$.rawPrincipal", Value: contact.RawPrincipal},
 			{Key: "contacts.$.type", Value: contact.Type},
 			{Key: "contacts.$.isPrimary", Value: contact.IsPrimary},
 			{Key: "contacts.$.confirmedDate", Value: contact.ConfirmedDate.GetPointerCopy()},

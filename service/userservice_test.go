@@ -251,6 +251,9 @@ func _testGetUserAndContactByConfirmedContact(t *testing.T, userService services
 			user, contact, err := userService.GetUserAndContactByConfirmedContact(context.TODO(), logger, tc.contactType, tc.contactPrincipal, userServiceTest_CreatedBy)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Fail()
 			} else {
 				if user.ID != tc.expectedUserID {
 					t.Errorf("\tuser id did not match expected: got - %s expected - %s", user.ID, tc.expectedUserID)
@@ -297,6 +300,9 @@ func _testRegisterUserAndPrimaryContact(t *testing.T, userService services.UserS
 			err := userService.RegisterUserAndPrimaryContact(context.TODO(), logger, tc.contactType, tc.contactPrincipal, userServiceTest_CreatedBy)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Fail()
 			} else {
 				ses, ok := userServiceTest_EmailService.(*stackEmailService)
 				if !ok {
@@ -347,6 +353,9 @@ func _testGetUserPrimaryContact(t *testing.T, userService services.UserService) 
 			contact, err := userService.GetUserPrimaryContact(context.TODO(), logger, tc.userID, tc.contactType, userServiceTest_CreatedBy)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Fail()
 			} else {
 				if contact.ID != tc.expectedContactID {
 					t.Errorf("\tcontact id not expected value: got - %s expected - %s", contact.ID, tc.expectedContactID)
@@ -383,6 +392,9 @@ func _testGetUsersContacts(t *testing.T, userService services.UserService) {
 			contacts, err := userService.GetUsersContacts(context.TODO(), logger, tc.userID, userServiceTest_CreatedBy)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Fail()
 			} else {
 				numContactsReturned := len(contacts)
 				numExpectedContacts := len(tc.expectedContactIDs)
@@ -444,6 +456,9 @@ func _testGetUsersConfirmedContacts(t *testing.T, userService services.UserServi
 			contacts, err := userService.GetUsersConfirmedContacts(context.TODO(), logger, tc.userID, userServiceTest_CreatedBy)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Fail()
 			} else {
 				numContactsReturned := len(contacts)
 				numExpectedContacts := len(tc.expectedContactIDs)
@@ -510,6 +525,9 @@ func _testGetUsersContactsOfType(t *testing.T, userService services.UserService)
 			contacts, err := userService.GetUsersContactsOfType(context.TODO(), logger, tc.userID, tc.contactType, userServiceTest_CreatedBy)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Fail()
 			} else {
 				numContactsReturned := len(contacts)
 				numExpectedContacts := len(tc.expectedContactIDs)
@@ -579,6 +597,9 @@ func _testGetUsersConfirmedContactsOfType(t *testing.T, userService services.Use
 			contacts, err := userService.GetUsersConfirmedContactsOfType(context.TODO(), logger, tc.userID, tc.contactType, userServiceTest_CreatedBy)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Fail()
 			} else {
 				numContactsReturned := len(contacts)
 				numExpectedContacts := len(tc.expectedContactIDs)
@@ -672,13 +693,16 @@ func _testAddContact(t *testing.T, userService services.UserService) {
 			err := userService.AddContact(context.TODO(), logger, tc.userID, &newContact, userServiceTest_CreatedBy)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Fail()
 			} else {
 				if newContact.ID == "" {
 					t.Error("\tcontact added does not have a contact id")
 					t.Fail()
 				}
 				if newContact.UserID != tc.userID {
-					t.Error("\tadded contact user id doesnot match expected user id")
+					t.Errorf("\tadded contact user id does not match expected user id: got - %s expected - %s", newContact.UserID, tc.userID)
 					t.Fail()
 				}
 			}
@@ -696,22 +720,22 @@ func _testSetContactAsPrimary(t *testing.T, userService services.UserService) {
 	}
 	testCases := []testCase{
 		{
-			name: "GIVEN a proper new primary contact id EXPECT new primary contact to be set as primary, and the old primary to be set as not primary",
+			name: "GIVEN a proper contact id EXPECT new primary contact to be set as primary, and the old primary to be set as not primary",
 		},
 		{
-			name: "GIVEN a proper new primary contact id EXPECT new primary contact to be set as primary, and the old primary to be set as not primary",
+			name: "GIVEN a proper contact id EXPECT new primary contact to be set as primary, and the old primary to be set as not primary",
 		},
 		{
-			name: "GIVEN a new primary contact id that is not confirmed EXPECT error code contact not confirmed",
+			name: "GIVEN a contact id that is not confirmed EXPECT error code contact not confirmed",
 		},
 		{
-			name: "GIVEN a new primary contact id is already marked as primary EXPECT error code contact already marked as primary",
+			name: "GIVEN a contact id is already marked as primary EXPECT error code contact already marked as primary",
 		},
 		{
-			name: "GIVEN a new primary contact id thats associated user id does not match EXPECT error code user ids do not match",
+			name: "GIVEN a contact id thats associated user id does not match EXPECT error code user ids do not match",
 		},
 		{
-			name: "GIVEN a new primary contact id that is not confirmed EXPECT error code contact not confirmed",
+			name: "GIVEN a contact id that is not confirmed EXPECT error code contact not confirmed",
 		},
 	}
 	for _, tc := range testCases {
@@ -719,6 +743,11 @@ func _testSetContactAsPrimary(t *testing.T, userService services.UserService) {
 			err := userService.SetContactAsPrimary(context.TODO(), logger, tc.userID, tc.newPrimaryContactID, userServiceTest_CreatedBy)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Fail()
+			} else {
+				// TODO: check that data store state is correct (only one primary contact)
 			}
 		})
 	}
@@ -726,17 +755,32 @@ func _testSetContactAsPrimary(t *testing.T, userService services.UserService) {
 	t.Fail()
 }
 
-// func _testConfirmContact(t *testing.T, userService services.UserService) {
-// 	logger := zaptest.NewLogger(t)
-// 	type testCase struct {
-// 		name string
-// 	}
-// 	testCases := []testCase{}
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-
-// 		})
-// 	}
-// 	t.Error(coreerrors.NewNotImplementedError(true))
-// 	t.Fail()
-// }
+func _testConfirmContact(t *testing.T, userService services.UserService) {
+	logger := zaptest.NewLogger(t)
+	type testCase struct {
+		name              string
+		confirmationCode  string
+		expectedErrorCode string
+	}
+	testCases := []testCase{
+		{
+			name: "GIVEN a valid confirmation code for a contact to be confirmed EXPECT success and contact confirmation date to be set",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := userService.ConfirmContact(context.TODO(), logger, tc.confirmationCode, userServiceTest_CreatedBy)
+			if err != nil {
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Fail()
+			} else {
+				// TODO: check that data store contact is confirmed
+			}
+			// There is nothing to check really?
+		})
+	}
+	t.Error(coreerrors.NewNotImplementedError(true))
+	t.Fail()
+}

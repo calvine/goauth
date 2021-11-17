@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/nullable"
 )
 
@@ -43,6 +44,44 @@ func TestContactIsConfirmed(t *testing.T) {
 			isConfirmed := contact.IsConfirmed()
 			if isConfirmed != tc.expectedIsConfirmed {
 				t.Errorf("\tconfirmed status is not what was expected: got - %v expected - %v", isConfirmed, tc.expectedIsConfirmed)
+				t.Fail()
+			}
+		})
+	}
+}
+
+func TestNormalizeContactPrincipal(t *testing.T) {
+	type testCase struct {
+		name                               string
+		contactType                        string
+		contactPrincipal                   string
+		expectedNormalizedContactPrincipal string
+	}
+	testCases := []testCase{
+		{
+			name:                               "GIVEN a email contact EXPECT the contact principal to be converted to lower case",
+			contactType:                        core.CONTACT_TYPE_EMAIL,
+			contactPrincipal:                   "My_Email_123@email.org",
+			expectedNormalizedContactPrincipal: "my_email_123@email.org",
+		},
+		{
+			name:                               "GIVEN a mobile contact EXPECT the contact principal to have any dashes removed",
+			contactType:                        core.CONTACT_TYPE_MOBILE,
+			contactPrincipal:                   "+1-478-867-5309",
+			expectedNormalizedContactPrincipal: "+14788675309",
+		},
+		{
+			name:                               "GIVEN an invalid contact type EXPECT the contact principal will be converted to lower case",
+			contactType:                        "INVALID TYPE",
+			contactPrincipal:                   "JustChecking!",
+			expectedNormalizedContactPrincipal: "justchecking!",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			normalizedContactPrincipal := NormalizeContactPrincipal(tc.contactType, tc.contactPrincipal)
+			if normalizedContactPrincipal != tc.expectedNormalizedContactPrincipal {
+				t.Errorf("normalized contact principal is not expected: got - %s expect - %s", normalizedContactPrincipal, tc.expectedNormalizedContactPrincipal)
 				t.Fail()
 			}
 		})

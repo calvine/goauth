@@ -77,7 +77,7 @@ func (cr contactRepo) GetPrimaryContactByUserID(ctx context.Context, userID stri
 				"UserID":    userID,
 				"IsPrimary": true,
 			}
-			err := coreerrors.NewNoUserFoundError(fields, true)
+			err := coreerrors.NewNoContactFoundError(fields, true)
 			evtString := fmt.Sprintf("no primary contact found for user: %s", userID)
 			apptelemetry.SetSpanError(&span, err, evtString)
 			return contact, err

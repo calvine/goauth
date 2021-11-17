@@ -60,35 +60,10 @@ func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger 
 	defer span.End()
 	// TODO: normalize contact principal
 	// check that email address does not already exist as a confirmed contact.
-	err := us.checkForExistingConfirmedContacts(ctx, logger, &span, contactType, contactPrincipal)
+	err := us.checkForExistingConfirmedContacts(ctx, logger, &span, contactType, contactPrincipal, "")
 	if err != nil {
 		return err
 	}
-	// numExistingConfirmedContacts, err := us.contactRepo.GetExistingConfirmedContactsCountByPrincipalAndType(ctx, contactType, contactPrincipal)
-	// if err != nil {
-	// 	logger.Error("contactRepo.GetExistingConfirmedContactsCountByPrincipalAndType call failed", zap.Any("error", err))
-	// 	apptelemetry.SetSpanError(&span, err, "")
-	// 	return err
-	// }
-	// if numExistingConfirmedContacts != 0 {
-	// 	var err errors.RichError
-	// 	if numExistingConfirmedContacts > 1 {
-	// 		// This is really bad and we need to know about it asap!
-	// 		errMsg := "critical issue here more than one contact is confirmed with this info"
-	// 		err = coreerrors.NewMultipleConfirmedInstancesOfContactError(contactPrincipal, contactType, numExistingConfirmedContacts, true)
-	// 		logger.Error(errMsg, zap.Any("error", err))
-	// 		apptelemetry.SetSpanOriginalError(&span, err, errMsg)
-	// 	} else {
-	// 		errMsg := "a contact already exists and is confirmed with the data provided"
-	// 		errorFields := make(map[string]interface{})
-	// 		errorFields["numExistingConfirmedContacts"] = numExistingConfirmedContacts
-	// 		err = coreerrors.NewRegistrationContactAlreadyConfirmedError(contactPrincipal, contactType, errorFields, true)
-	// 		logger.Error(errMsg,
-	// 			zap.Any("error", err))
-	// 		apptelemetry.SetSpanOriginalError(&span, err, errMsg)
-	// 	}
-	// 	return err
-	// }
 	// create new user and contact in datastore
 	newUser := models.NewUser()
 	err = us.userRepo.AddUser(ctx, &newUser, initiator)
@@ -232,13 +207,44 @@ func (us userService) AddContact(ctx context.Context, logger *zap.Logger, userID
 		return err
 	}
 	// check that no other contact that is confirmed is already in data store
-	err := us.checkForExistingConfirmedContacts(ctx, logger, &span, contact.Type, contact.Principal)
+	err := us.checkForExistingConfirmedContacts(ctx, logger, &span, contact.Type, contact.Principal, userID)
 	if err != nil {
 		return err
 	}
-	// normalize contact principal
+
+	// check if there is an existing primary contact of this type... if so throw an error.
+	if contact.IsPrimary {
+		_, err := us.contactRepo.GetPrimaryContactByUserID(ctx, userID, contact.Type)
+		if err != nil && err.GetErrorCode() != coreerrors.ErrCodeNoContactFound {
+			// we got an error that indicates there was an error
+			// making the query against the data store
+			evtString := "failed to retreive current primary contact of type"
+			logger.Error(evtString, zap.Any("error", err))
+			apptelemetry.SetSpanError(&span, err, evtString)
+			return err
+		}
+		if err == nil {
+			// there was no error so a contact was returned.
+			// If you want to make a new primary contact you need to go through the
+			// SetContactAsPrimary method
+			err := coreerrors.NewContactToAddMarkedAsPrimaryError(userID, contact.Principal, contact.Type, true)
+			evtString := "user id and contact user id do not match"
+			logger.Error(evtString, zap.Any("error", err))
+			apptelemetry.SetSpanOriginalError(&span, err, evtString)
+			return err
+		}
+		// the account has no contact marked as primary with the contact type
+		logger.Warn("contact is marked as primary and there are no existing primary contacts of this type", zap.String("userID", userID), zap.String("contactPrincipal", contact.Principal), zap.String("contactType", contact.Type), zap.Bool("contactIsPrimary", contact.IsPrimary))
+	}
 
 	// run add contact on data store repo
+	err = us.contactRepo.AddContact(ctx, contact, initiator)
+	if err != nil {
+		evtString := "failed to save contact in the data store"
+		logger.Error(evtString, zap.Any("error", err))
+		apptelemetry.SetSpanError(&span, err, evtString)
+		return err
+	}
 	span.AddEvent("contact added for user")
 	return nil
 }
@@ -275,7 +281,7 @@ func (us userService) ConfirmContact(ctx context.Context, logger *zap.Logger, co
 // 	return true, nil
 // }
 
-func (us userService) checkForExistingConfirmedContacts(ctx context.Context, logger *zap.Logger, span *trace.Span, contactType, contactPrincipal string) errors.RichError {
+func (us userService) checkForExistingConfirmedContacts(ctx context.Context, logger *zap.Logger, span *trace.Span, contactType, contactPrincipal, userID string) errors.RichError {
 	numExistingConfirmedContacts, err := us.contactRepo.GetExistingConfirmedContactsCountByPrincipalAndType(ctx, contactType, contactPrincipal)
 	if err != nil {
 		logger.Error("contactRepo.GetExistingConfirmedContactsCountByPrincipalAndType call failed", zap.Any("error", err))
@@ -293,7 +299,11 @@ func (us userService) checkForExistingConfirmedContacts(ctx context.Context, log
 			errMsg := "a contact already exists and is confirmed with the data provided"
 			errorFields := make(map[string]interface{})
 			errorFields["numExistingConfirmedContacts"] = numExistingConfirmedContacts
-			err = coreerrors.NewRegistrationContactAlreadyConfirmedError(contactPrincipal, contactType, errorFields, true)
+			if userID == "" {
+				err = coreerrors.NewRegistrationContactAlreadyConfirmedError(contactPrincipal, contactType, errorFields, true)
+			} else {
+				err = coreerrors.NewContactToAddAlreadyConfirmedError(userID, contactPrincipal, contactType, errorFields, true)
+			}
 			logger.Error(errMsg,
 				zap.Any("error", err))
 			apptelemetry.SetSpanOriginalError(span, err, errMsg)
