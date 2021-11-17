@@ -727,9 +727,6 @@ func _testSetContactAsPrimary(t *testing.T, userService services.UserService, co
 			name: "GIVEN a proper contact id EXPECT new primary contact to be set as primary, and the old primary to be set as not primary",
 		},
 		{
-			name: "GIVEN a proper contact id EXPECT new primary contact to be set as primary, and the old primary to be set as not primary",
-		},
-		{
 			name:              "GIVEN a contact id that is not confirmed EXPECT error code contact not confirmed",
 			expectedErrorCode: coreerrors.ErrCodeContactNotConfirmed,
 		},
@@ -789,8 +786,6 @@ func _testSetContactAsPrimary(t *testing.T, userService services.UserService, co
 			}
 		})
 	}
-	t.Error(coreerrors.NewNotImplementedError(true))
-	t.Fail()
 }
 
 func _testConfirmContact(t *testing.T, userService services.UserService) {
