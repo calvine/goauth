@@ -139,15 +139,12 @@ func _testGetUserAndContactByConfrimedContact(t *testing.T, userRepo repo.UserRe
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				if tc.expectedUserID != retreivedUser.ID {
 					t.Errorf("\tuser id expected: got - %s expected - %s", retreivedUser.ID, tc.expectedUserID)
-					t.Fail()
 				}
 				if tc.expectedContactID != retreivedContact.ID {
 					t.Errorf("\tcontact id expected: got - %s expected - %s", retreivedContact.ID, tc.expectedContactID)
-					t.Fail()
 				}
 			}
 		})

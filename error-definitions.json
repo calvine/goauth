@@ -156,6 +156,14 @@
         ]
     },
     {
+        "code": "RepoQueryFailedWithMetaData",
+        "message": "repo query failed with error",
+        "includeMap": true,
+        "metaData": [
+            { "name": "queryError", "dataType": "error"}
+        ]
+    },
+    {
         "code": "LoginContactNotPrimary",
         "message": "contact for login is not a primary contact",
         "includeMap": false,
@@ -206,6 +214,9 @@
         "code": "LoginFailedWrongPassword",
         "message": "login for user failed due to incorrect password",
         "includeMap": false,
+        "tags": [
+            "security"
+        ],
         "metaData": [
             { "name": "userID", "dataType": "string"}
         ]
@@ -285,7 +296,7 @@
         "metaData": [
             { "name": "id", "dataType": "string" },
             { "name": "tokenType", "dataType": "string" },
-            { "name": "expiredOn", "dataType": "time.Time" }
+            { "name": "expiredOn", "dataType": "time.Time", "importPath": "time" }
         ]
     },
     {
@@ -301,6 +312,20 @@
             { "name": "template", "dataType": "string" },
             { "name": "renderError", "dataType": "error" }
         ]
-    }
-    
+    },
+    {
+        "code": "DatastoreTransactionFailed",
+        "message": "data store transaction was aborted",
+        "metaData": [
+            { "name": "cause", "dataType": "error" }
+        ]
+    },
+    {
+        "code": "DatastoreTransactionAbortFailed",
+        "message": "data store transaction was aborted",
+        "metaData": [
+            { "name": "cause", "dataType": "error" },
+            { "name": "transactionAbortError", "dataType": "error" }
+        ]
+    }    
 ]

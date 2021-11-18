@@ -19,6 +19,7 @@ const (
 var (
 	newEmailContact1      models.Contact
 	newEmailContact2      models.Contact
+	newEmailContact3      models.Contact
 	newMobileContact1     models.Contact
 	newMobileContact2     models.Contact
 	noMatchingUserContact models.Contact
@@ -32,10 +33,13 @@ func setupContactTestData(t *testing.T, testHarness RepoTestHarnessInput) {
 
 	newEmailContact2 = models.NewContact(testUser1.ID, "", "frank@app.space", core.CONTACT_TYPE_EMAIL, false)
 
+	newEmailContact3 = models.NewContact(testUser1.ID, "", "jeremy@app.space", core.CONTACT_TYPE_EMAIL, false)
+	newEmailContact3.ConfirmedDate.Set(time.Now().UTC())
+
 	newMobileContact1 = models.NewContact(testUser1.ID, "", "555-555-5555", core.CONTACT_TYPE_MOBILE, false)
 	newEmailContact1.ConfirmedDate.Set(time.Now().UTC())
 
-	newMobileContact2 = models.NewContact(testUser1.ID, "", "email@email.email", core.CONTACT_TYPE_MOBILE, false)
+	newMobileContact2 = models.NewContact(testUser1.ID, "", "444-444-4444", core.CONTACT_TYPE_MOBILE, false)
 
 	noMatchingUserContact = models.NewContact(testHarness.IDGenerator(false), "", "email@email.email", core.CONTACT_TYPE_MOBILE, false)
 
@@ -65,6 +69,9 @@ func testContactRepo(t *testing.T, testHarness RepoTestHarnessInput) {
 	t.Run("GetExistingConfirmedContactsCountByPrincipalAndType", func(t *testing.T) {
 		_testGetExistingConfirmedContactsCountByPrincipalAndType(t, *testHarness.ContactRepo)
 	})
+	t.Run("SwapPrimaryContacts", func(t *testing.T) {
+		_testSwapPrimaryContacts(t, *testHarness.ContactRepo)
+	})
 }
 
 func _testAddContact(t *testing.T, contactRepo repo.ContactRepo) {
@@ -83,6 +90,11 @@ func _testAddContact(t *testing.T, contactRepo repo.ContactRepo) {
 		{
 			name:           "GIVEN contact to insert EXPECT contact to be inserted",
 			contactToAdd:   &newEmailContact2,
+			expectedUserID: testUser1.ID,
+		},
+		{
+			name:           "GIVEN contact to insert EXPECT contact to be inserted",
+			contactToAdd:   &newEmailContact3,
 			expectedUserID: testUser1.ID,
 		},
 		{
@@ -108,15 +120,12 @@ func _testAddContact(t *testing.T, contactRepo repo.ContactRepo) {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				if tc.expectedUserID != tc.contactToAdd.UserID {
 					t.Errorf("\tuser id expected: got - %s expected - %s", tc.contactToAdd.UserID, tc.expectedUserID)
-					t.Fail()
 				}
 				if tc.contactToAdd.ID == "" {
 					t.Error("\tcontact id is blank")
-					t.Fail()
 				}
 			}
 		})
@@ -147,15 +156,12 @@ func _testGetContactByID(t *testing.T, contactRepo repo.ContactRepo) {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				if tc.contactID != contact.ID {
 					t.Errorf("\tcontact id expected: got - %s expected - %s", contact.ID, tc.contactID)
-					t.Fail()
 				}
 				if contact.ID == "" {
 					t.Error("\tcontact id is blank")
-					t.Fail()
 				}
 			}
 		})
@@ -191,18 +197,15 @@ func _testGetPrimaryContactByUserID(t *testing.T, contactRepo repo.ContactRepo) 
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				if !contact.IsPrimary {
 					t.Errorf("\tcontact returned is not primary contact: %v", contact)
 				}
 				if tc.expectedContactID != contact.ID {
 					t.Errorf("\tcontact id was not expected: got - %s expected - %s", contact.ID, tc.expectedContactID)
-					t.Fail()
 				}
 				if contact.ID == "" {
 					t.Error("\tcontact id is blank")
-					t.Fail()
 				}
 			}
 		})
@@ -223,6 +226,7 @@ func _testGetContactsByUserID(t *testing.T, contactRepo repo.ContactRepo) {
 			expectedContactIds: []string{
 				newEmailContact1.ID,
 				newEmailContact2.ID,
+				newEmailContact3.ID,
 				newMobileContact1.ID,
 				newMobileContact2.ID,
 			},
@@ -241,12 +245,10 @@ func _testGetContactsByUserID(t *testing.T, contactRepo repo.ContactRepo) {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				numContactsFound := len(contacts)
 				if numContactsFound != numExpectedContacts {
 					t.Errorf("\tnumber of contacts returned not expected amount: got - %d expected - %d", numContactsFound, numExpectedContacts)
-					t.Fail()
 				} else {
 					for _, c := range contacts {
 						contactFound := false
@@ -258,7 +260,6 @@ func _testGetContactsByUserID(t *testing.T, contactRepo repo.ContactRepo) {
 						}
 						if !contactFound {
 							t.Errorf("\tcontact with id %s was not found in results", c.ID)
-							t.Fail()
 						}
 					}
 				}
@@ -283,6 +284,7 @@ func _testGetContactsByUserIDAndType(t *testing.T, contactRepo repo.ContactRepo)
 			expectedContactIds: []string{
 				newEmailContact1.ID,
 				newEmailContact2.ID,
+				newEmailContact3.ID,
 			},
 		},
 		{
@@ -309,12 +311,10 @@ func _testGetContactsByUserIDAndType(t *testing.T, contactRepo repo.ContactRepo)
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				numContactsFound := len(contacts)
 				if numContactsFound != numExpectedContacts {
 					t.Errorf("\tnumber of contacts returned not expected amount: got - %d expected - %d", numContactsFound, numExpectedContacts)
-					t.Fail()
 				} else {
 					for _, c := range contacts {
 						contactFound := false
@@ -326,10 +326,8 @@ func _testGetContactsByUserIDAndType(t *testing.T, contactRepo repo.ContactRepo)
 						}
 						if !contactFound {
 							t.Errorf("\tcontact with id %s was not found in results", c.ID)
-							t.Fail()
 						} else if c.Type != tc.contactType {
 							t.Errorf("\tcontact type not expected: got - %s expected - %s", c.Type, tc.contactType)
-							t.Fail()
 						}
 					}
 				}
@@ -366,31 +364,25 @@ func _testUpdateContact(t *testing.T, contactRepo repo.ContactRepo) {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				if tc.contactToUpdate.Principal != tc.newPrincipal {
 					t.Errorf("\tupdated contact principal was not expected: got - %s expected - %s", tc.contactToUpdate.Principal, tc.newPrincipal)
-					t.Fail()
 				}
 				if tc.markConfirmed {
 					if !tc.contactToUpdate.ConfirmedDate.HasValue {
 						t.Error("\tupdated contact confirmed date does not have a value even thought test case markConfirmed was true")
-						t.Fail()
 					}
 					if tc.contactToUpdate.ConfirmedDate.Value.Before(preUpdateTime) {
 						t.Errorf("\tupdated contact confirmed date not after pre update time when markConfirmed was set: preUpdateTime - %s confirmedDate - %s", preUpdateTime.Format(time.RFC3339), tc.contactToUpdate.ConfirmedDate.Value.Format(time.RFC3339))
-						t.Fail()
 					}
 				}
 				if tc.contactToUpdate.AuditData.ModifiedOnDate.HasValue &&
 					tc.contactToUpdate.AuditData.ModifiedOnDate.Value.Before(preUpdateTime) {
 					t.Error("\texpected updated contact ModifiedOnDate to be after the preUpdateTime")
-					t.Fail()
 				}
 				if tc.contactToUpdate.AuditData.ModifiedByID.HasValue &&
 					tc.contactToUpdate.AuditData.ModifiedByID.Value != contactRepoCreatedBy {
 					t.Errorf("\tupdated contact ModifiedByID not expected: got %s - expected: %s", tc.contactToUpdate.AuditData.ModifiedByID.Value, contactRepoCreatedBy)
-					t.Fail()
 				}
 			}
 		})
@@ -426,11 +418,47 @@ func _testGetExistingConfirmedContactsCountByPrincipalAndType(t *testing.T, cont
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				if numContacts != tc.expectedNumberOfContacts {
 					t.Errorf("\tnumber of contacts returned does not match expected: got - %d expected - %d", numContacts, tc.expectedNumberOfContacts)
-					t.Fail()
+				}
+			}
+		})
+	}
+}
+
+func _testSwapPrimaryContacts(t *testing.T, contactRepo repo.ContactRepo) {
+	type testCase struct {
+		name                   string
+		previousPrimaryContact *models.Contact
+		newPrimaryContact      *models.Contact
+		expectedErrorCode      string
+	}
+	testCases := []testCase{
+		{
+			name:                   "GIVEN a confirmed contact EXPECT success",
+			previousPrimaryContact: &newEmailContact1,
+			newPrimaryContact:      &newEmailContact3,
+		},
+		{
+			name:                   "GIVEN a confirmed contact EXPECT success (reset original primary contact)",
+			previousPrimaryContact: &newEmailContact3,
+			newPrimaryContact:      &newEmailContact1,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := contactRepo.SwapPrimaryContacts(context.TODO(), tc.previousPrimaryContact, tc.newPrimaryContact, contactRepoCreatedBy)
+			if err != nil {
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+			} else {
+				if tc.previousPrimaryContact.IsPrimary {
+					t.Errorf("expected previous primary contact isPimary to be false")
+				}
+				if !tc.newPrimaryContact.IsPrimary {
+					t.Errorf("expected new primary contact isPrimary to be true")
 				}
 			}
 		})

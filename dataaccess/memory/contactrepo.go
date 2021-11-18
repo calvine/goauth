@@ -184,3 +184,18 @@ func (cr contactRepo) GetExistingConfirmedContactsCountByPrincipalAndType(ctx co
 	span.AddEvent("number of confirmed contacts retreived")
 	return numConfirmedContacts, nil
 }
+
+func (cr contactRepo) SwapPrimaryContacts(ctx context.Context, previousPrimaryContact, newPrimaryContact *models.Contact, modifiedBy string) errors.RichError {
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, cr.GetName(), "SwapPrimaryContacts", cr.GetType())
+	defer span.End()
+	previousPrimaryContact.IsPrimary = false
+	previousPrimaryContact.AuditData.ModifiedOnDate.Set(time.Now().UTC())
+	previousPrimaryContact.AuditData.ModifiedByID.Set(modifiedBy)
+	(*cr.contacts)[previousPrimaryContact.ID] = *previousPrimaryContact
+	newPrimaryContact.IsPrimary = true
+	newPrimaryContact.AuditData.ModifiedOnDate.Set(time.Now().UTC())
+	newPrimaryContact.AuditData.ModifiedByID.Set(modifiedBy)
+	(*cr.contacts)[newPrimaryContact.ID] = *newPrimaryContact
+	span.AddEvent("contact primary states set")
+	return nil
+}

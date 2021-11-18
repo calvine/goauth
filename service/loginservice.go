@@ -71,7 +71,7 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.
 	defer span.End()
 	user, contact, err := ls.userRepo.GetUserAndContactByConfirmedContact(ctx, principalType, principal)
 	if err != nil {
-		logger.Error("userRepo.GetUserAndContactByConfirmedContact call failed", zap.Any("error", err))
+		logger.Error("userRepo.GetUserAndContactByConfirmedContact call failed", zap.Reflect("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return models.User{}, err
 	}
@@ -80,14 +80,14 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.
 	// is user locked out?
 	if user.LockedOutUntil.HasValue && now.Before(user.LockedOutUntil.Value) {
 		err := coreerrors.NewUserLockedOutError(user.ID, true)
-		logger.Error(err.GetErrorMessage(), zap.Any("error", err))
+		logger.Error(err.GetErrorMessage(), zap.Reflect("error", err))
 		evtString := fmt.Sprintf("user is locked out until %s", user.LockedOutUntil.Value.UTC().String())
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return models.User{}, err
 	}
 	if !contact.IsPrimary {
 		err := coreerrors.NewLoginContactNotPrimaryError(contact.ID, contact.Principal, contact.Type, true)
-		logger.Error(err.GetErrorMessage(), zap.Any("error", err))
+		logger.Error(err.GetErrorMessage(), zap.Reflect("error", err))
 		evtString := fmt.Sprintf("contact user is not primary: %s of type %s", contact.Principal, contact.Type)
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return models.User{}, err
@@ -95,7 +95,7 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.
 	// TODO: remove this I guess because if the contact is not confirmed then GetUserAndContactByConfirmedContact will not return anything
 	if !contact.IsConfirmed() { // || contact.ConfirmedDate.Value.After(now)
 		err := coreerrors.NewLoginPrimaryContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
-		logger.Error(err.GetErrorMessage(), zap.Any("error", err))
+		logger.Error(err.GetErrorMessage(), zap.Reflect("error", err))
 		evtString := fmt.Sprintf("contact is not confirmed: %s of type %s", contact.Principal, contact.Type)
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return models.User{}, err
@@ -106,7 +106,7 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.
 	passwordMatch, err := utilities.BcryptCompareStringAndHash(user.PasswordHash, password, user.ID)
 	if err != nil {
 		evtString := "failed to check users password hash"
-		logger.Error(evtString, zap.Any("error", err))
+		logger.Error(evtString, zap.Reflect("error", err))
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return models.User{}, err
 	}
@@ -119,11 +119,11 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.
 		}
 		err = ls.userRepo.UpdateUser(ctx, &user, user.ID)
 		if err != nil {
-			logger.Error("update user after consecutive failed login increment failed", zap.Any("error", err))
+			logger.Error("update user after consecutive failed login increment failed", zap.Reflect("error", err))
 		}
 		err = coreerrors.NewLoginFailedWrongPasswordError(user.ID, true)
 		evtString := err.GetErrorMessage()
-		logger.Warn(evtString, zap.Any("error", err))
+		logger.Warn(evtString, zap.Reflect("error", err))
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return models.User{}, err
 	}
@@ -134,7 +134,7 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.
 	if err != nil {
 		evtString := "update user after successful login"
 		apptelemetry.SetSpanError(&span, err, evtString)
-		logger.Error(evtString, zap.Any("error", err))
+		logger.Error(evtString, zap.Reflect("error", err))
 		return models.User{}, err
 	}
 	span.AddEvent("login completed")
@@ -147,7 +147,7 @@ func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, l
 	defer span.End()
 	user, contact, err := ls.userRepo.GetUserAndContactByConfirmedContact(ctx, principalType, principal)
 	if err != nil {
-		logger.Error("userRepo.GetUserAndContactByContact call failed", zap.Any("error", err))
+		logger.Error("userRepo.GetUserAndContactByContact call failed", zap.Reflect("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return "", err
 	}
@@ -155,7 +155,7 @@ func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, l
 	if !contact.IsPrimary {
 		evtString := fmt.Sprintf("contact user is not primary: %s of type %s", contact.Principal, contact.Type)
 		err := coreerrors.NewPasswordResetContactNotPrimaryError(contact.ID, contact.Principal, contact.Type, true)
-		logger.Error(evtString, zap.Any("error", err))
+		logger.Error(evtString, zap.Reflect("error", err))
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return "", err
 	}
@@ -163,7 +163,7 @@ func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, l
 	token, err := models.NewToken(user.ID, models.TokenTypePasswordReset, time.Minute*15)
 	if err != nil {
 		evtString := "failed to create new password reset token"
-		logger.Error(evtString, zap.Any("error", err))
+		logger.Error(evtString, zap.Reflect("error", err))
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return "", err
 	}
@@ -171,7 +171,7 @@ func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, l
 	err = ls.tokenService.PutToken(ctx, logger, token)
 	if err != nil {
 		evtString := "failed to store new password reset token"
-		logger.Error(evtString, zap.Any("error", err))
+		logger.Error(evtString, zap.Reflect("error", err))
 		apptelemetry.SetSpanError(&span, err, evtString)
 		return "", err
 	}
@@ -183,14 +183,14 @@ func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, l
 		err = ls.emailService.SendPlainTextEmail(ctx, logger, []string{contact.Principal}, "Password reset", body)
 		if err != nil {
 			evtString := "failed to send password reset notification error occurred"
-			logger.Error(evtString, zap.Any("error", err))
+			logger.Error(evtString, zap.Reflect("error", err))
 			apptelemetry.SetSpanError(&span, err, evtString)
 			return token.Value, err // TODO: what should we do here???
 		}
 	default:
 		err := coreerrors.NewComponentNotImplementedError("notification system", fmt.Sprintf("%s notification service", contact.Type), true)
 		evtString := fmt.Sprintf("failed to send notification contact type not supported: %s", contact.Type)
-		logger.Error(evtString, zap.Any("error", err))
+		logger.Error(evtString, zap.Reflect("error", err))
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return "", err
 	}
@@ -204,21 +204,21 @@ func (ls loginService) ResetPassword(ctx context.Context, logger *zap.Logger, pa
 	if newPassword == "" {
 		err := coreerrors.NewNoNewPasswordHashProvidedError(true)
 		evtString := "new password is empty string"
-		logger.Error(evtString, zap.Any("error", err))
+		logger.Error(evtString, zap.Reflect("error", err))
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}
 	// TODO: add password validation logic
 	token, err := ls.tokenService.GetToken(ctx, logger, passwordResetToken, models.TokenTypePasswordReset)
 	if err != nil {
-		logger.Error("tokenService.GetToken call failed", zap.Any("error", err))
+		logger.Error("tokenService.GetToken call failed", zap.Reflect("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return err
 	}
 	span.AddEvent("password reset token retreived from repo")
 	user, err := ls.userRepo.GetUserByID(ctx, token.TargetID)
 	if err != nil {
-		logger.Error("userRepo.GetUserByID call failed", zap.Any("error", err))
+		logger.Error("userRepo.GetUserByID call failed", zap.Reflect("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return err
 	}
@@ -226,7 +226,7 @@ func (ls loginService) ResetPassword(ctx context.Context, logger *zap.Logger, pa
 	newPasswordHash, err := utilities.BcryptHashString(newPassword, bcrypt.DefaultCost)
 	if err != nil {
 		evtString := "failed to hash users new password"
-		logger.Error(evtString, zap.Any("error", err))
+		logger.Error(evtString, zap.Reflect("error", err))
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}
@@ -234,7 +234,7 @@ func (ls loginService) ResetPassword(ctx context.Context, logger *zap.Logger, pa
 	user.PasswordHash = newPasswordHash
 	err = ls.userRepo.UpdateUser(ctx, &user, initiator)
 	if err != nil {
-		logger.Error("userRepo.UpdateUser call failed", zap.Any("error", err))
+		logger.Error("userRepo.UpdateUser call failed", zap.Reflect("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
 		return err
 	}

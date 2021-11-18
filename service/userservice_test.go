@@ -255,15 +255,12 @@ func _testGetUserAndContactByConfirmedContact(t *testing.T, userService services
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				if user.ID != tc.expectedUserID {
 					t.Errorf("\tuser id did not match expected: got - %s expected - %s", user.ID, tc.expectedUserID)
-					t.Fail()
 				}
 				if contact.ID != tc.expectedContactID {
 					t.Errorf("\tcontact id did not match expected: got - %s expected - %s", contact.ID, tc.expectedContactID)
-					t.Fail()
 				}
 			}
 		})
@@ -304,7 +301,6 @@ func _testRegisterUserAndPrimaryContact(t *testing.T, userService services.UserS
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				ses, ok := userServiceTest_EmailService.(*stackEmailService)
 				if !ok {
@@ -314,18 +310,15 @@ func _testRegisterUserAndPrimaryContact(t *testing.T, userService services.UserS
 				lastMessage, ok := ses.PopMessage()
 				if !ok {
 					t.Error("\tno message found in email stack from user registration")
-					t.Fail()
 				}
 				numReceipents := len(lastMessage.To)
 				if numReceipents != 1 {
 					t.Errorf("\twrong number of recepitents in messages to: got - %d expected 1", numReceipents)
-					t.Fail()
 					// we return here because we do not need to go further
 					return
 				}
 				if lastMessage.To[0] != tc.contactPrincipal {
 					t.Errorf("\tto value not expected: got - %s expected - %s", lastMessage.To[0], tc.contactPrincipal)
-					t.Fail()
 				}
 				// TODO: check subject and body once I write those....
 			}
@@ -357,11 +350,9 @@ func _testGetUserPrimaryContact(t *testing.T, userService services.UserService) 
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				if contact.ID != tc.expectedContactID {
 					t.Errorf("\tcontact id not expected value: got - %s expected - %s", contact.ID, tc.expectedContactID)
-					t.Fail()
 				}
 			}
 		})
@@ -396,19 +387,16 @@ func _testGetUsersContacts(t *testing.T, userService services.UserService) {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				numContactsReturned := len(contacts)
 				numExpectedContacts := len(tc.expectedContactIDs)
 				if numContactsReturned != numExpectedContacts {
 					t.Errorf("\tnumber of contacts expected does not match: got - %d expected - %d", numContactsReturned, numExpectedContacts)
-					t.Fail()
 				} else {
 					numContactsReturned := len(contacts)
 					numExpectedContacts := len(tc.expectedContactIDs)
 					if numContactsReturned != numExpectedContacts {
 						t.Errorf("\tnumber of contacts expected does not match: got - %d expected - %d", numContactsReturned, numExpectedContacts)
-						t.Fail()
 					}
 					for _, ecid := range tc.expectedContactIDs {
 						found := false
@@ -420,7 +408,6 @@ func _testGetUsersContacts(t *testing.T, userService services.UserService) {
 						}
 						if !found {
 							t.Errorf("\tunable to find expected contact id in results: %s", ecid)
-							t.Fail()
 						}
 					}
 				}
@@ -460,13 +447,11 @@ func _testGetUsersConfirmedContacts(t *testing.T, userService services.UserServi
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				numContactsReturned := len(contacts)
 				numExpectedContacts := len(tc.expectedContactIDs)
 				if numContactsReturned != numExpectedContacts {
 					t.Errorf("\tnumber of contacts expected does not match: got - %d expected - %d", numContactsReturned, numExpectedContacts)
-					t.Fail()
 				} else {
 					for _, ecid := range tc.expectedContactIDs {
 						found := false
@@ -478,7 +463,6 @@ func _testGetUsersConfirmedContacts(t *testing.T, userService services.UserServi
 						}
 						if !found {
 							t.Errorf("\tunable to find expected contact id in results: %s", ecid)
-							t.Fail()
 						}
 					}
 				}
@@ -529,13 +513,11 @@ func _testGetUsersContactsOfType(t *testing.T, userService services.UserService)
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				numContactsReturned := len(contacts)
 				numExpectedContacts := len(tc.expectedContactIDs)
 				if numContactsReturned != numExpectedContacts {
 					t.Errorf("\tnumber of contacts expected does not match: got - %d expected - %d", numContactsReturned, numExpectedContacts)
-					t.Fail()
 				} else {
 					for _, ecid := range tc.expectedContactIDs {
 						found := false
@@ -549,10 +531,8 @@ func _testGetUsersContactsOfType(t *testing.T, userService services.UserService)
 						}
 						if !found {
 							t.Errorf("\tunable to find expected contact id in results: %s", ecid)
-							t.Fail()
 						} else if contact.Type != tc.contactType {
 							t.Errorf("\tcontact type not expected: got - %s expected - %s", contact.Type, tc.contactType)
-							t.Fail()
 						}
 					}
 				}
@@ -601,13 +581,11 @@ func _testGetUsersConfirmedContactsOfType(t *testing.T, userService services.Use
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				numContactsReturned := len(contacts)
 				numExpectedContacts := len(tc.expectedContactIDs)
 				if numContactsReturned != numExpectedContacts {
 					t.Errorf("\tnumber of contacts expected does not match: got - %d expected - %d", numContactsReturned, numExpectedContacts)
-					t.Fail()
 				} else {
 					for _, ecid := range tc.expectedContactIDs {
 						found := false
@@ -621,10 +599,8 @@ func _testGetUsersConfirmedContactsOfType(t *testing.T, userService services.Use
 						}
 						if !found {
 							t.Errorf("\tunable to find expected contact id in results: %s", ecid)
-							t.Fail()
 						} else if contact.Type != tc.contactType {
 							t.Errorf("\tcontact type not expected: got - %s expected - %s", contact.Type, tc.contactType)
-							t.Fail()
 						}
 					}
 				}
@@ -697,15 +673,12 @@ func _testAddContact(t *testing.T, userService services.UserService) {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				if newContact.ID == "" {
 					t.Error("\tcontact added does not have a contact id")
-					t.Fail()
 				}
 				if newContact.UserID != tc.userID {
 					t.Errorf("\tadded contact user id does not match expected user id: got - %s expected - %s", newContact.UserID, tc.userID)
-					t.Fail()
 				}
 			}
 		})
@@ -744,7 +717,6 @@ func _testSetContactAsPrimary(t *testing.T, userService services.UserService, co
 			currentPrimaryContact, err := contactRepo.GetPrimaryContactByUserID(context.TODO(), tc.userID, tc.contactType)
 			if err != nil {
 				t.Errorf("failed to retreive current primary contact for user")
-				t.Fail()
 				return
 			}
 			err = userService.SetContactAsPrimary(context.TODO(), logger, tc.userID, tc.newPrimaryContactID, userServiceTest_CreatedBy)
@@ -752,36 +724,39 @@ func _testSetContactAsPrimary(t *testing.T, userService services.UserService, co
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
-				// TODO: check that data store state is correct (only one primary contact)
-				previousPrimaryContact, err := contactRepo.GetContactByID(context.TODO(), currentPrimaryContact.ID)
+				contactsOfType, err := contactRepo.GetContactsByUserIDAndType(context.TODO(), tc.userID, tc.contactType)
 				if err != nil {
-					t.Errorf("failed to retreive previous primary contact for user")
-					t.Fail()
+					t.Errorf("failed to return users contacts for test confirmation: %s - %s", err.GetErrorCode(), err.Error())
 					return
 				}
-				newPrimaryContact, err := contactRepo.GetPrimaryContactByUserID(context.TODO(), tc.userID, tc.contactType)
-				if err != nil {
-					t.Errorf("failed to retreive new primary contact for user")
-					t.Fail()
-					return
+				var previousPrimaryContact, newPrimaryContact models.Contact
+				var numPrimaryContacts = 0
+				for _, c := range contactsOfType {
+					if c.ID == currentPrimaryContact.ID {
+						previousPrimaryContact = c
+					} else if c.ID == tc.newPrimaryContactID {
+						newPrimaryContact = c
+					}
+					if c.IsPrimary {
+						numPrimaryContacts++
+					}
+
+				}
+				if numPrimaryContacts != 1 {
+					t.Errorf("there should only be one primary contact, but there were %d", numPrimaryContacts)
 				}
 				if previousPrimaryContact.IsPrimary {
 					t.Error("previous primary contact should not still be marked as primary")
-					t.Fail()
 				}
 				if !newPrimaryContact.IsPrimary {
 					t.Error("new primary contact should be marked as primary")
-					t.Fail()
 				}
 				if currentPrimaryContact.ID != tc.expectedCurrentPrimaryContactID {
 					t.Errorf("previous contact id not expected value: got - %s expected - %s", currentPrimaryContact.ID, tc.expectedCurrentPrimaryContactID)
-					t.Fail()
 				}
 				if newPrimaryContact.ID != tc.newPrimaryContactID {
 					t.Errorf("previous contact id not expected value: got - %s expected - %s", newPrimaryContact.ID, tc.newPrimaryContactID)
-					t.Fail()
 				}
 			}
 		})
@@ -807,7 +782,6 @@ func _testConfirmContact(t *testing.T, userService services.UserService) {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
-				t.Fail()
 			} else {
 				// TODO: check that data store contact is confirmed
 			}
@@ -815,5 +789,4 @@ func _testConfirmContact(t *testing.T, userService services.UserService) {
 		})
 	}
 	t.Error(coreerrors.NewNotImplementedError(true))
-	t.Fail()
 }

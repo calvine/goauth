@@ -64,6 +64,9 @@ type ContactRepo interface {
 	UpdateContact(ctx context.Context, contact *models.Contact, modifiedByID string) errors.RichError
 	// GetExistingConfirmedContactsCountByPrincipalAndType gets the count of all contact with the given principal and type which are confrimed.
 	GetExistingConfirmedContactsCountByPrincipalAndType(ctx context.Context, contactType, contactPrincipal string) (int64, errors.RichError)
+	// SwapPrimaryContacts takes two contact models and sets the isPimary flag to false for previousPrimaryContact and sets the isPrimary flag to true for newPrimaryContact
+	// An important note for this function is that the contacts provided to it MUST be of the same type. this logic is contained in the service that calls this function, but is nontheless critical.
+	SwapPrimaryContacts(ctx context.Context, previousPrimaryContact, newPrimaryContact *models.Contact, modifiedBy string) errors.RichError
 
 	Repo
 }

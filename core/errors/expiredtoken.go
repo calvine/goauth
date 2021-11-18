@@ -3,9 +3,9 @@ package errors
 /* WARNING: This is GENERATED CODE Please do not edit. */
 
 import (
-	"time"
-
 	"github.com/calvine/richerror/errors"
+
+	"time"
 )
 
 // ErrCodeExpiredToken token has expired

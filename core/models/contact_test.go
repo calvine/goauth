@@ -44,7 +44,6 @@ func TestContactIsConfirmed(t *testing.T) {
 			isConfirmed := contact.IsConfirmed()
 			if isConfirmed != tc.expectedIsConfirmed {
 				t.Errorf("\tconfirmed status is not what was expected: got - %v expected - %v", isConfirmed, tc.expectedIsConfirmed)
-				t.Fail()
 			}
 		})
 	}
@@ -82,7 +81,6 @@ func TestNormalizeContactPrincipal(t *testing.T) {
 			normalizedContactPrincipal := NormalizeContactPrincipal(tc.contactType, tc.contactPrincipal)
 			if normalizedContactPrincipal != tc.expectedNormalizedContactPrincipal {
 				t.Errorf("normalized contact principal is not expected: got - %s expect - %s", normalizedContactPrincipal, tc.expectedNormalizedContactPrincipal)
-				t.Fail()
 			}
 		})
 	}

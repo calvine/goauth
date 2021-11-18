@@ -3,7 +3,7 @@ module github.com/calvine/goauth
 go 1.16
 
 require (
-	github.com/calvine/richerror v0.0.3-alpha.5
+	github.com/calvine/richerror v0.0.4
 	github.com/go-chi/chi/v5 v5.0.4
 	github.com/google/uuid v1.3.0
 	go.mongodb.org/mongo-driver v1.5.3
