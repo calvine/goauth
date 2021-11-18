@@ -439,9 +439,9 @@ func (ur userRepo) SwapPrimaryContacts(ctx context.Context, previousPrimaryConta
 			return err
 		}
 
-		newPrimaryContactObjectID, err := primitive.ObjectIDFromHex(newPrimaryContact.UserID)
+		newPrimaryContactObjectID, err := primitive.ObjectIDFromHex(newPrimaryContact.ID)
 		if err != nil {
-			rErr := coreerrors.NewFailedToParseObjectIDError(newPrimaryContact.UserID, err, true)
+			rErr := coreerrors.NewFailedToParseObjectIDError(newPrimaryContact.ID, err, true)
 			evtString := fmt.Sprintf("%s new primary contact id: %s", rErr.GetErrorMessage(), newPrimaryContact.UserID)
 			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 			return rErr

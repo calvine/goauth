@@ -3,10 +3,11 @@ module github.com/calvine/goauth
 go 1.16
 
 require (
+	github.com/aws/aws-sdk-go v1.34.28 // indirect
 	github.com/calvine/richerror v0.0.4
 	github.com/go-chi/chi/v5 v5.0.4
 	github.com/google/uuid v1.3.0
-	go.mongodb.org/mongo-driver v1.5.3
+	go.mongodb.org/mongo-driver v1.7.4
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.24.0
 	go.opentelemetry.io/otel v1.0.0
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v0.23.0
