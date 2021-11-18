@@ -460,6 +460,20 @@ func _testSwapPrimaryContacts(t *testing.T, contactRepo repo.ContactRepo) {
 				if !tc.newPrimaryContact.IsPrimary {
 					t.Errorf("expected new primary contact isPrimary to be true")
 				}
+				ppc, err := contactRepo.GetContactByID(context.TODO(), tc.previousPrimaryContact.ID)
+				if err != nil {
+					t.Errorf("failed to retreive new primary contact for evaluation %s: %s", err.GetErrorCode(), err.Error())
+				}
+				if ppc.IsPrimary {
+					t.Error("previous primary contact should no longer be marked as primary")
+				}
+				npc, err := contactRepo.GetContactByID(context.TODO(), tc.newPrimaryContact.ID)
+				if err != nil {
+					t.Errorf("failed to retreive new primary contact for evaluation %s: %s", err.GetErrorCode(), err.Error())
+				}
+				if !npc.IsPrimary {
+					t.Error("new primary contact should be marked as primary")
+				}
 			}
 		})
 	}
