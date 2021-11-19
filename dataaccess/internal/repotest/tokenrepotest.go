@@ -96,7 +96,7 @@ func _testDeleteToken(t *testing.T, tokenRepo repo.TokenRepo) {
 
 func _testGetToken(t *testing.T, tokenRepo repo.TokenRepo) {
 	_, err := tokenRepo.GetToken(context.TODO(), testPasswordResetToken.Value)
-	if err.GetErrorCode() != errors.ErrCodeTokenNotFound {
+	if err.GetErrorCode() != errors.ErrCodeInvalidToken {
 		t.Error("testPasswordResetToken found inspite of being deleted in the tokenRepo.DeleteToken test...")
 	}
 	expiredToken, err := tokenRepo.GetToken(context.TODO(), testExpiredToken.Value)

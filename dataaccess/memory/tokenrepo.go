@@ -34,7 +34,7 @@ func (ltr *tokenRepo) GetToken(ctx context.Context, tokenValue string) (models.T
 	token, ok := ltr.tokenMap[tokenValue]
 	if !ok {
 		evtString := fmt.Sprintf("token not found: %s", tokenValue)
-		err := coreerrors.NewTokenNotFoundError(tokenValue, true)
+		err := coreerrors.NewInvalidTokenError(tokenValue, true)
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return token, err
 	}
@@ -56,7 +56,7 @@ func (ltr *tokenRepo) DeleteToken(ctx context.Context, tokenValue string) errors
 	_, ok := ltr.tokenMap[tokenValue]
 	if !ok {
 		evtString := fmt.Sprintf("token not found: %s", tokenValue)
-		err := coreerrors.NewTokenNotFoundError(tokenValue, true)
+		err := coreerrors.NewInvalidTokenError(tokenValue, true)
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}

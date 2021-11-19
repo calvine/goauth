@@ -3,7 +3,6 @@ module github.com/calvine/goauth
 go 1.16
 
 require (
-	github.com/aws/aws-sdk-go v1.34.28 // indirect
 	github.com/calvine/richerror v0.0.4
 	github.com/go-chi/chi/v5 v5.0.4
 	github.com/google/uuid v1.3.0

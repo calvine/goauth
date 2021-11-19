@@ -32,6 +32,7 @@ var (
 	userServiceTest_UnconfirmedUser_UnconfirmedPrimaryContact models.Contact
 
 	userServiceText_ContactRepo repo.ContactRepo
+	userServiceText_TokenRepo   repo.TokenRepo
 )
 
 const (
@@ -88,13 +89,13 @@ func TestUserService(t *testing.T) {
 		_testAddContact(t, userService)
 	})
 
-	// t.Run("SetContactAsPrimary", func(t *testing.T) {
-	// 	_testSetContactAsPrimary(t, userService, userServiceText_ContactRepo)
-	// })
+	t.Run("SetContactAsPrimary", func(t *testing.T) {
+		_testSetContactAsPrimary(t, userService, userServiceText_ContactRepo)
+	})
 
-	// t.Run("ConfirmContact", func(t *testing.T) {
-	// 	_testConfirmContact(t, userService)
-	// })
+	t.Run("ConfirmContact", func(t *testing.T) {
+		_testConfirmContact(t, userService, userServiceText_ContactRepo, userServiceText_TokenRepo)
+	})
 }
 
 func setupTestUserServiceData(t *testing.T, userRepo repo.UserRepo, contactRepo repo.ContactRepo) {
@@ -194,8 +195,8 @@ func buildUserService(t *testing.T) services.UserService {
 		t.Error(err)
 		t.FailNow()
 	}
-	tokenRepo := memory.NewMemoryTokenRepo()
-	tokenService := NewTokenService(tokenRepo)
+	userServiceText_TokenRepo = memory.NewMemoryTokenRepo()
+	tokenService := NewTokenService(userServiceText_TokenRepo)
 	userServiceTest_EmailService, _ = NewEmailService(StackEmailService, nil)
 	userService := NewUserService(userRepo, userServiceText_ContactRepo, tokenService, userServiceTest_EmailService)
 	setupTestUserServiceData(t, userRepo, userServiceText_ContactRepo)
@@ -697,19 +698,42 @@ func _testSetContactAsPrimary(t *testing.T, userService services.UserService, co
 	}
 	testCases := []testCase{
 		{
-			name: "GIVEN a proper contact id EXPECT new primary contact to be set as primary, and the old primary to be set as not primary",
+			name:                            "GIVEN a proper contact id EXPECT new primary contact to be set as primary, and the old primary to be set as not primary",
+			userID:                          userServiceTest_ConfirmedUser.ID,
+			contactType:                     userServiceTest_ConfirmedUser_ConfirmedSecondaryContact.Type,
+			newPrimaryContactID:             userServiceTest_ConfirmedUser_ConfirmedSecondaryContact.ID,
+			expectedCurrentPrimaryContactID: userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.ID,
 		},
 		{
-			name:              "GIVEN a contact id that is not confirmed EXPECT error code contact not confirmed",
-			expectedErrorCode: coreerrors.ErrCodeContactNotConfirmed,
+			name:                            "GIVEN a proper contact id EXPECT new primary contact to be set as primary, and the old primary to be set as not primary (revert previous)",
+			userID:                          userServiceTest_ConfirmedUser.ID,
+			contactType:                     userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.Type,
+			newPrimaryContactID:             userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.ID,
+			expectedCurrentPrimaryContactID: userServiceTest_ConfirmedUser_ConfirmedSecondaryContact.ID,
 		},
 		{
-			name:              "GIVEN a contact id is already marked as primary EXPECT error code contact already marked as primary",
-			expectedErrorCode: coreerrors.ErrCodeContactAlreadyMarkedPrimary,
+			name:                            "GIVEN a contact id that is not confirmed EXPECT error code contact not confirmed",
+			userID:                          userServiceTest_ConfirmedUser.ID,
+			contactType:                     userServiceTest_ConfirmedUser_UnconfirmedSecondaryContact.Type,
+			newPrimaryContactID:             userServiceTest_ConfirmedUser_UnconfirmedSecondaryContact.ID,
+			expectedCurrentPrimaryContactID: userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.ID,
+			expectedErrorCode:               coreerrors.ErrCodeContactNotConfirmed,
 		},
 		{
-			name:              "GIVEN a contact id thats associated user id does not match EXPECT error code user ids do not match",
-			expectedErrorCode: coreerrors.ErrCodeUserIDsDoNotMatch,
+			name:                            "GIVEN a contact id is already marked as primary EXPECT error code contact already marked as primary",
+			userID:                          userServiceTest_ConfirmedUser.ID,
+			contactType:                     userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.Type,
+			newPrimaryContactID:             userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.ID,
+			expectedCurrentPrimaryContactID: userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.ID,
+			expectedErrorCode:               coreerrors.ErrCodeContactAlreadyMarkedPrimary,
+		},
+		{
+			name:                            "GIVEN a contact id thats associated user id does not match EXPECT error code user ids do not match",
+			userID:                          userServiceTest_UnconfirmedUser.ID,
+			contactType:                     userServiceTest_ConfirmedUser_ConfirmedSecondaryContact.Type,
+			newPrimaryContactID:             userServiceTest_ConfirmedUser_ConfirmedSecondaryContact.ID,
+			expectedCurrentPrimaryContactID: userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.ID,
+			expectedErrorCode:               coreerrors.ErrCodeUserIDsDoNotMatch,
 		},
 	}
 	for _, tc := range testCases {
@@ -763,30 +787,75 @@ func _testSetContactAsPrimary(t *testing.T, userService services.UserService, co
 	}
 }
 
-func _testConfirmContact(t *testing.T, userService services.UserService) {
+func _testConfirmContact(t *testing.T, userService services.UserService, contactRepo repo.ContactRepo, tokenRepo repo.TokenRepo) {
 	logger := zaptest.NewLogger(t)
 	type testCase struct {
-		name              string
-		confirmationCode  string
-		expectedErrorCode string
+		name                          string
+		contactToConfirm              *models.Contact
+		tokenValidFor                 time.Duration
+		mockConfirmContactTokenString string
+		expectedErrorCode             string
 	}
 	testCases := []testCase{
 		{
-			name: "GIVEN a valid confirmation code for a contact to be confirmed EXPECT success and contact confirmation date to be set",
+			name:                          "GIVEN a valid confirmation code for a contact to be confirmed EXPECT success and contact confirmation date to be set",
+			contactToConfirm:              &userServiceTest_UnconfirmedUser_UnconfirmedPrimaryContact,
+			tokenValidFor:                 time.Minute,
+			mockConfirmContactTokenString: "",
+			expectedErrorCode:             "",
+		},
+		{
+			name:                          "GIVEN an invalid confirmation code for a contact to be confirmed EXPECT error code invalid token",
+			contactToConfirm:              &userServiceTest_ConfirmedUser_UnconfirmedSecondaryContact,
+			tokenValidFor:                 time.Minute,
+			mockConfirmContactTokenString: "whyuibgvouieynboiuwyb04t8b5tu7yv394uy9tur",
+			expectedErrorCode:             coreerrors.ErrCodeInvalidToken,
+		},
+		{
+			name:                          "GIVEN an expired confirmation code for a contact to be confirmed EXPECT error code invalid token",
+			contactToConfirm:              &userServiceTest_ConfirmedUser_UnconfirmedSecondaryContact,
+			tokenValidFor:                 time.Minute * -1,
+			mockConfirmContactTokenString: "",
+			expectedErrorCode:             coreerrors.ErrCodeExpiredToken,
+		},
+		{
+			name:                          "GIVEN an expired confirmation code for a contact to be confirmed EXPECT error code invalid token",
+			contactToConfirm:              &userServiceTest_ConfirmedUser_ConfirmedSecondaryContact,
+			tokenValidFor:                 time.Minute,
+			mockConfirmContactTokenString: "",
+			expectedErrorCode:             coreerrors.ErrCodeContactAlreadyConfirmed,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := userService.ConfirmContact(context.TODO(), logger, tc.confirmationCode, userServiceTest_CreatedBy)
+			var confirmContactToken string
+			if tc.mockConfirmContactTokenString != "" {
+				confirmContactToken = tc.mockConfirmContactTokenString
+			} else {
+				newConfirmToken, err := models.NewToken(tc.contactToConfirm.ID, models.TokenTypeConfirmContact, tc.tokenValidFor)
+				if err != nil {
+					t.Errorf("failed to create new confirm contact token: %s - %s", err.GetErrorCode(), err.Error())
+				}
+				err = tokenRepo.PutToken(context.TODO(), newConfirmToken)
+				if err != nil {
+					t.Errorf("failed to new confirm contact token in repo for validation: %s - %s", err.GetErrorCode(), err.Error())
+				}
+				confirmContactToken = newConfirmToken.Value
+			}
+			err := userService.ConfirmContact(context.TODO(), logger, confirmContactToken, userServiceTest_CreatedBy)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
-				// TODO: check that data store contact is confirmed
+				newlyConfirmedContact, err := contactRepo.GetContactByID(context.TODO(), tc.contactToConfirm.ID)
+				if err != nil {
+					t.Errorf("failed to retreive newly confirmed contact from repo for validation: %s - %s", err.GetErrorCode(), err.Error())
+				}
+				if !newlyConfirmedContact.IsConfirmed() {
+					t.Error("newly confirmed contact is not confirmed in the underlying data store.")
+				}
 			}
-			// There is nothing to check really?
 		})
 	}
-	t.Error(coreerrors.NewNotImplementedError(true))
 }

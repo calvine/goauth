@@ -36,8 +36,7 @@ func (ts tokenService) GetToken(ctx context.Context, logger *zap.Logger, tokenVa
 		return token, err
 	}
 	span.AddEvent("token retreived from tokenRepo")
-	now := time.Now().UTC()
-	if now.After(token.Expiration) {
+	if token.IsExpired() {
 		// TODO: do we want to delete the token incase the native store does not support auto delete on TTL like redis?
 		evtString := fmt.Sprintf("token expired on %s", token.Expiration.UTC().String())
 		err := coreerrors.NewExpiredTokenError(tokenValue, token.TokenType.String(), token.Expiration, true)

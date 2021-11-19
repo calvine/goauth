@@ -46,7 +46,9 @@ func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, l
 	}
 	if !contact.IsConfirmed() {
 		evtString := fmt.Sprintf("contact found is not confirmed: ID = %s", contact.ID)
-		err := coreerrors.NewRegisteredContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
+		fields := make(map[string]interface{})
+		fields["userId"] = contact.UserID
+		err := coreerrors.NewContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, fields, true)
 		logger.Error(evtString, zap.Reflect("error", err))
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return models.User{}, models.Contact{}, err
@@ -269,6 +271,16 @@ func (us userService) SetContactAsPrimary(ctx context.Context, logger *zap.Logge
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}
+	if !newPrimaryContact.IsConfirmed() {
+		fields := make(map[string]interface{})
+		fields["userId"] = userID
+		fields["isPrimary"] = newPrimaryContact.IsPrimary
+		err := coreerrors.NewContactNotConfirmedError(newPrimaryContact.ID, newPrimaryContact.Principal, newPrimaryContact.Type, fields, true)
+		evtString := "user id provided does not match user id of contact to set as primary"
+		logger.Error(evtString, zap.String("userId", userID), zap.String("newPrimaryContactUserId", newPrimaryContact.UserID))
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
+		return err
+	}
 	hasCurrentPrimaryContact := true
 	currentPrimaryContact, err := us.contactRepo.GetPrimaryContactByUserID(ctx, userID, newPrimaryContact.Type)
 	if err != nil {
@@ -285,7 +297,7 @@ func (us userService) SetContactAsPrimary(ctx context.Context, logger *zap.Logge
 		if currentPrimaryContact.ID == newPrimaryContact.ID {
 			err := coreerrors.NewContactAlreadyMarkedPrimaryError(currentPrimaryContact.Principal, currentPrimaryContact.Type, true)
 			evtString := "contact to mark is primary is already primary contact"
-			logger.Error(evtString, zap.String("userId", userID), zap.String("newPrimaryContactUserId", newPrimaryContact.UserID), zap.String("currentPrimaryContactUserId", currentPrimaryContact.UserID))
+			logger.Error(evtString, zap.String("userId", userID), zap.String("newPrimaryContactUserId", newPrimaryContact.UserID), zap.String("currentPrimaryContactUserId", currentPrimaryContact.UserID), zap.Reflect("error", err))
 			apptelemetry.SetSpanOriginalError(&span, err, evtString)
 			return err
 		}
@@ -298,18 +310,72 @@ func (us userService) SetContactAsPrimary(ctx context.Context, logger *zap.Logge
 			return err
 		}
 	} else {
-		logger.Warn("")
+		logger.Info("no current primary contact for type, updating contact provided as primary")
+		newPrimaryContact.IsPrimary = true
+		err := us.contactRepo.UpdateContact(ctx, &newPrimaryContact, initiator)
+		if err != nil {
+			evtString := "failed to update contact to set is primary flag"
+			logger.Error(evtString, zap.Reflect("error", err))
+			apptelemetry.SetSpanError(&span, err, evtString)
+			return err
+		}
 	}
 
 	span.AddEvent("primary contact swapped")
-	return coreerrors.NewNotImplementedError(true)
+	return nil
 }
 
 func (us userService) ConfirmContact(ctx context.Context, logger *zap.Logger, confirmationCode string, initiator string) errors.RichError {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "ConfirmContact")
 	defer span.End()
+	confirmationToken, err := us.tokenService.GetToken(ctx, logger, confirmationCode, models.TokenTypeConfirmContact)
+	if err != nil {
+		evtString := "failed to retreive confirmation token from data store"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanError(&span, err, evtString)
+		return err
+	}
+	if confirmationToken.TokenType != models.TokenTypeConfirmContact {
+		err := coreerrors.NewInvalidTokenError(confirmationToken.Value, true)
+		evtString := "token type is not valid"
+		logger.Error(evtString, zap.String("tokenType", confirmationToken.TokenType.String()), zap.String("tokenValue", confirmationToken.Value), zap.Reflect("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
+		return err
+	}
+	// it appears that the token service will return this error if the token is expired, so this code is redundant...
+	// should this service rely on the token service for some business logic?
+	// I need to think on this...
+	// if confirmationToken.IsExpired() {
+	// 	err := coreerrors.NewExpiredTokenError(confirmationToken.Value, confirmationToken.TokenType.String(), confirmationToken.Expiration, true)
+	// 	evtString := "token is expired"
+	// 	logger.Error(evtString, zap.String("tokenType", confirmationToken.TokenType.String()), zap.String("tokenValue", confirmationToken.Value), zap.Reflect("error", err))
+	// 	apptelemetry.SetSpanOriginalError(&span, err, evtString)
+	// 	return err
+	// }
+	contactToConfirm, err := us.contactRepo.GetContactByID(ctx, confirmationToken.TargetID)
+	if err != nil {
+		evtString := "failed to retreive contact to confirm from data store"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanError(&span, err, evtString)
+		return err
+	}
+	if contactToConfirm.IsConfirmed() {
+		err := coreerrors.NewContactAlreadyConfirmedError(contactToConfirm.UserID, contactToConfirm.ID, contactToConfirm.Principal, contactToConfirm.Type, nil, true)
+		evtString := "token is expired"
+		logger.Error(evtString, zap.String("tokenType", confirmationToken.TokenType.String()), zap.String("tokenValue", confirmationToken.Value), zap.Reflect("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
+		return err
+	}
+	contactToConfirm.ConfirmedDate.Set(time.Now().UTC())
+	err = us.contactRepo.UpdateContact(ctx, &contactToConfirm, initiator)
+	if err != nil {
+		evtString := "failed to update contact to confirmed"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanError(&span, err, evtString)
+		return err
+	}
 	span.AddEvent("contact confirmed")
-	return coreerrors.NewNotImplementedError(true)
+	return nil
 }
 
 // func (us userService) ConfirmContact(ctx context.Context, confirmationCode string, initiator string) (bool, errors.RichError) {

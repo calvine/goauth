@@ -56,6 +56,17 @@
         ]
     },
     {
+        "code": "ContactAlreadyConfirmed",
+        "message": "contact is already confirmed",
+        "includeMap": true,
+        "metaData": [
+            { "name": "userId", "dataType": "string" },
+            { "name": "contactId", "dataType": "string" },
+            { "name": "principal", "dataType": "string" },
+            { "name": "principalType", "dataType": "string" }
+        ]
+    },
+    {
         "code": "ContactToAddMarkedAsPrimary",
         "message": "cannot add contact that is marked as primary must go through primary contact reassignment flow",
         "includeMap": false,
@@ -80,6 +91,7 @@
         "message": "contact is not confirmed",
         "includeMap": true,
         "metaData": [
+            { "name": "contactId", "dataType": "string" },
             { "name": "principal", "dataType": "string" },
             { "name": "principalType", "dataType": "string" }
         ]
