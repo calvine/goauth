@@ -81,6 +81,13 @@ func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger 
 	}
 	// registration contant is by definition the prinary contact.
 	// TODO: normalize contact principal
+	err = models.ValidateContactPrincipal(contactType, contactPrincipal)
+	if err != nil {
+		evtString := "failed to create new contact confirmation token"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
+		return err
+	}
 	newContact := models.NewContact(newUser.ID, "", contactPrincipal, contactType, true)
 	err = us.contactRepo.AddContact(ctx, &newContact, initiator)
 	if err != nil {

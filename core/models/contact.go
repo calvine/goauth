@@ -5,23 +5,24 @@ import (
 	"time"
 
 	"github.com/calvine/goauth/core"
+	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/nullable"
+	"github.com/calvine/richerror/errors"
 )
 
 // TODO: Add validator for pre insert / update
 // TODO: determine if the confirmation code needs an expiration date? or use redis for these short lived tokens?
 // Contact is a model that represents a contact method for a user like phone or email.
 type Contact struct {
-	ID           string                  `bson:"-"`
-	UserID       string                  `bson:"-"`
-	Name         nullable.NullableString `bson:"name"`
-	RawPrincipal string                  `bson:"rawPrincipal"`
-	Principal    string                  `bson:"principal"`
-	Type         string                  `bson:"type"`
-	IsPrimary    bool                    `bson:"isPrimary"`
-	// ConfirmationCode nullable.NullableString `bson:"confirmationCode"`
-	ConfirmedDate nullable.NullableTime `bson:"confirmedDate"`
-	AuditData     auditable             `bson:",inline"`
+	ID            string                  `bson:"-"`
+	UserID        string                  `bson:"-"`
+	Name          nullable.NullableString `bson:"name"`
+	RawPrincipal  string                  `bson:"rawPrincipal"`
+	Principal     string                  `bson:"principal"`
+	Type          string                  `bson:"type"`
+	IsPrimary     bool                    `bson:"isPrimary"`
+	ConfirmedDate nullable.NullableTime   `bson:"confirmedDate"`
+	AuditData     auditable               `bson:",inline"`
 }
 
 // TODO: write unit tests
@@ -45,6 +46,16 @@ func (c *Contact) IsConfirmed() bool {
 		c.ConfirmedDate.Value.Before(now)
 }
 
+func IsValidContactType(contactType string) errors.RichError {
+	switch contactType {
+	case core.CONTACT_TYPE_EMAIL:
+		return nil
+	case core.CONTACT_TYPE_MOBILE:
+		return nil
+	}
+	return coreerrors.NewInvalidContactTypeError(contactType, true)
+}
+
 func NormalizeContactPrincipal(contactType, contactPrincipal string) string {
 	var normalizedPrincipal string
 	switch contactType {
@@ -56,4 +67,16 @@ func NormalizeContactPrincipal(contactType, contactPrincipal string) string {
 		normalizedPrincipal = strings.ToLower(contactPrincipal)
 	}
 	return normalizedPrincipal
+}
+
+func ValidateContactPrincipal(contactType, contactPrincipal string) errors.RichError {
+	if contactPrincipal == "" {
+		// an empty string is never valid...
+		return coreerrors.NewInvalidContactPrincipalError(contactPrincipal, contactType, true)
+	}
+	// TODO: implement this...
+	switch contactType {
+	default:
+		return nil
+	}
 }

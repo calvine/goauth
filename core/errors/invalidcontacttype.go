@@ -10,9 +10,9 @@ import (
 const ErrCodeInvalidContactType = "InvalidContactType"
 
 // NewInvalidContactTypeError creates a new specific error
-func NewInvalidContactTypeError(principal string, principalType string, includeStack bool) errors.RichError {
+func NewInvalidContactTypeError(principalType string, includeStack bool) errors.RichError {
 	msg := "the contact type provided is not valid"
-	err := errors.NewRichError(ErrCodeInvalidContactType, msg).AddMetaData("principal", principal).AddMetaData("principalType", principalType)
+	err := errors.NewRichError(ErrCodeInvalidContactType, msg).AddMetaData("principalType", principalType)
 	if includeStack {
 		err = err.WithStack(1)
 	}

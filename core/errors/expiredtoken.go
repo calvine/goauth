@@ -4,8 +4,6 @@ package errors
 
 import (
 	"github.com/calvine/richerror/errors"
-
-	"time"
 )
 
 // ErrCodeExpiredToken token has expired

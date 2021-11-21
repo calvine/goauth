@@ -159,9 +159,9 @@ func run() error {
 		AccountLockoutDuration: time.Minute * 15,
 	}
 	loginService := service.NewLoginService(loginServiceOptions)
-
+	userService := service.NewUserService(userRepo, userRepo, tokenService, emailService)
 	httpStaticFS := http.FS(staticFS)
-	httpServer := gahttp.NewServer(logger, loginService, emailService, tokenService, &httpStaticFS, &templateFS)
+	httpServer := gahttp.NewServer(logger, loginService, userService, emailService, tokenService, &httpStaticFS, &templateFS)
 	httpServer.BuildRoutes()
 	address := utilities.GetEnv(ENV_HTTP_ADDRESS_STRING, DEFAULT_HTTP_PORT_STRING)
 	fmt.Printf("running http services on: %s", address)

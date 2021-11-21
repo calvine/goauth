@@ -10,9 +10,9 @@
     <body>
         <header>Register Account</header>
         <form method="POST">
-            <label>Email: <input type="email" name="email" /></label>
+            <label>Email: <input type="email" name="principal" value="{{ .Primcipal}}" /></label>
             <div class="error_container">
-                <span></span>
+                <span>{{ .ErrorMsg }}</span>
             </div>
             <input type="hidden" name="csrf_token" value="{{ .CSRFToken }}" />
             <input type="submit" value="Login" />

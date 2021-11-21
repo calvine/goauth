@@ -16,6 +16,7 @@ import (
 type server struct {
 	logger       *zap.Logger
 	loginService services.LoginService
+	userService  services.UserService
 	emailService services.EmailService
 	tokenService services.TokenService
 	staticFS     *http.FileSystem
@@ -23,9 +24,9 @@ type server struct {
 	Mux          *chi.Mux
 }
 
-func NewServer(logger *zap.Logger, loginService services.LoginService, emailService services.EmailService, tokenService services.TokenService, staticFS *http.FileSystem, templateFS *embed.FS) server {
+func NewServer(logger *zap.Logger, loginService services.LoginService, userService services.UserService, emailService services.EmailService, tokenService services.TokenService, staticFS *http.FileSystem, templateFS *embed.FS) server {
 	mux := chi.NewRouter()
-	return server{logger, loginService, emailService, tokenService, staticFS, templateFS, mux}
+	return server{logger, loginService, userService, emailService, tokenService, staticFS, templateFS, mux}
 }
 
 func (hh *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

@@ -4,12 +4,12 @@ import (
 	"html/template"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/calvine/goauth/core"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/utilities/ctxpropagation"
+	"github.com/calvine/goauth/http/internal/constants"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -39,7 +39,7 @@ func (s *server) handleLoginGet() http.HandlerFunc {
 		ctx := r.Context()
 		logger := ctxpropagation.GetLoggerFromContext(ctx)
 		span := trace.SpanFromContext(ctx)
-		token, err := models.NewToken("", models.TokenTypeCSRF, time.Minute*10)
+		token, err := models.NewToken("", models.TokenTypeCSRF, constants.Default_CSRF_Token_Duration)
 		if err != nil {
 			span.RecordError(err)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)

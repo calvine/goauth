@@ -12,7 +12,7 @@ const ErrCodeLoginFailedWrongPassword = "LoginFailedWrongPassword"
 // NewLoginFailedWrongPasswordError creates a new specific error
 func NewLoginFailedWrongPasswordError(userID string, includeStack bool) errors.RichError {
 	msg := "login for user failed due to incorrect password"
-	err := errors.NewRichError(ErrCodeLoginFailedWrongPassword, msg).AddMetaData("userID", userID).WithTags([]string{"security"})
+	err := errors.NewRichError(ErrCodeLoginFailedWrongPassword, msg).AddMetaData("userID", userID)
 	if includeStack {
 		err = err.WithStack(1)
 	}

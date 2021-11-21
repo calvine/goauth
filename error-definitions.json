@@ -106,11 +106,19 @@
         ]
     },
     {
+        "code": "InvalidContactPrincipal",
+        "message": "the contact principal provided is not valid",
+        "includeMap": false,
+        "metaData": [
+            { "name": "principal", "dataType": "string"},
+            { "name": "principalType", "dataType": "string"}
+        ]
+    },
+    {
         "code": "InvalidContactType",
         "message": "the contact type provided is not valid",
         "includeMap": false,
         "metaData": [
-            { "name": "principal", "dataType": "string"},
             { "name": "principalType", "dataType": "string"}
         ]
     },
@@ -179,6 +187,9 @@
         "code": "LoginContactNotPrimary",
         "message": "contact for login is not a primary contact",
         "includeMap": false,
+        "tags": [
+            "login"
+        ],
         "metaData": [
             { "name": "contactId", "dataType": "string"},
             { "name": "principal", "dataType": "string"},
@@ -189,6 +200,9 @@
         "code": "LoginPrimaryContactNotConfirmed",
         "message": "primary contact for login is not confirmed",
         "includeMap": false,
+        "tags": [
+            "login"
+        ],
         "metaData": [
             { "name": "contactId", "dataType": "string"},
             { "name": "principal", "dataType": "string"},
@@ -199,6 +213,9 @@
         "code": "PasswordResetContactNotPrimary",
         "message": "contact for password reset is not a primary contact",
         "includeMap": false,
+        "tags": [
+            "login"
+        ],
         "metaData": [
             { "name": "contactId", "dataType": "string"},
             { "name": "principal", "dataType": "string"},
@@ -209,6 +226,9 @@
         "code": "UserLockedOut",
         "message": "attempted login by locked out user",
         "includeMap": false,
+        "tags": [
+            "login"
+        ],
         "metaData": [
             { "name": "userID", "dataType": "string"}
         ]
