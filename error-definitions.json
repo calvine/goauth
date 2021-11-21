@@ -326,8 +326,31 @@
         ]
     },
     {
+        "code": "DatastoreStartTransactionFailed",
+        "message": "data store failed to start transaction",
+        "tags": [
+            "datastore"
+        ],
+        "metaData": [
+            { "name": "cause", "dataType": "error" }
+        ]
+    },
+    {
+        "code": "DatastoreCommitTransactionFailed",
+        "message": "data store failed to commit transaction",
+        "tags": [
+            "datastore"
+        ],
+        "metaData": [
+            { "name": "cause", "dataType": "error" }
+        ]
+    },
+    {
         "code": "DatastoreTransactionFailed",
         "message": "data store transaction was aborted",
+        "tags": [
+            "datastore"
+        ],
         "metaData": [
             { "name": "cause", "dataType": "error" }
         ]
@@ -335,6 +358,9 @@
     {
         "code": "DatastoreTransactionAbortFailed",
         "message": "data store transaction was aborted",
+        "tags": [
+            "datastore"
+        ],
         "metaData": [
             { "name": "cause", "dataType": "error" },
             { "name": "transactionAbortError", "dataType": "error" }

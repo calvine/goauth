@@ -681,6 +681,26 @@ func _testAddContact(t *testing.T, userService services.UserService) {
 				if newContact.UserID != tc.userID {
 					t.Errorf("\tadded contact user id does not match expected user id: got - %s expected - %s", newContact.UserID, tc.userID)
 				}
+				// test that confirmation email was sent
+				ses, ok := userServiceTest_EmailService.(*stackEmailService)
+				if !ok {
+					t.Errorf("\texpected stackEmailService instance of email service but got %s", userServiceTest_EmailService.GetName())
+					t.FailNow()
+				}
+				lastMessage, ok := ses.PopMessage()
+				if !ok {
+					t.Error("\tno message found in email stack from user registration")
+				}
+				numReceipents := len(lastMessage.To)
+				if numReceipents != 1 {
+					t.Errorf("\twrong number of recepitents in messages to: got - %d expected 1", numReceipents)
+					// we return here because we do not need to go further
+					return
+				}
+				if lastMessage.To[0] != tc.contactPrincipal {
+					t.Errorf("\tto value not expected: got - %s expected - %s", lastMessage.To[0], tc.contactPrincipal)
+				}
+				// TODO: check subject and body once I write those....
 			}
 		})
 	}

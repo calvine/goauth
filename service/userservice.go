@@ -15,6 +15,10 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	contactConfirmationDuration = time.Hour * 4
+)
+
 type userService struct {
 	userRepo     repo.UserRepo
 	contactRepo  repo.ContactRepo
@@ -86,7 +90,7 @@ func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger 
 	}
 	// generate confirmation code
 	// TODO: make token valid time configurable
-	confirmationToken, err := models.NewToken(newContact.ID, models.TokenTypeConfirmContact, time.Hour*2)
+	confirmationToken, err := models.NewToken(newContact.ID, models.TokenTypeConfirmContact, contactConfirmationDuration)
 	if err != nil {
 		evtString := "failed to create new contact confirmation token"
 		logger.Error(evtString, zap.Reflect("error", err))
@@ -249,7 +253,32 @@ func (us userService) AddContact(ctx context.Context, logger *zap.Logger, userID
 		apptelemetry.SetSpanError(&span, err, evtString)
 		return err
 	}
-	// TODO: send confirmation message?
+	// generate contact confirmation token
+	// TODO: make token valid time configurable
+	confirmationToken, err := models.NewToken(contact.ID, models.TokenTypeConfirmContact, contactConfirmationDuration)
+	if err != nil {
+		evtString := "failed to create new contact confirmation token"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
+		return err
+	}
+	err = us.tokenService.PutToken(ctx, logger, confirmationToken)
+	if err != nil {
+		evtString := "failed to store new contact confirmation token"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanError(&span, err, evtString)
+		return err
+	}
+	// send confirmation email
+	// TODO: convert this email into a template...
+	to := []string{contact.Principal}
+	err = us.emailService.SendPlainTextEmail(ctx, logger, to, "contact confirmation link", confirmationToken.Value)
+	if err != nil {
+		evtString := "failed to send contact confirmation notification error occurred"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanError(&span, err, evtString)
+		return err // TODO: what should we do here???
+	}
 	span.AddEvent("contact added for user")
 	return nil
 }
@@ -377,24 +406,6 @@ func (us userService) ConfirmContact(ctx context.Context, logger *zap.Logger, co
 	span.AddEvent("contact confirmed")
 	return nil
 }
-
-// func (us userService) ConfirmContact(ctx context.Context, confirmationCode string, initiator string) (bool, errors.RichError) {
-// 	token, err := ls.tokenService.GetToken(confirmationCode, models.TokenTypeConfirmContact)
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	contact, err := ls.contactRepo.GetContactByContactID(ctx, token.TargetID)
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	now := time.Now().UTC()
-// 	contact.ConfirmedDate.Set(now)
-// 	err = ls.contactRepo.UpdateContact(ctx, &contact, initiator)
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	return true, nil
-// }
 
 func (us userService) checkForExistingConfirmedContacts(ctx context.Context, logger *zap.Logger, span *trace.Span, contactType, contactPrincipal, userID string) errors.RichError {
 	numExistingConfirmedContacts, err := us.contactRepo.GetExistingConfirmedContactsCountByPrincipalAndType(ctx, contactType, contactPrincipal)

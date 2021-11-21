@@ -13,14 +13,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-const loginCookieName = "x-goauth-session"
-
 func (s *server) handleLoginGet() http.HandlerFunc {
 	var (
 		once          sync.Once
 		loginTemplate *template.Template
 		templateErr   error
-		templatePath  string = "http/templates/login.tmpl"
+		templatePath  string = "http/templates/login.html.tmpl"
 	)
 	type requestData struct {
 		CSRFToken string

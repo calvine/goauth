@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Register Account</title>
+        <link rel="stylesheet" href="/static/css/register.css" />
+    </head>
+    <body>
+        <header>Register Account</header>
+        <form method="POST">
+            <label>Email: <input type="email" name="email" /></label>
+            <div class="error_container">
+                <span></span>
+            </div>
+            <input type="hidden" name="csrf_token" value="{{ .CSRFToken }}" />
+            <input type="submit" value="Login" />
+        </form>
+    </body>
+</html>

@@ -381,125 +381,124 @@ func (ur userRepo) SwapPrimaryContacts(ctx context.Context, previousPrimaryConta
 	}
 	defer session.EndSession(context.Background())
 
-	err = mongo.WithSession(ctx, session, func(sessionContext mongo.SessionContext) error {
-		err = session.StartTransaction(txnOpts)
-		if err != nil {
-			return err
-		}
+	sessionContext := mongo.NewSessionContext(ctx, session)
 
-		userObjectID, err := primitive.ObjectIDFromHex(previousPrimaryContact.UserID)
-		if err != nil {
-			rErr := coreerrors.NewFailedToParseObjectIDError(previousPrimaryContact.UserID, err, true)
-			evtString := fmt.Sprintf("%s user id: %s", rErr.GetErrorMessage(), previousPrimaryContact.UserID)
-			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
-			return rErr
-		}
-		previousPrimaryContactObjectID, err := primitive.ObjectIDFromHex(previousPrimaryContact.ID)
-		if err != nil {
-			rErr := coreerrors.NewFailedToParseObjectIDError(previousPrimaryContact.ID, err, true)
-			evtString := fmt.Sprintf("%s previous primary contact id: %s", rErr.GetErrorMessage(), previousPrimaryContact.ID)
-			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
-			return rErr
-		}
-
-		previousPrimaryContact.IsPrimary = false
-		previousPrimaryContact.AuditData.ModifiedOnDate.Set(time.Now().UTC())
-		previousPrimaryContact.AuditData.ModifiedByID.Set(modifiedBy)
-
-		previousPrimaryContactFilter := bson.D{
-			{Key: "_id", Value: userObjectID},
-			{Key: "contacts.id", Value: previousPrimaryContactObjectID},
-		}
-		previousPrimaryContactUpdate := bson.D{
-			{Key: "$set", Value: bson.D{
-				{Key: "contacts.$.isPrimary", Value: previousPrimaryContact.IsPrimary},
-				{Key: "contacts.$.modifiedById", Value: previousPrimaryContact.AuditData.ModifiedByID.GetPointerCopy()},
-				{Key: "contacts.$.modifiedOnDate", Value: previousPrimaryContact.AuditData.ModifiedOnDate.GetPointerCopy()},
-			}},
-		}
-
-		previousPrimaryUpdateResult, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(sessionContext, previousPrimaryContactFilter, previousPrimaryContactUpdate, nil)
-		if err != nil {
-			abortErr := session.AbortTransaction(sessionContext)
-			if abortErr != nil {
-				return coreerrors.NewDatastoreTransactionAbortFailedError(err, abortErr, true)
-			}
-			return coreerrors.NewDatastoreTransactionFailedError(err, true)
-		}
-		if previousPrimaryUpdateResult.ModifiedCount != 1 {
-			errMsg := fmt.Sprintf("previous primary contact updated %d records. expected 1", previousPrimaryUpdateResult.ModifiedCount)
-			span.AddEvent(errMsg)
-			rootErr := fmt.Errorf(errMsg)
-			err := coreerrors.NewDatastoreTransactionFailedError(rootErr, true)
-			abortErr := session.AbortTransaction(sessionContext)
-			if abortErr != nil {
-				span.AddEvent("transaction abort failed")
-				return coreerrors.NewDatastoreTransactionAbortFailedError(err, abortErr, true)
-			}
-			return err
-		}
-
-		newPrimaryContactObjectID, err := primitive.ObjectIDFromHex(newPrimaryContact.ID)
-		if err != nil {
-			rErr := coreerrors.NewFailedToParseObjectIDError(newPrimaryContact.ID, err, true)
-			evtString := fmt.Sprintf("%s new primary contact id: %s", rErr.GetErrorMessage(), newPrimaryContact.UserID)
-			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
-			return rErr
-		}
-
-		newPrimaryContact.IsPrimary = true
-		newPrimaryContact.AuditData.ModifiedOnDate.Set(time.Now().UTC())
-		newPrimaryContact.AuditData.ModifiedByID.Set(modifiedBy)
-
-		newPrimaryContactFilter := bson.D{
-			{Key: "_id", Value: userObjectID},
-			{Key: "contacts.id", Value: newPrimaryContactObjectID},
-		}
-		newPrimaryContactUpdate := bson.D{
-			{Key: "$set", Value: bson.D{
-				{Key: "contacts.$.isPrimary", Value: newPrimaryContact.IsPrimary},
-				{Key: "contacts.$.modifiedById", Value: newPrimaryContact.AuditData.ModifiedByID.GetPointerCopy()},
-				{Key: "contacts.$.modifiedOnDate", Value: newPrimaryContact.AuditData.ModifiedOnDate.GetPointerCopy()},
-			}},
-		}
-
-		newPrimaryUpdateResult, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(sessionContext, newPrimaryContactFilter, newPrimaryContactUpdate, nil)
-		if err != nil {
-			abortErr := session.AbortTransaction(sessionContext)
-			if abortErr != nil {
-				return coreerrors.NewDatastoreTransactionAbortFailedError(err, abortErr, true)
-			}
-			return coreerrors.NewDatastoreTransactionFailedError(err, true)
-		}
-		if newPrimaryUpdateResult.ModifiedCount != 1 {
-			errMsg := fmt.Sprintf("new primary contact updated %d records. expected 1", newPrimaryUpdateResult.ModifiedCount)
-			span.AddEvent(errMsg)
-			rootErr := fmt.Errorf(errMsg)
-			err := coreerrors.NewDatastoreTransactionFailedError(rootErr, true)
-			abortErr := session.AbortTransaction(sessionContext)
-			if abortErr != nil {
-				span.AddEvent("transaction abort failed")
-				return coreerrors.NewDatastoreTransactionAbortFailedError(err, abortErr, true)
-			}
-			return err
-		}
-
-		err = session.CommitTransaction(sessionContext)
-		if err != nil {
-			fields := map[string]interface{}{
-				"previousPrimaryContact": previousPrimaryContact,
-				"newPrimaryContact":      newPrimaryContact,
-			}
-			rErr := coreerrors.NewRepoQueryFailedWithMetaDataError(err, fields, true)
-			evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
-			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
-			return err
-		}
-		return nil
-	})
+	err = session.StartTransaction(txnOpts)
 	if err != nil {
-		// the function above always returns a RichError and does the additional error code handling, so we can skip it here.
-		return err.(errors.RichError)
+		rErr := coreerrors.NewDatastoreStartTransactionFailedError(err, true)
+		return rErr
+	}
+
+	userObjectID, err := primitive.ObjectIDFromHex(previousPrimaryContact.UserID)
+	if err != nil {
+		rErr := coreerrors.NewFailedToParseObjectIDError(previousPrimaryContact.UserID, err, true)
+		evtString := fmt.Sprintf("%s user id: %s", rErr.GetErrorMessage(), previousPrimaryContact.UserID)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
+		return rErr
+	}
+	previousPrimaryContactObjectID, err := primitive.ObjectIDFromHex(previousPrimaryContact.ID)
+	if err != nil {
+		rErr := coreerrors.NewFailedToParseObjectIDError(previousPrimaryContact.ID, err, true)
+		evtString := fmt.Sprintf("%s previous primary contact id: %s", rErr.GetErrorMessage(), previousPrimaryContact.ID)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
+		return rErr
+	}
+
+	previousPrimaryContact.IsPrimary = false
+	previousPrimaryContact.AuditData.ModifiedOnDate.Set(time.Now().UTC())
+	previousPrimaryContact.AuditData.ModifiedByID.Set(modifiedBy)
+
+	previousPrimaryContactFilter := bson.D{
+		{Key: "_id", Value: userObjectID},
+		{Key: "contacts.id", Value: previousPrimaryContactObjectID},
+	}
+	previousPrimaryContactUpdate := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "contacts.$.isPrimary", Value: previousPrimaryContact.IsPrimary},
+			{Key: "contacts.$.modifiedById", Value: previousPrimaryContact.AuditData.ModifiedByID.GetPointerCopy()},
+			{Key: "contacts.$.modifiedOnDate", Value: previousPrimaryContact.AuditData.ModifiedOnDate.GetPointerCopy()},
+		}},
+	}
+
+	previousPrimaryUpdateResult, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(sessionContext, previousPrimaryContactFilter, previousPrimaryContactUpdate, nil)
+	if err != nil {
+		abortErr := session.AbortTransaction(sessionContext)
+		if abortErr != nil {
+			return coreerrors.NewDatastoreTransactionAbortFailedError(err, abortErr, true)
+		}
+		return coreerrors.NewDatastoreTransactionFailedError(err, true)
+	}
+	if previousPrimaryUpdateResult.ModifiedCount != 1 {
+		errMsg := fmt.Sprintf("previous primary contact updated %d records. expected 1", previousPrimaryUpdateResult.ModifiedCount)
+		span.AddEvent(errMsg)
+		// TODO: make new error
+		rootErr := fmt.Errorf(errMsg)
+		err := coreerrors.NewDatastoreTransactionFailedError(rootErr, true)
+		abortErr := session.AbortTransaction(sessionContext)
+		if abortErr != nil {
+			span.AddEvent("transaction abort failed")
+			return coreerrors.NewDatastoreTransactionAbortFailedError(err, abortErr, true)
+		}
+		return err
+	}
+
+	newPrimaryContactObjectID, err := primitive.ObjectIDFromHex(newPrimaryContact.ID)
+	if err != nil {
+		rErr := coreerrors.NewFailedToParseObjectIDError(newPrimaryContact.ID, err, true)
+		evtString := fmt.Sprintf("%s new primary contact id: %s", rErr.GetErrorMessage(), newPrimaryContact.UserID)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
+		return rErr
+	}
+
+	newPrimaryContact.IsPrimary = true
+	newPrimaryContact.AuditData.ModifiedOnDate.Set(time.Now().UTC())
+	newPrimaryContact.AuditData.ModifiedByID.Set(modifiedBy)
+
+	newPrimaryContactFilter := bson.D{
+		{Key: "_id", Value: userObjectID},
+		{Key: "contacts.id", Value: newPrimaryContactObjectID},
+	}
+	newPrimaryContactUpdate := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "contacts.$.isPrimary", Value: newPrimaryContact.IsPrimary},
+			{Key: "contacts.$.modifiedById", Value: newPrimaryContact.AuditData.ModifiedByID.GetPointerCopy()},
+			{Key: "contacts.$.modifiedOnDate", Value: newPrimaryContact.AuditData.ModifiedOnDate.GetPointerCopy()},
+		}},
+	}
+
+	newPrimaryUpdateResult, err := ur.mongoClient.Database(ur.dbName).Collection(ur.collectionName).UpdateOne(sessionContext, newPrimaryContactFilter, newPrimaryContactUpdate, nil)
+	if err != nil {
+		abortErr := session.AbortTransaction(sessionContext)
+		if abortErr != nil {
+			return coreerrors.NewDatastoreTransactionAbortFailedError(err, abortErr, true)
+		}
+		return coreerrors.NewDatastoreTransactionFailedError(err, true)
+	}
+	if newPrimaryUpdateResult.ModifiedCount != 1 {
+		errMsg := fmt.Sprintf("new primary contact updated %d records. expected 1", newPrimaryUpdateResult.ModifiedCount)
+		span.AddEvent(errMsg)
+		// TODO: make new error
+		rootErr := fmt.Errorf(errMsg)
+		err := coreerrors.NewDatastoreTransactionFailedError(rootErr, true)
+		abortErr := session.AbortTransaction(sessionContext)
+		if abortErr != nil {
+			span.AddEvent("transaction abort failed")
+			return coreerrors.NewDatastoreTransactionAbortFailedError(err, abortErr, true)
+		}
+		return err
+	}
+
+	err = session.CommitTransaction(sessionContext)
+	if err != nil {
+		innerRErr := coreerrors.NewDatastoreCommitTransactionFailedError(err, false)
+		fields := map[string]interface{}{
+			"previousPrimaryContactId": previousPrimaryContact.ID,
+			"newPrimaryContactId":      newPrimaryContact.ID,
+		}
+		rErr := coreerrors.NewRepoQueryFailedWithMetaDataError(innerRErr, fields, true)
+		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
+		return rErr
 	}
 	span.AddEvent("contact primary states set")
 	return nil
