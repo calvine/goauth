@@ -299,6 +299,12 @@ func _testRegisterUserAndPrimaryContact(t *testing.T, userService services.UserS
 			contactType:       core.CONTACT_TYPE_EMAIL,
 			expectedErrorCode: coreerrors.ErrCodeInvalidContactPrincipal,
 		},
+		{
+			name:              "GIVEN an invalid contact principal of the given type contact EXPECT error code invalid contact principal",
+			contactPrincipal:  "a_valid_email@email.com",
+			contactType:       "not a valid contact type",
+			expectedErrorCode: coreerrors.ErrCodeInvalidContactType,
+		},
 		// TODO: create test case for multiple confirmed instances of a contact returning the appropriate error...
 	}
 	for _, tc := range testCases {
@@ -679,6 +685,15 @@ func _testAddContact(t *testing.T, userService services.UserService) {
 			contactType:       core.CONTACT_TYPE_EMAIL,
 			contactIsPrimary:  false,
 			expectedErrorCode: coreerrors.ErrCodeInvalidContactPrincipal,
+		},
+		{
+			name:              "GIVEN an invalid contact type of the given type contact EXPECT error code invalid contact type",
+			userID:            userServiceTest_UnconfirmedUser.ID,
+			contactUserID:     userServiceTest_UnconfirmedUser.ID,
+			contactPrincipal:  "a_valid_email@email.com",
+			contactType:       "not a valid contact type",
+			contactIsPrimary:  false,
+			expectedErrorCode: coreerrors.ErrCodeInvalidContactType,
 		},
 	}
 	for _, tc := range testCases {

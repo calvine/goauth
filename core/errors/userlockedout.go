@@ -12,7 +12,7 @@ const ErrCodeUserLockedOut = "UserLockedOut"
 // NewUserLockedOutError creates a new specific error
 func NewUserLockedOutError(userID string, includeStack bool) errors.RichError {
 	msg := "attempted login by locked out user"
-	err := errors.NewRichError(ErrCodeUserLockedOut, msg).AddMetaData("userID", userID)
+	err := errors.NewRichError(ErrCodeUserLockedOut, msg).AddMetaData("userID", userID).WithTags([]string{"login"})
 	if includeStack {
 		err = err.WithStack(1)
 	}

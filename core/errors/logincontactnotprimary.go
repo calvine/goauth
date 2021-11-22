@@ -12,7 +12,7 @@ const ErrCodeLoginContactNotPrimary = "LoginContactNotPrimary"
 // NewLoginContactNotPrimaryError creates a new specific error
 func NewLoginContactNotPrimaryError(contactId string, principal string, principalType string, includeStack bool) errors.RichError {
 	msg := "contact for login is not a primary contact"
-	err := errors.NewRichError(ErrCodeLoginContactNotPrimary, msg).AddMetaData("contactId", contactId).AddMetaData("principal", principal).AddMetaData("principalType", principalType)
+	err := errors.NewRichError(ErrCodeLoginContactNotPrimary, msg).AddMetaData("contactId", contactId).AddMetaData("principal", principal).AddMetaData("principalType", principalType).WithTags([]string{"login"})
 	if includeStack {
 		err = err.WithStack(1)
 	}

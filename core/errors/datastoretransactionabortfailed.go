@@ -12,7 +12,7 @@ const ErrCodeDatastoreTransactionAbortFailed = "DatastoreTransactionAbortFailed"
 // NewDatastoreTransactionAbortFailedError creates a new specific error
 func NewDatastoreTransactionAbortFailedError(cause error, transactionAbortError error, includeStack bool) errors.RichError {
 	msg := "data store transaction was aborted"
-	err := errors.NewRichError(ErrCodeDatastoreTransactionAbortFailed, msg).AddError(cause).AddError(transactionAbortError)
+	err := errors.NewRichError(ErrCodeDatastoreTransactionAbortFailed, msg).AddError(cause).AddError(transactionAbortError).WithTags([]string{"datastore"})
 	if includeStack {
 		err = err.WithStack(1)
 	}

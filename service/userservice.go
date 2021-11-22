@@ -64,9 +64,26 @@ func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, l
 func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType, contactPrincipal string, initiator string) errors.RichError {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "RegisterUserAndPrimaryContact")
 	defer span.End()
+
+	err := models.IsValidContactType(contactType)
+	if err != nil {
+		evtString := "failed to create new contact due to invalid contact type"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
+		return err
+	}
+	// registration contact is by definition the primary contact.
+	newContact := models.NewContact("", "", contactPrincipal, contactType, true)
+	err = models.IsValidateContactPrincipal(newContact.Type, newContact.Principal)
+	if err != nil {
+		evtString := "failed to create new contact due to invalid contact principal"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
+		return err
+	}
 	// TODO: normalize contact principal
 	// check that email address does not already exist as a confirmed contact.
-	err := us.checkForExistingConfirmedContacts(ctx, logger, &span, contactType, contactPrincipal, "")
+	err = us.checkForExistingConfirmedContacts(ctx, logger, &span, contactType, contactPrincipal, "")
 	if err != nil {
 		// additional error stuff handeled in checkForExistingConfirmedContacts function
 		return err
@@ -79,16 +96,8 @@ func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger 
 		apptelemetry.SetSpanError(&span, err, "")
 		return err
 	}
-	// registration contant is by definition the prinary contact.
-	// TODO: normalize contact principal
-	err = models.ValidateContactPrincipal(contactType, contactPrincipal)
-	if err != nil {
-		evtString := "failed to create new contact confirmation token"
-		logger.Error(evtString, zap.Reflect("error", err))
-		apptelemetry.SetSpanOriginalError(&span, err, evtString)
-		return err
-	}
-	newContact := models.NewContact(newUser.ID, "", contactPrincipal, contactType, true)
+
+	newContact.UserID = newUser.ID
 	err = us.contactRepo.AddContact(ctx, &newContact, initiator)
 	if err != nil {
 		logger.Error("contactRepo.AddContact call failed", zap.Reflect("error", err))
@@ -212,6 +221,20 @@ func (us userService) GetUsersConfirmedContactsOfType(ctx context.Context, logge
 func (us userService) AddContact(ctx context.Context, logger *zap.Logger, userID string, contact *models.Contact, initiator string) errors.RichError {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "AddContact")
 	defer span.End()
+	err := models.IsValidContactType(contact.Type)
+	if err != nil {
+		evtString := "failed to create new contact due to invalid contact type"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
+		return err
+	}
+	err = models.IsValidateContactPrincipal(contact.Type, contact.Principal)
+	if err != nil {
+		evtString := "failed to create new contact due to invalid contact principal"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
+		return err
+	}
 	// check user ids match
 	if userID != contact.UserID {
 		err := coreerrors.NewUserIDsDoNotMatchError(userID, contact.UserID, true)
@@ -221,7 +244,7 @@ func (us userService) AddContact(ctx context.Context, logger *zap.Logger, userID
 		return err
 	}
 	// check that no other contact that is confirmed is already in data store
-	err := us.checkForExistingConfirmedContacts(ctx, logger, &span, contact.Type, contact.Principal, userID)
+	err = us.checkForExistingConfirmedContacts(ctx, logger, &span, contact.Type, contact.Principal, userID)
 	if err != nil {
 		// additional error stuff handeled in checkForExistingConfirmedContacts function
 		return err

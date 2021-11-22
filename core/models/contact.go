@@ -1,6 +1,7 @@
 package models
 
 import (
+	"net/mail"
 	"strings"
 	"time"
 
@@ -69,13 +70,19 @@ func NormalizeContactPrincipal(contactType, contactPrincipal string) string {
 	return normalizedPrincipal
 }
 
-func ValidateContactPrincipal(contactType, contactPrincipal string) errors.RichError {
+func IsValidateContactPrincipal(contactType, contactPrincipal string) errors.RichError {
 	if contactPrincipal == "" {
 		// an empty string is never valid...
 		return coreerrors.NewInvalidContactPrincipalError(contactPrincipal, contactType, true)
 	}
-	// TODO: implement this...
+	// TODO: implement this for mobile...
 	switch contactType {
+	case core.CONTACT_TYPE_EMAIL:
+		_, err := mail.ParseAddress(contactPrincipal)
+		if err != nil {
+			return coreerrors.NewInvalidContactPrincipalError(contactPrincipal, contactType, true)
+		}
+		return nil
 	default:
 		return nil
 	}
