@@ -11,6 +11,7 @@ import (
 	"github.com/calvine/goauth/core/utilities/ctxpropagation"
 	"github.com/calvine/goauth/http/internal/constants"
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 )
 
 func (s *server) handleLoginGet() http.HandlerFunc {
@@ -88,6 +89,7 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 		}
 		err = s.tokenService.DeleteToken(ctx, logger, data.CSRFToken)
 		if err != nil {
+			logger.Warn("unable to delete CSRF token from data store", zap.Reflect("error", err))
 			// uh of the token was not deleted! need to log this...
 		}
 		_, err = s.loginService.LoginWithPrimaryContact(ctx, s.logger, data.Email, core.CONTACT_TYPE_EMAIL, data.Password, "login post handler")
