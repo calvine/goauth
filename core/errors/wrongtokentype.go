@@ -12,7 +12,7 @@ const ErrCodeWrongTokenType = "WrongTokenType"
 // NewWrongTokenTypeError creates a new specific error
 func NewWrongTokenTypeError(id string, tokenType string, expectedTokenType string, includeStack bool) errors.RichError {
 	msg := "token type does not match expected token type"
-	err := errors.NewRichError(ErrCodeWrongTokenType, msg).AddMetaData("id", id).AddMetaData("tokenType", tokenType).AddMetaData("expectedTokenType", expectedTokenType)
+	err := errors.NewRichError(ErrCodeWrongTokenType, msg).AddMetaData("id", id).AddMetaData("tokenType", tokenType).AddMetaData("expectedTokenType", expectedTokenType).WithTags([]string{"token"})
 	if includeStack {
 		err = err.WithStack(1)
 	}

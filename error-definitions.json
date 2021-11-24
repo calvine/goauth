@@ -307,6 +307,9 @@
         "code": "InvalidToken",
         "message": "expired or invalid token was found with the given id.",
         "includeMap": false,
+        "tags": [
+            "token"
+        ],
         "metaData": [
             { "name": "id", "dataType": "string" }
         ]
@@ -315,6 +318,9 @@
         "code": "WrongTokenType",
         "message": "token type does not match expected token type",
         "includeMap": false,
+        "tags": [
+            "token"
+        ],
         "metaData": [
             { "name": "id", "dataType": "string" },
             { "name": "tokenType", "dataType": "string" },
@@ -325,6 +331,9 @@
         "code": "ExpiredToken",
         "message": "token has expired",
         "includeMap": false,
+        "tags": [
+            "token"
+        ],
         "metaData": [
             { "name": "id", "dataType": "string" },
             { "name": "tokenType", "dataType": "string" },
@@ -335,11 +344,28 @@
         "code": "MalfomedToken",
         "message": "token is not valid",
         "includeMap": true,
+        "tags": [
+            "token"
+        ],
         "metaData": []
     },
     {
-        "code": "TemplateRenderError",
+        "code": "FailedTemplateParse",
+        "message": "An error occurred while parsing template",
+        "tags": [
+            "template"
+        ],
+        "metaData": [
+            { "name": "template", "dataType": "string" },
+            { "name": "parseError", "dataType": "error" }
+        ]
+    },
+    {
+        "code": "FailedTemplateRender",
         "message": "An error occurred while rendering template",
+        "tags": [
+            "template"
+        ],
         "metaData": [
             { "name": "template", "dataType": "string" },
             { "name": "renderError", "dataType": "error" }

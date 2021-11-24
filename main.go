@@ -134,6 +134,8 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	logger = logger.With(zap.String("app_name", "goauth"))
+	defer logger.Sync()
 	connectionString := utilities.GetEnv(ENV_MONGO_CONNECTION_STRING, DEFAULT_MONGO_CONNECTION_STRING)
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(connectionString))
 	defer client.Disconnect(context.TODO())

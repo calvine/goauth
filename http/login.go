@@ -55,7 +55,7 @@ func (s *server) handleLoginGet() http.HandlerFunc {
 		templateRenderError := loginTemplate.Execute(rw, requestData{token.Value})
 		if templateRenderError != nil {
 			span.RecordError(err)
-			err = coreerrors.NewTemplateRenderErrorError(templatePath, templateRenderError, true)
+			err = coreerrors.NewFailedTemplateRenderError(templatePath, templateRenderError, true)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}

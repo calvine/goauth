@@ -12,7 +12,7 @@ const ErrCodeInvalidToken = "InvalidToken"
 // NewInvalidTokenError creates a new specific error
 func NewInvalidTokenError(id string, includeStack bool) errors.RichError {
 	msg := "expired or invalid token was found with the given id."
-	err := errors.NewRichError(ErrCodeInvalidToken, msg).AddMetaData("id", id)
+	err := errors.NewRichError(ErrCodeInvalidToken, msg).AddMetaData("id", id).WithTags([]string{"token"})
 	if includeStack {
 		err = err.WithStack(1)
 	}

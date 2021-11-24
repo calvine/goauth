@@ -21,12 +21,11 @@ func InitializeRequest(logger *zap.Logger) func(next http.Handler) http.Handler 
 				// requestID = fmt.Sprintf("%s-%06d", prefix, myid)
 				requestID = uuid.Must(uuid.NewRandom()).String()
 			}
-			ctx = ctxpropagation.SetRequestIDForContext(
-				ctxpropagation.SetLoggerForContext(ctx, logger.With(
-					zap.String("http_request_id", requestID),
-					// zap.String("app_name", "goauth")), // TODO: set app name from env var in http server set up code.
-				)),
-				requestID)
+			logger = logger.With(
+				zap.String("http_request_id", requestID),
+			)
+			ctx = ctxpropagation.SetLoggerForContext(ctx, logger)
+			ctx = ctxpropagation.SetRequestIDForContext(ctx, requestID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
 		return http.HandlerFunc(fn)
