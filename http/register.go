@@ -76,6 +76,7 @@ func (s *server) handleRegisterGet() http.HandlerFunc {
 			HasErrorMessage: false,
 		})
 		if templateRenderError != nil {
+			// TODO: redirect to error page to avoid partial rendered page showing
 			errorMsg := "failed to render page template"
 			err = coreerrors.NewFailedTemplateRenderError(templatePath, templateRenderError, true)
 			logger.Error(errorMsg,
@@ -186,6 +187,7 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 		}
 		templateRenderError := registerTemplate.Execute(rw, templateData)
 		if templateRenderError != nil {
+			// TODO: redirect to error page to avoid partial rendered page showing
 			errorMsg = "failed to render template with data provided"
 			logger.Error(errorMsg, zap.Reflect("error", err), zap.Any("templateData", templateData))
 			apptelemetry.SetSpanError(&span, err, errorMsg)
