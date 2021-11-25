@@ -350,13 +350,25 @@
         "metaData": []
     },
     {
+        "code": "FailedTemplateParseTemplatNotFound",
+        "message": "template not found in fs with path provided",
+        "tags": [
+            "template"
+        ],
+        "metaData": [
+            { "name": "templateName", "dataType": "string" },
+            { "name": "templatePath", "dataType": "string" },
+            { "name": "parseError", "dataType": "error" }
+        ]
+    },
+    {
         "code": "FailedTemplateParse",
         "message": "An error occurred while parsing template",
         "tags": [
             "template"
         ],
         "metaData": [
-            { "name": "template", "dataType": "string" },
+            { "name": "templateName", "dataType": "string" },
             { "name": "parseError", "dataType": "error" }
         ]
     },
@@ -367,7 +379,7 @@
             "template"
         ],
         "metaData": [
-            { "name": "template", "dataType": "string" },
+            { "name": "templateName", "dataType": "string" },
             { "name": "renderError", "dataType": "error" }
         ]
     },

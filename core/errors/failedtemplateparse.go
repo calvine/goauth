@@ -10,9 +10,9 @@ import (
 const ErrCodeFailedTemplateParse = "FailedTemplateParse"
 
 // NewFailedTemplateParseError creates a new specific error
-func NewFailedTemplateParseError(template string, parseError error, includeStack bool) errors.RichError {
+func NewFailedTemplateParseError(templateName string, parseError error, includeStack bool) errors.RichError {
 	msg := "An error occurred while parsing template"
-	err := errors.NewRichError(ErrCodeFailedTemplateParse, msg).AddMetaData("template", template).AddError(parseError).WithTags([]string{"template"})
+	err := errors.NewRichError(ErrCodeFailedTemplateParse, msg).AddMetaData("templateName", templateName).AddError(parseError).WithTags([]string{"template"})
 	if includeStack {
 		err = err.WithStack(1)
 	}

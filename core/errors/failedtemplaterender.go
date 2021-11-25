@@ -10,9 +10,9 @@ import (
 const ErrCodeFailedTemplateRender = "FailedTemplateRender"
 
 // NewFailedTemplateRenderError creates a new specific error
-func NewFailedTemplateRenderError(template string, renderError error, includeStack bool) errors.RichError {
+func NewFailedTemplateRenderError(templateName string, renderError error, includeStack bool) errors.RichError {
 	msg := "An error occurred while rendering template"
-	err := errors.NewRichError(ErrCodeFailedTemplateRender, msg).AddMetaData("template", template).AddError(renderError).WithTags([]string{"template"})
+	err := errors.NewRichError(ErrCodeFailedTemplateRender, msg).AddMetaData("templateName", templateName).AddError(renderError).WithTags([]string{"template"})
 	if includeStack {
 		err = err.WithStack(1)
 	}

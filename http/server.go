@@ -2,11 +2,14 @@ package http
 
 import (
 	"embed"
+	"html/template"
 	"net/http"
 	"time"
 
+	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/services"
 	mymiddleware "github.com/calvine/goauth/http/middleware"
+	"github.com/calvine/richerror/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -70,4 +73,31 @@ func (hh *server) BuildRoutes() {
 	fs := http.FileServer(*hh.staticFS)
 	// static files
 	hh.Mux.Handle("/static/*", fs)
+}
+
+func parseTemplateFromEmbedFS(path string, name string, fs *embed.FS) (*template.Template, errors.RichError) {
+	templateFileData, err := fs.ReadFile(path)
+	if err != nil {
+		rErr := coreerrors.NewFailedTemplateParseTemplatNotFoundError(name, path, err, true)
+		return nil, rErr
+	}
+	return parseTemplate(name, string(templateFileData))
+}
+
+func parseTemplate(name string, templateString string) (*template.Template, errors.RichError) {
+	template, err := template.New(name).Parse(templateString)
+	if err != nil {
+		rErr := coreerrors.NewFailedTemplateParseError(name, err, true)
+		return nil, rErr
+	}
+	return template, nil
+}
+
+func renderTemplate(rw http.ResponseWriter, template template.Template, data interface{}) errors.RichError {
+	err := template.Execute(rw, data)
+	if err != nil {
+		rErr := coreerrors.NewFailedTemplateRenderError(template.Name(), err, true)
+		return rErr
+	}
+	return nil
 }
