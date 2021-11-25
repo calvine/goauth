@@ -172,7 +172,7 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 			)
 			apptelemetry.SetSpanError(&span, err, errorMsg)
 		} else {
-			// TODO: redirect to page rather than rendre template...
+			// FIXME: redirect to page rather than rendre template...
 			// on success code here...
 			accountRegisteredData := accountRegisteredTemplateData{
 				ContactType:      contactType,
@@ -180,7 +180,7 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 			}
 			templateRenderError = accountRegisteredTemplate.Execute(rw, accountRegisteredData)
 			if templateRenderError != nil {
-				// TODO: redirect to error page to avoid partial rendered page showing
+				// FIXME: redirect to error page to avoid partial rendered page showing
 				errorMsg = "failed to render template with data provided"
 				err = coreerrors.NewFailedTemplateRenderError(templateRegisterPath, templateRenderError, true)
 				logger.Error(errorMsg, zap.Reflect("error", err), zap.Any("templateData", accountRegisteredData))
@@ -216,7 +216,7 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 		}
 		templateRenderError = registerTemplate.Execute(rw, templateData)
 		if templateRenderError != nil {
-			// TODO: redirect to error page to avoid partial rendered page showing
+			// FIXME: redirect to error page to avoid partial rendered page showing
 			errorMsg = "failed to render template with data provided"
 			err = coreerrors.NewFailedTemplateRenderError(templateRegisterPath, templateRenderError, true)
 			logger.Error(errorMsg, zap.Reflect("error", err), zap.Any("templateData", templateData))
