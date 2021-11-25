@@ -74,7 +74,7 @@ func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger 
 	}
 	// registration contact is by definition the primary contact.
 	newContact := models.NewContact("", "", contactPrincipal, contactType, true)
-	err = models.IsValidateContactPrincipal(newContact.Type, newContact.Principal)
+	err = models.IsValidNormalizedContactPrincipal(newContact.Type, newContact.Principal)
 	if err != nil {
 		evtString := "failed to create new contact due to invalid contact principal"
 		logger.Error(evtString, zap.Reflect("error", err))
@@ -228,7 +228,7 @@ func (us userService) AddContact(ctx context.Context, logger *zap.Logger, userID
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return err
 	}
-	err = models.IsValidateContactPrincipal(contact.Type, contact.Principal)
+	err = models.IsValidNormalizedContactPrincipal(contact.Type, contact.Principal)
 	if err != nil {
 		evtString := "failed to create new contact due to invalid contact principal"
 		logger.Error(evtString, zap.Reflect("error", err))

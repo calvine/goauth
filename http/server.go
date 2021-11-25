@@ -37,7 +37,7 @@ func (hh *server) BuildRoutes() {
 	hh.Mux.Use(
 		// middleware.Recoverer,
 		mymiddleware.InitializeRequest(hh.logger),
-		middleware.Timeout(time.Second*5),
+		middleware.Timeout(time.Second*60),
 		middleware.RealIP,
 	)
 	hh.Mux.Route("/auth", func(r chi.Router) {

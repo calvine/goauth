@@ -1,23 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Register Account</title>
-        <link rel="stylesheet" href="/static/css/register.css" />
-    </head>
-    <body>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Account</title>
+    <link rel="stylesheet" href="/static/css/register.css" />
+</head>
+
+<body>
+    <main>
         <header>Register Account</header>
         <form method="POST">
             <label>Email: <input type="email" name="principal" required value="{{ .Principal}}" /></label>
-            <div class="error_container">
+            <section class="error_container">
                 {{ if .HasErrorMessage }}
                 <span>{{ .ErrorMsg }}</span>
                 {{ end }}
-            </div>
+            </section>
             <input type="hidden" name="csrf_token" value="{{ .CSRFToken }}" />
             <input type="submit" value="Login" />
         </form>
-    </body>
+    </main>
+</body>
+
 </html>

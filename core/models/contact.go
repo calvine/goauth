@@ -70,17 +70,17 @@ func NormalizeContactPrincipal(contactType, contactPrincipal string) string {
 	return normalizedPrincipal
 }
 
-func IsValidateContactPrincipal(contactType, contactPrincipal string) errors.RichError {
-	if contactPrincipal == "" {
+func IsValidNormalizedContactPrincipal(contactType, normalizedContactPrincipal string) errors.RichError {
+	if normalizedContactPrincipal == "" {
 		// an empty string is never valid...
-		return coreerrors.NewInvalidContactPrincipalError(contactPrincipal, contactType, true)
+		return coreerrors.NewInvalidContactPrincipalError(normalizedContactPrincipal, contactType, true)
 	}
 	// TODO: implement this for mobile...
 	switch contactType {
 	case core.CONTACT_TYPE_EMAIL:
-		_, err := mail.ParseAddress(contactPrincipal)
+		_, err := mail.ParseAddress(normalizedContactPrincipal)
 		if err != nil {
-			return coreerrors.NewInvalidContactPrincipalError(contactPrincipal, contactType, true)
+			return coreerrors.NewInvalidContactPrincipalError(normalizedContactPrincipal, contactType, true)
 		}
 		return nil
 	default:

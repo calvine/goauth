@@ -36,7 +36,7 @@ const (
 	ENV_MONGO_CONNECTION_STRING = "GOAUTH_MONGO_CONNECTION_STRING"
 	ENV_HTTP_ADDRESS_STRING     = "GOAUTH_HTTP_PORT_STRING"
 
-	DEFAULT_MONGO_CONNECTION_STRING = "mongodb://root:password@localhost:27017/?authSource=admin&readPreference=primary&ssl=false"
+	DEFAULT_MONGO_CONNECTION_STRING = "mongodb://root:password@localhost:27017/?authSource=admin&ssl=false&replicaSet=goauth_test&connect=direct"
 	DEFAULT_HTTP_PORT_STRING        = ":8080"
 )
 
