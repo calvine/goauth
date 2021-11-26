@@ -37,7 +37,7 @@ const (
 	ENV_HTTP_ADDRESS_STRING     = "GOAUTH_HTTP_PORT_STRING"
 
 	DEFAULT_MONGO_CONNECTION_STRING = "mongodb://root:password@localhost:27017/?authSource=admin&ssl=false&replicaSet=goauth_test&connect=direct"
-	DEFAULT_HTTP_PORT_STRING        = ":8080"
+	DEFAULT_HTTP_PORT_STRING        = "0.0.0.0:8080"
 )
 
 var (
@@ -147,7 +147,12 @@ func run() error {
 	tokenRepo := memory.NewMemoryTokenRepo()
 
 	tokenService := service.NewTokenService(tokenRepo)
-	emailService, err := service.NewEmailService(service.MockEmailService, nil)
+	// TODO: set this up from configuration
+	smtpEmailServiceOptions := service.SMTPEmailServiceOptions{
+		Host: "localhost",
+		Port: "1029",
+	}
+	emailService, err := service.NewEmailService(service.SMTPEmailService, smtpEmailServiceOptions)
 	if err != nil {
 		return err
 	}

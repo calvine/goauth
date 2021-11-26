@@ -10,6 +10,7 @@ import (
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/core/services"
+	"github.com/calvine/goauth/internal/constants"
 	"github.com/calvine/richerror/errors"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -123,7 +124,7 @@ func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger 
 	// send confirmation email
 	// TODO: convert this email into a template...
 	to := []string{contactPrincipal}
-	err = us.emailService.SendPlainTextEmail(ctx, logger, to, "contact confirmation link", confirmationToken.Value)
+	err = us.emailService.SendPlainTextEmail(ctx, logger, to, constants.NoReplyEmailAddress, "contact confirmation link", confirmationToken.Value)
 	if err != nil {
 		evtString := "failed to send contact confirmation notification error occurred"
 		logger.Error(evtString, zap.Reflect("error", err))
@@ -302,7 +303,7 @@ func (us userService) AddContact(ctx context.Context, logger *zap.Logger, userID
 	// send confirmation email
 	// TODO: convert this email into a template...
 	to := []string{contact.Principal}
-	err = us.emailService.SendPlainTextEmail(ctx, logger, to, "contact confirmation link", confirmationToken.Value)
+	err = us.emailService.SendPlainTextEmail(ctx, logger, to, constants.NoReplyEmailAddress, "contact confirmation link", confirmationToken.Value)
 	if err != nil {
 		evtString := "failed to send contact confirmation notification error occurred"
 		logger.Error(evtString, zap.Reflect("error", err))

@@ -12,6 +12,7 @@ import (
 	repo "github.com/calvine/goauth/core/repositories"
 	coreservices "github.com/calvine/goauth/core/services"
 	"github.com/calvine/goauth/core/utilities"
+	"github.com/calvine/goauth/internal/constants"
 	"github.com/calvine/richerror/errors"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -180,7 +181,7 @@ func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, l
 	case core.CONTACT_TYPE_EMAIL:
 		// TODO: create template for this...
 		body := fmt.Sprintf("A Password reset has been initiated. Your password reset token is: %s", token.Value)
-		err = ls.emailService.SendPlainTextEmail(ctx, logger, []string{contact.Principal}, "Password reset", body)
+		err = ls.emailService.SendPlainTextEmail(ctx, logger, []string{contact.Principal}, constants.NoReplyEmailAddress, "Password reset", body)
 		if err != nil {
 			evtString := "failed to send password reset notification error occurred"
 			logger.Error(evtString, zap.Reflect("error", err))

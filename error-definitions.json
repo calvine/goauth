@@ -423,5 +423,28 @@
             { "name": "cause", "dataType": "error" },
             { "name": "transactionAbortError", "dataType": "error" }
         ]
-    }    
+    },  
+    {
+        "code": "InvalidSMTPEmailOptions",
+        "message": "smtp options provided are invalid",
+        "tags": [
+            "email",
+            "smtp"
+        ],
+        "includeMap": true,
+        "metaData": [
+            { "name": "reason", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "FailedToSendEmail",
+        "message": "failed to send email message",
+        "tags": [
+            "email"
+        ],
+        "includeMap": true,
+        "metaData": [
+            { "name": "cause", "dataType": "error" }
+        ]
+    }   
 ]

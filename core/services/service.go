@@ -89,7 +89,7 @@ type AppService interface {
 
 type EmailService interface {
 	// SendPlainTextEmail sends a plain text email.
-	SendPlainTextEmail(ctx context.Context, logger *zap.Logger, to []string, subject, body string) errors.RichError
+	SendPlainTextEmail(ctx context.Context, logger *zap.Logger, to []string, from, subject, body string) errors.RichError
 
 	Service
 }
