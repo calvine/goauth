@@ -150,7 +150,7 @@ func run() error {
 	// TODO: set this up from configuration
 	smtpEmailServiceOptions := service.SMTPEmailServiceOptions{
 		Host: "localhost",
-		Port: "1029",
+		Port: "1025",
 	}
 	emailService, err := service.NewEmailService(service.SMTPEmailService, smtpEmailServiceOptions)
 	if err != nil {

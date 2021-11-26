@@ -37,7 +37,6 @@ func (hh *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hh *server) BuildRoutes() {
-	// FIXME: multiple request ids are getting attached to the logger...
 	hh.Mux.Use(
 		// middleware.Recoverer,
 		mymiddleware.InitializeRequest(hh.logger),

@@ -5,6 +5,9 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "env": {
+                "GODEBUG=": "x509ignoreCN=0"
+            },
             "name": "Launch main.go",
             "type": "go",
             "request": "launch",

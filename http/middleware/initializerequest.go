@@ -17,14 +17,11 @@ func InitializeRequest(logger *zap.Logger) func(next http.Handler) http.Handler 
 			ctx := r.Context()
 			requestID := r.Header.Get(RequestIDHeader)
 			if requestID == "" {
-				// myid := atomic.AddUint64(&reqid, 1)
-				// requestID = fmt.Sprintf("%s-%06d", prefix, myid)
 				requestID = uuid.Must(uuid.NewRandom()).String()
 			}
-			logger = logger.With(
+			ctx = ctxpropagation.SetLoggerForContext(ctx, logger.With(
 				zap.String("http_request_id", requestID),
-			)
-			ctx = ctxpropagation.SetLoggerForContext(ctx, logger)
+			))
 			ctx = ctxpropagation.SetRequestIDForContext(ctx, requestID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}
