@@ -5,6 +5,7 @@ import (
 
 	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/models"
+	"github.com/calvine/goauth/core/models/email"
 	"github.com/calvine/richerror/errors"
 	"go.uber.org/zap"
 )
@@ -89,7 +90,7 @@ type AppService interface {
 
 type EmailService interface {
 	// SendPlainTextEmail sends a plain text email.
-	SendPlainTextEmail(ctx context.Context, logger *zap.Logger, to []string, from, subject, body string) errors.RichError
+	SendPlainTextEmail(ctx context.Context, logger *zap.Logger, message email.EmailMessage) errors.RichError
 
 	Service
 }

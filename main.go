@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"path"
 	"time"
 
 	"github.com/calvine/goauth/core/utilities"
@@ -148,11 +149,10 @@ func run() error {
 
 	tokenService := service.NewTokenService(tokenRepo)
 	// TODO: set this up from configuration
-	smtpEmailServiceOptions := service.SMTPEmailServiceOptions{
-		Host: "localhost",
-		Port: "1025",
+	fsEmailServiceOptions := service.FSEmailServiceOptions{
+		MessageDir: path.Join(".", "test_emails"),
 	}
-	emailService, err := service.NewEmailService(service.SMTPEmailService, smtpEmailServiceOptions)
+	emailService, err := service.NewEmailService(service.FSEmailService, fsEmailServiceOptions)
 	if err != nil {
 		return err
 	}

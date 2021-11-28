@@ -8,6 +8,7 @@ import (
 	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
+	"github.com/calvine/goauth/core/models/email"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/core/services"
 	"github.com/calvine/goauth/internal/constants"
@@ -123,8 +124,13 @@ func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger 
 	}
 	// send confirmation email
 	// TODO: convert this email into a template...
-	to := []string{contactPrincipal}
-	err = us.emailService.SendPlainTextEmail(ctx, logger, to, constants.NoReplyEmailAddress, "contact confirmation link", confirmationToken.Value)
+	emailMessage := email.EmailMessage{
+		From:    constants.NoReplyEmailAddress,
+		To:      []string{contactPrincipal},
+		Subject: "contact confirmation link",
+		Body:    confirmationToken.Value,
+	}
+	err = us.emailService.SendPlainTextEmail(ctx, logger, emailMessage)
 	if err != nil {
 		evtString := "failed to send contact confirmation notification error occurred"
 		logger.Error(evtString, zap.Reflect("error", err))
@@ -302,8 +308,13 @@ func (us userService) AddContact(ctx context.Context, logger *zap.Logger, userID
 	}
 	// send confirmation email
 	// TODO: convert this email into a template...
-	to := []string{contact.Principal}
-	err = us.emailService.SendPlainTextEmail(ctx, logger, to, constants.NoReplyEmailAddress, "contact confirmation link", confirmationToken.Value)
+	emailMessage := email.EmailMessage{
+		From:    constants.NoReplyEmailAddress,
+		To:      []string{contact.Principal},
+		Subject: "contact confirmation link",
+		Body:    confirmationToken.Value,
+	}
+	err = us.emailService.SendPlainTextEmail(ctx, logger, emailMessage)
 	if err != nil {
 		evtString := "failed to send contact confirmation notification error occurred"
 		logger.Error(evtString, zap.Reflect("error", err))

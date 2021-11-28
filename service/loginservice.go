@@ -9,6 +9,7 @@ import (
 	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
+	"github.com/calvine/goauth/core/models/email"
 	repo "github.com/calvine/goauth/core/repositories"
 	coreservices "github.com/calvine/goauth/core/services"
 	"github.com/calvine/goauth/core/utilities"
@@ -181,7 +182,13 @@ func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, l
 	case core.CONTACT_TYPE_EMAIL:
 		// TODO: create template for this...
 		body := fmt.Sprintf("A Password reset has been initiated. Your password reset token is: %s", token.Value)
-		err = ls.emailService.SendPlainTextEmail(ctx, logger, []string{contact.Principal}, constants.NoReplyEmailAddress, "Password reset", body)
+		emailMessage := email.EmailMessage{
+			From:    constants.NoReplyEmailAddress,
+			To:      []string{contact.Principal},
+			Subject: "Password reset",
+			Body:    body,
+		}
+		err = ls.emailService.SendPlainTextEmail(ctx, logger, emailMessage)
 		if err != nil {
 			evtString := "failed to send password reset notification error occurred"
 			logger.Error(evtString, zap.Reflect("error", err))
