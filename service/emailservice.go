@@ -157,7 +157,7 @@ func (fsEmailService) GetName() string {
 func (ses *fsEmailService) SendPlainTextEmail(ctx context.Context, logger *zap.Logger, message email.EmailMessage) errors.RichError {
 	messageFileName := fmt.Sprintf("%d_%s.json", time.Now().Unix(), message.Subject)
 	filePath := path.Join(ses.messageDir, messageFileName)
-	fileData, err := json.Marshal(message)
+	fileData, err := json.MarshalIndent(message, "", "    ")
 	if err != nil {
 		rErr := coreerrors.NewFailedToSendEmailError(err, nil, true)
 		return rErr
