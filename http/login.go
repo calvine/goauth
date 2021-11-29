@@ -1,7 +1,6 @@
 package http
 
 import (
-	"html/template"
 	"net/http"
 	"sync"
 
@@ -14,22 +13,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// FIXME: add proper error handling like in register file
 func (s *server) handleLoginGet() http.HandlerFunc {
 	var (
-		once          sync.Once
-		loginTemplate *template.Template
-		templateErr   error
-		templatePath  string = "http/templates/login.html.tmpl"
+		once        sync.Once
+		templateErr error
 	)
 	type requestData struct {
 		CSRFToken string
 	}
 	return func(rw http.ResponseWriter, r *http.Request) {
 		once.Do(func() {
-			templateFileData, err := s.templateFS.ReadFile(templatePath)
-			templateErr = err
-			if templateErr == nil {
-				loginTemplate, templateErr = template.New("loginPage").Parse(string(templateFileData))
+			if loginPageTemplate == nil {
+				loginPageTemplate, templateErr = parseTemplateFromEmbedFS(loginPageTemplatePath, loginPageName, s.templateFS)
 			}
 		})
 		if templateErr != nil {
@@ -52,10 +48,10 @@ func (s *server) handleLoginGet() http.HandlerFunc {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		templateRenderError := loginTemplate.Execute(rw, requestData{token.Value})
+		templateRenderError := loginPageTemplate.Execute(rw, requestData{token.Value})
 		if templateRenderError != nil {
 			span.RecordError(err)
-			err = coreerrors.NewFailedTemplateRenderError(templatePath, templateRenderError, true)
+			err = coreerrors.NewFailedTemplateRenderError(loginPageName, templateRenderError, true)
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
