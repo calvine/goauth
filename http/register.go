@@ -1,7 +1,6 @@
 package http
 
 import (
-	"html/template"
 	"net/http"
 	"sync"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/utilities/ctxpropagation"
 	"github.com/calvine/goauth/http/internal/constants"
+	"github.com/calvine/richerror/errors"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
@@ -24,10 +24,8 @@ type registerRequestData struct {
 
 func (s *server) handleRegisterGet() http.HandlerFunc {
 	var (
-		once             sync.Once
-		registerTemplate *template.Template
-		templateErr      error
-		templatePath     string = "http/templates/register.html.tmpl"
+		once        sync.Once
+		templateErr errors.RichError
 	)
 	return func(rw http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -35,18 +33,15 @@ func (s *server) handleRegisterGet() http.HandlerFunc {
 		span := trace.SpanFromContext(ctx)
 		defer span.End()
 		once.Do(func() {
-			templateFileData, err := s.templateFS.ReadFile(templatePath)
-			templateErr = err
-			if templateErr == nil {
-				registerTemplate, templateErr = template.New("registerPage").Parse(string(templateFileData))
+			if registerPageTemplate == nil {
+				registerPageTemplate, templateErr = parseTemplateFromEmbedFS(registerPageTemplatePath, registerPageName, s.templateFS)
 			}
 		})
 		if templateErr != nil {
-			err := coreerrors.NewFailedTemplateParseError(templatePath, templateErr, true)
 			errorMsg := "initial parsing of template failed"
-			logger.Error(errorMsg, zap.Reflect("error", err))
-			apptelemetry.SetSpanError(&span, err, errorMsg)
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			logger.Error(errorMsg, zap.Reflect("error", templateErr))
+			apptelemetry.SetSpanError(&span, templateErr, errorMsg)
+			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			return
 		}
 		// TODO: make CSRF token life span configurable
@@ -57,7 +52,7 @@ func (s *server) handleRegisterGet() http.HandlerFunc {
 				zap.Reflect("error", err),
 			)
 			apptelemetry.SetSpanError(&span, err, errorMsg)
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			return
 		}
 		err = s.tokenService.PutToken(ctx, logger, token)
@@ -68,22 +63,22 @@ func (s *server) handleRegisterGet() http.HandlerFunc {
 			)
 			apptelemetry.SetSpanError(&span, err, errorMsg)
 			span.RecordError(err)
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			return
 		}
-		templateRenderError := registerTemplate.Execute(rw, registerRequestData{
+		templateRenderError := registerPageTemplate.Execute(rw, registerRequestData{
 			CSRFToken:       token.Value,
 			HasErrorMessage: false,
 		})
 		if templateRenderError != nil {
 			// TODO: redirect to error page to avoid partial rendered page showing
 			errorMsg := "failed to render page template"
-			err = coreerrors.NewFailedTemplateRenderError(templatePath, templateRenderError, true)
+			err = coreerrors.NewFailedTemplateRenderError(registerPageName, templateRenderError, true)
 			logger.Error(errorMsg,
 				zap.Reflect("error", err),
 			)
 			apptelemetry.SetSpanError(&span, err, errorMsg)
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -91,12 +86,8 @@ func (s *server) handleRegisterGet() http.HandlerFunc {
 
 func (s *server) handleRegisterPost() http.HandlerFunc {
 	var (
-		once                          sync.Once
-		registerTemplate              *template.Template
-		accountRegisteredTemplate     *template.Template
-		templateErr                   error
-		templateRegisterPath          string = "http/templates/register.html.tmpl"
-		templateAccountRegisteredPath string = "http/templates/accountregistered.html.tmpl"
+		once        sync.Once
+		templateErr errors.RichError
 	)
 	type accountRegisteredTemplateData struct {
 		ContactType      string
@@ -108,27 +99,21 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 		span := trace.SpanFromContext(ctx)
 		defer span.End()
 		once.Do(func() {
-			templateFileData, err := s.templateFS.ReadFile(templateRegisterPath)
-			templateErr = err
-			if templateErr == nil {
-				registerTemplate, templateErr = template.New("registerPage").Parse(string(templateFileData))
-				if templateErr != nil {
-					return
-				}
+			if registerPageTemplate == nil {
+				registerPageTemplate, templateErr = parseTemplateFromEmbedFS(registerPageTemplatePath, registerPageName, s.templateFS)
 			}
-			// parse account registered template
-			templateFileData, err = s.templateFS.ReadFile(templateAccountRegisteredPath)
-			templateErr = err
-			if templateErr == nil {
-				accountRegisteredTemplate, templateErr = template.New("registerPage").Parse(string(templateFileData))
+			if templateErr != nil {
+				return
+			}
+			if accountRegisteredPageTemplate == nil {
+				accountRegisteredPageTemplate, templateErr = parseTemplateFromEmbedFS(accountRegisteredPageTemplatePath, accountRegisteredPageName, s.templateFS)
 			}
 		})
 		if templateErr != nil {
-			err := coreerrors.NewFailedTemplateParseError(templateRegisterPath, templateErr, true)
 			errorMsg := "initial parsing of template failed"
-			logger.Error(errorMsg, zap.Reflect("error", err))
-			apptelemetry.SetSpanError(&span, err, errorMsg)
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			logger.Error(errorMsg, zap.Reflect("error", templateErr))
+			apptelemetry.SetSpanError(&span, templateErr, errorMsg)
+			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			return
 		}
 		var errorMsg string
@@ -178,14 +163,14 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 				ContactType:      contactType,
 				ContactPrincipal: principal,
 			}
-			templateRenderError = accountRegisteredTemplate.Execute(rw, accountRegisteredData)
+			templateRenderError = accountRegisteredPageTemplate.Execute(rw, accountRegisteredData)
 			if templateRenderError != nil {
 				// FIXME: redirect to error page to avoid partial rendered page showing
 				errorMsg = "failed to render template with data provided"
-				err = coreerrors.NewFailedTemplateRenderError(templateRegisterPath, templateRenderError, true)
+				err = coreerrors.NewFailedTemplateRenderError(accountRegisteredPageName, templateRenderError, true)
 				logger.Error(errorMsg, zap.Reflect("error", err), zap.Any("templateData", accountRegisteredData))
 				apptelemetry.SetSpanError(&span, err, errorMsg)
-				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			}
 			return
 		}
@@ -196,7 +181,7 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 			errorMsg = "failed to create new CSRF token for page"
 			logger.Error(errorMsg, zap.Reflect("error", err))
 			apptelemetry.SetSpanError(&span, err, errorMsg)
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			return
 		}
 		err = s.tokenService.PutToken(ctx, logger, token)
@@ -204,7 +189,7 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 			errorMsg = "failed to store new CSRF token for page"
 			logger.Error(errorMsg, zap.Reflect("error", err))
 			apptelemetry.SetSpanError(&span, err, errorMsg)
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			return
 		}
 
@@ -214,14 +199,14 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 			ErrorMsg:        errorMsg,
 			Principal:       principal,
 		}
-		templateRenderError = registerTemplate.Execute(rw, templateData)
+		templateRenderError = registerPageTemplate.Execute(rw, templateData)
 		if templateRenderError != nil {
 			// FIXME: redirect to error page to avoid partial rendered page showing
 			errorMsg = "failed to render template with data provided"
-			err = coreerrors.NewFailedTemplateRenderError(templateRegisterPath, templateRenderError, true)
+			err = coreerrors.NewFailedTemplateRenderError(registerPageName, templateRenderError, true)
 			logger.Error(errorMsg, zap.Reflect("error", err), zap.Any("templateData", templateData))
 			apptelemetry.SetSpanError(&span, err, errorMsg)
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			return
 		}
 	}

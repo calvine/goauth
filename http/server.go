@@ -16,6 +16,27 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	authPageTemplate              *template.Template
+	errorPageTemplate             *template.Template
+	loginPageTemplate             *template.Template
+	registerPageTemplate          *template.Template
+	accountRegisteredPageTemplate *template.Template
+)
+
+const (
+	authPageName                      = "auth"
+	authPageTemplatePath              = "http/templates/auth.html.tmpl"
+	errorPageName                     = "error"
+	errorPageTemplatePath             = "http/templates/error.html.tmpl"
+	loginPageName                     = "login"
+	loginPageTemplatePath             = "http/templates/login.html.tmpl"
+	registerPageName                  = "register"
+	registerPageTemplatePath          = "http/templates/register.html.tmpl"
+	accountRegisteredPageName         = "accountRegistered"
+	accountRegisteredPageTemplatePath = "http/templates/accountregistered.html.tmpl"
+)
+
 type server struct {
 	logger       *zap.Logger
 	loginService services.LoginService
@@ -34,6 +55,36 @@ func NewServer(logger *zap.Logger, loginService services.LoginService, userServi
 
 func (hh *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hh.Mux.ServeHTTP(w, r)
+}
+
+func (hh *server) ParseTemplates() errors.RichError {
+	var rErr errors.RichError
+	// parse auth page template
+	authPageTemplate, rErr = parseTemplateFromEmbedFS(authPageTemplatePath, authPageName, hh.templateFS)
+	if rErr != nil {
+		return rErr
+	}
+	// parse error page template
+	errorPageTemplate, rErr = parseTemplateFromEmbedFS(errorPageTemplatePath, errorPageName, hh.templateFS)
+	if rErr != nil {
+		return rErr
+	}
+	// parse login page template
+	loginPageTemplate, rErr = parseTemplateFromEmbedFS(loginPageTemplatePath, loginPageName, hh.templateFS)
+	if rErr != nil {
+		return rErr
+	}
+	// parse register page template
+	registerPageTemplate, rErr = parseTemplateFromEmbedFS(registerPageTemplatePath, registerPageName, hh.templateFS)
+	if rErr != nil {
+		return rErr
+	}
+	// parse accountregistered page template
+	accountRegisteredPageTemplate, rErr = parseTemplateFromEmbedFS(accountRegisteredPageTemplatePath, accountRegisteredPageName, hh.templateFS)
+	if rErr != nil {
+		return rErr
+	}
+	return nil
 }
 
 func (hh *server) BuildRoutes() {
