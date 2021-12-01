@@ -5,10 +5,10 @@ import (
 	"sync"
 
 	"github.com/calvine/goauth/core"
+	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
-	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/utilities/ctxpropagation"
-	"github.com/calvine/goauth/http/internal/constants"
+	"github.com/calvine/goauth/http/internal/viewmodels"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
@@ -19,10 +19,11 @@ func (s *server) handleLoginGet() http.HandlerFunc {
 		once        sync.Once
 		templateErr error
 	)
-	type requestData struct {
-		CSRFToken string
-	}
 	return func(rw http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		logger := ctxpropagation.GetLoggerFromContext(ctx)
+		span := trace.SpanFromContext(ctx)
+		defer span.End()
 		once.Do(func() {
 			if loginPageTemplate == nil {
 				loginPageTemplate, templateErr = parseTemplateFromEmbedFS(loginPageTemplatePath, loginPageName, s.templateFS)
@@ -33,22 +34,16 @@ func (s *server) handleLoginGet() http.HandlerFunc {
 			return
 		}
 		// TODO: make CSRF token life span configurable
-		ctx := r.Context()
-		logger := ctxpropagation.GetLoggerFromContext(ctx)
-		span := trace.SpanFromContext(ctx)
-		token, err := models.NewToken("", models.TokenTypeCSRF, constants.Default_CSRF_Token_Duration)
+		token, err := s.getNewSCRFToken(ctx, logger)
 		if err != nil {
-			span.RecordError(err)
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			errorMsg := "failed to create new CSRF token"
+			apptelemetry.SetSpanError(&span, err, errorMsg)
+			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			return
 		}
-		err = s.tokenService.PutToken(ctx, logger, token)
-		if err != nil {
-			span.RecordError(err)
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		templateRenderError := loginPageTemplate.Execute(rw, requestData{token.Value})
+		templateRenderError := loginPageTemplate.Execute(rw, viewmodels.LoginTemplateData{
+			CSRF: token.Value,
+		})
 		if templateRenderError != nil {
 			span.RecordError(err)
 			err = coreerrors.NewFailedTemplateRenderError(loginPageName, templateRenderError, true)
@@ -71,28 +66,34 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 		Password  string
 	}
 	return func(rw http.ResponseWriter, r *http.Request) {
-		data := requestData{}
 		ctx := r.Context()
 		logger := ctxpropagation.GetLoggerFromContext(ctx)
+		span := trace.SpanFromContext(ctx)
+		defer span.End()
+		data := requestData{}
 		data.CSRFToken = r.FormValue("csrf_token")
 		data.Email = r.FormValue("email")
 		data.Password = r.FormValue("password")
 
-		_, err := s.tokenService.GetToken(ctx, logger, data.CSRFToken, models.TokenTypeCSRF)
+		_, err := s.retreiveCSRFToken(ctx, logger, data.CSRFToken)
 		if err != nil {
-			http.Error(rw, err.GetErrorMessage(), http.StatusBadRequest)
+			errorMsg := "failed to retreive CSRF token"
+			logger.Error(errorMsg, zap.Reflect("error", err))
+			apptelemetry.SetSpanError(&span, err, errorMsg)
+			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			return
-		}
-		err = s.tokenService.DeleteToken(ctx, logger, data.CSRFToken)
-		if err != nil {
-			logger.Warn("unable to delete CSRF token from data store", zap.Reflect("error", err))
-			// uh of the token was not deleted! need to log this...
 		}
 		_, err = s.loginService.LoginWithPrimaryContact(ctx, s.logger, data.Email, core.CONTACT_TYPE_EMAIL, data.Password, "login post handler")
 		if err != nil {
+			// TODO: add switch case here to set error message and re render login page for certain error messages
+			errorMsg := "login attempt failed"
+			logger.Error(errorMsg, zap.Reflect("error", err))
+			apptelemetry.SetSpanError(&span, err, errorMsg)
+			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			http.Error(rw, err.GetErrorMessage(), http.StatusUnauthorized)
 			return
 		}
+		// TODO: finish the login code...
 		rw.Header().Add("test-header", "JWT")
 		http.Redirect(rw, r, "/static/hooray.html", http.StatusFound)
 	}

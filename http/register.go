@@ -9,18 +9,11 @@ import (
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/utilities/ctxpropagation"
-	"github.com/calvine/goauth/http/internal/constants"
+	"github.com/calvine/goauth/http/internal/viewmodels"
 	"github.com/calvine/richerror/errors"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
-
-type registerRequestData struct {
-	Principal       string
-	CSRFToken       string
-	ErrorMsg        string
-	HasErrorMessage bool
-}
 
 func (s *server) handleRegisterGet() http.HandlerFunc {
 	var (
@@ -44,29 +37,14 @@ func (s *server) handleRegisterGet() http.HandlerFunc {
 			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			return
 		}
-		// TODO: make CSRF token life span configurable
-		token, err := models.NewToken("", models.TokenTypeCSRF, constants.Default_CSRF_Token_Duration)
+		token, err := s.getNewSCRFToken(ctx, logger)
 		if err != nil {
-			errorMsg := "failed to create new csrf token"
-			logger.Error(errorMsg,
-				zap.Reflect("error", err),
-			)
+			errorMsg := "failed to create new CSRF token"
 			apptelemetry.SetSpanError(&span, err, errorMsg)
 			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			return
 		}
-		err = s.tokenService.PutToken(ctx, logger, token)
-		if err != nil {
-			errorMsg := "failed to store new CSRF token"
-			logger.Error(errorMsg,
-				zap.Reflect("error", err),
-			)
-			apptelemetry.SetSpanError(&span, err, errorMsg)
-			span.RecordError(err)
-			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
-			return
-		}
-		templateRenderError := registerPageTemplate.Execute(rw, registerRequestData{
+		templateRenderError := registerPageTemplate.Execute(rw, viewmodels.RegisterTemplateData{
 			CSRFToken:       token.Value,
 			HasErrorMessage: false,
 		})
@@ -89,10 +67,6 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 		once        sync.Once
 		templateErr errors.RichError
 	)
-	type accountRegisteredTemplateData struct {
-		ContactType      string
-		ContactPrincipal string
-	}
 	return func(rw http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		logger := ctxpropagation.GetLoggerFromContext(ctx)
@@ -159,7 +133,7 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 		} else {
 			// FIXME: redirect to page rather than rendre template...
 			// on success code here...
-			accountRegisteredData := accountRegisteredTemplateData{
+			accountRegisteredData := viewmodels.AccountRegisteredTemplateData{
 				ContactType:      contactType,
 				ContactPrincipal: principal,
 			}
@@ -174,26 +148,16 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 			}
 			return
 		}
-	RenderTemplateWithError: // We should only land here
-		// TODO: make CSRF token life span configurable
-		token, err := models.NewToken("", models.TokenTypeCSRF, constants.Default_CSRF_Token_Duration)
+	RenderTemplateWithError: // We should only land here if an error occurred that should be forwarded to the client
+		token, err := s.getNewSCRFToken(ctx, logger)
 		if err != nil {
-			errorMsg = "failed to create new CSRF token for page"
-			logger.Error(errorMsg, zap.Reflect("error", err))
-			apptelemetry.SetSpanError(&span, err, errorMsg)
-			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
-			return
-		}
-		err = s.tokenService.PutToken(ctx, logger, token)
-		if err != nil {
-			errorMsg = "failed to store new CSRF token for page"
-			logger.Error(errorMsg, zap.Reflect("error", err))
+			errorMsg := "failed to create new CSRF token"
 			apptelemetry.SetSpanError(&span, err, errorMsg)
 			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			return
 		}
 
-		templateData := registerRequestData{
+		templateData := viewmodels.RegisterTemplateData{
 			CSRFToken:       token.Value,
 			HasErrorMessage: errorMsg != "",
 			ErrorMsg:        errorMsg,
@@ -201,7 +165,6 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 		}
 		templateRenderError = registerPageTemplate.Execute(rw, templateData)
 		if templateRenderError != nil {
-			// FIXME: redirect to error page to avoid partial rendered page showing
 			errorMsg = "failed to render template with data provided"
 			err = coreerrors.NewFailedTemplateRenderError(registerPageName, templateRenderError, true)
 			logger.Error(errorMsg, zap.Reflect("error", err), zap.Any("templateData", templateData))

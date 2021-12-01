@@ -17,24 +17,27 @@ import (
 )
 
 var (
+	accountRegisteredPageTemplate *template.Template
 	authPageTemplate              *template.Template
 	errorPageTemplate             *template.Template
 	loginPageTemplate             *template.Template
+	redirectPageTemplate          *template.Template
 	registerPageTemplate          *template.Template
-	accountRegisteredPageTemplate *template.Template
 )
 
 const (
+	accountRegisteredPageName         = "accountRegistered"
+	accountRegisteredPageTemplatePath = "http/templates/accountregistered.html.tmpl"
 	authPageName                      = "auth"
 	authPageTemplatePath              = "http/templates/auth.html.tmpl"
 	errorPageName                     = "error"
 	errorPageTemplatePath             = "http/templates/error.html.tmpl"
 	loginPageName                     = "login"
 	loginPageTemplatePath             = "http/templates/login.html.tmpl"
+	redirectPageName                  = "redirect"
+	redirectPageTemplatePath          = "http/templates/redirect.html.tmpl"
 	registerPageName                  = "register"
 	registerPageTemplatePath          = "http/templates/register.html.tmpl"
-	accountRegisteredPageName         = "accountRegistered"
-	accountRegisteredPageTemplatePath = "http/templates/accountregistered.html.tmpl"
 )
 
 type server struct {
@@ -59,6 +62,11 @@ func (hh *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (hh *server) ParseTemplates() errors.RichError {
 	var rErr errors.RichError
+	// parse accountregistered page template
+	accountRegisteredPageTemplate, rErr = parseTemplateFromEmbedFS(accountRegisteredPageTemplatePath, accountRegisteredPageName, hh.templateFS)
+	if rErr != nil {
+		return rErr
+	}
 	// parse auth page template
 	authPageTemplate, rErr = parseTemplateFromEmbedFS(authPageTemplatePath, authPageName, hh.templateFS)
 	if rErr != nil {
@@ -74,13 +82,13 @@ func (hh *server) ParseTemplates() errors.RichError {
 	if rErr != nil {
 		return rErr
 	}
-	// parse register page template
-	registerPageTemplate, rErr = parseTemplateFromEmbedFS(registerPageTemplatePath, registerPageName, hh.templateFS)
+	// parse redirect page template
+	redirectPageTemplate, rErr = parseTemplateFromEmbedFS(redirectPageTemplatePath, redirectPageName, hh.templateFS)
 	if rErr != nil {
 		return rErr
 	}
-	// parse accountregistered page template
-	accountRegisteredPageTemplate, rErr = parseTemplateFromEmbedFS(accountRegisteredPageTemplatePath, accountRegisteredPageName, hh.templateFS)
+	// parse register page template
+	registerPageTemplate, rErr = parseTemplateFromEmbedFS(registerPageTemplatePath, registerPageName, hh.templateFS)
 	if rErr != nil {
 		return rErr
 	}

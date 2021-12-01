@@ -13,7 +13,7 @@
     <main>
         <header>Register Account</header>
         <form method="POST">
-            <label>Email: <input type="email" name="principal" required value="{{ .Principal}}" /></label>
+            <label>Email: <input type="email" name="principal" required placeholder="email address" value="{{ .Principal}}" /></label>
             <section class="error_container">
                 {{ if .HasErrorMessage }}
                 <span>{{ .ErrorMsg }}</span>

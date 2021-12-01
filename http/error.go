@@ -7,15 +7,10 @@ import (
 
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/utilities/ctxpropagation"
+	"github.com/calvine/goauth/http/internal/viewmodels"
 	"github.com/calvine/richerror/errors"
 	"go.uber.org/zap"
 )
-
-type errorPageData struct {
-	ErrorMessage   string
-	RequestID      string
-	SupportContact string
-}
 
 var (
 	errorPageParseSync   sync.Once
@@ -28,8 +23,8 @@ func (hh *server) renderErrorPage(ctx context.Context, logger *zap.Logger, rw ht
 			errorPageTemplate, errorPageTemplateErr = parseTemplateFromEmbedFS(errorPageTemplatePath, errorPageName, hh.templateFS)
 		}
 	})
-	if errorPageTemplate != nil {
-		logger.Error("there was an error parsing the error page template", zap.Reflect("error", errorPageTemplate))
+	if errorPageTemplateErr != nil {
+		logger.Error("there was an error parsing the error page template", zap.Reflect("error", errorPageTemplateErr))
 		rw.WriteHeader(http.StatusInternalServerError)
 		rw.Write([]byte("FAILED TO PARSE ERROR PAGE TEMAPLTE!"))
 		return
@@ -37,7 +32,7 @@ func (hh *server) renderErrorPage(ctx context.Context, logger *zap.Logger, rw ht
 	if httpErrorCode > 0 {
 		rw.WriteHeader(httpErrorCode)
 	}
-	pageData := errorPageData{
+	pageData := viewmodels.ErrorTemplateData{
 		ErrorMessage:   errorMessage,
 		RequestID:      ctxpropagation.GetRequestIDFromContext(ctx),
 		SupportContact: "make_me_configurable@email.com",
