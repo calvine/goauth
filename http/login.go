@@ -8,7 +8,9 @@ import (
 	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/utilities/ctxpropagation"
+	"github.com/calvine/goauth/http/internal/constants"
 	"github.com/calvine/goauth/http/internal/viewmodels"
+	"github.com/calvine/richerror/errors"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
@@ -17,7 +19,7 @@ import (
 func (s *server) handleLoginGet() http.HandlerFunc {
 	var (
 		once        sync.Once
-		templateErr error
+		templateErr errors.RichError
 	)
 	return func(rw http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -30,6 +32,9 @@ func (s *server) handleLoginGet() http.HandlerFunc {
 			}
 		})
 		if templateErr != nil {
+			errorMsg := "initial parsing of template failed"
+			logger.Error(errorMsg, zap.Reflect("error", templateErr))
+			apptelemetry.SetSpanError(&span, templateErr, errorMsg)
 			http.Error(rw, templateErr.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -42,7 +47,7 @@ func (s *server) handleLoginGet() http.HandlerFunc {
 			return
 		}
 		templateRenderError := loginPageTemplate.Execute(rw, viewmodels.LoginTemplateData{
-			CSRF: token.Value,
+			CSRFToken: token.Value,
 		})
 		if templateRenderError != nil {
 			span.RecordError(err)
@@ -54,28 +59,32 @@ func (s *server) handleLoginGet() http.HandlerFunc {
 }
 
 func (s *server) handleLoginPost() http.HandlerFunc {
-	// var (
-	// 	once          sync.Once
-	// 	loginTemplate *template.Template
-	// 	templateErr   error
-	// 	templatePath  string = "http/templates/login.tmpl"
-	// )
-	type requestData struct {
-		CSRFToken string
-		Email     string
-		Password  string
-	}
+	var (
+		once        sync.Once
+		templateErr errors.RichError
+	)
 	return func(rw http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		logger := ctxpropagation.GetLoggerFromContext(ctx)
 		span := trace.SpanFromContext(ctx)
 		defer span.End()
-		data := requestData{}
-		data.CSRFToken = r.FormValue("csrf_token")
-		data.Email = r.FormValue("email")
-		data.Password = r.FormValue("password")
+		once.Do(func() {
+			if loginPageTemplate == nil {
+				loginPageTemplate, templateErr = parseTemplateFromEmbedFS(loginPageTemplatePath, loginPageName, s.templateFS)
+			}
+		})
+		if templateErr != nil {
+			errorMsg := "initial parsing of template failed"
+			logger.Error(errorMsg, zap.Reflect("error", templateErr))
+			apptelemetry.SetSpanError(&span, templateErr, errorMsg)
+			http.Error(rw, templateErr.Error(), http.StatusInternalServerError)
+			return
+		}
+		csrfToken := r.FormValue("csrf_token")
+		email := r.FormValue("email")
+		password := r.FormValue("password")
 
-		_, err := s.retreiveCSRFToken(ctx, logger, data.CSRFToken)
+		_, err := s.retreiveCSRFToken(ctx, logger, csrfToken)
 		if err != nil {
 			errorMsg := "failed to retreive CSRF token"
 			logger.Error(errorMsg, zap.Reflect("error", err))
@@ -83,18 +92,55 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 			return
 		}
-		_, err = s.loginService.LoginWithPrimaryContact(ctx, s.logger, data.Email, core.CONTACT_TYPE_EMAIL, data.Password, "login post handler")
+		_, err = s.loginService.LoginWithPrimaryContact(ctx, s.logger, email, core.CONTACT_TYPE_EMAIL, password, "login post handler")
 		if err != nil {
+			var errorMsg string
+			switch err.GetErrorCode() {
+			case coreerrors.ErrCodeLoginContactNotPrimary:
+			case coreerrors.ErrCodeLoginFailedWrongPassword:
+			case coreerrors.ErrCodeLoginPrimaryContactNotConfirmed:
+			case coreerrors.ErrCodeNoUserFound:
 			// TODO: add switch case here to set error message and re render login page for certain error messages
-			errorMsg := "login attempt failed"
+			default:
+				errorMsg = "login attempt failed"
+				logger.Error(errorMsg, zap.Reflect("error", err))
+				apptelemetry.SetSpanError(&span, err, errorMsg)
+				s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
+				return
+			}
 			logger.Error(errorMsg, zap.Reflect("error", err))
 			apptelemetry.SetSpanError(&span, err, errorMsg)
-			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
-			http.Error(rw, err.GetErrorMessage(), http.StatusUnauthorized)
+			newCSRFToken, err := s.getNewSCRFToken(ctx, logger)
+			if err != nil {
+				errorMsg := "failed to create new CSRF token"
+				apptelemetry.SetSpanError(&span, err, errorMsg)
+				s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
+				return
+			}
+			templateRenderError := loginPageTemplate.Execute(rw, viewmodels.LoginTemplateData{
+				CSRFToken:       newCSRFToken.Value,
+				Email:           email,
+				ErrorMsg:        errorMsg,
+				HasErrorMessage: true,
+				// Do Not Set Password!!!
+			})
+			if templateRenderError != nil {
+				span.RecordError(err)
+				err = coreerrors.NewFailedTemplateRenderError(loginPageName, templateRenderError, true)
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			return
 		}
 		// TODO: finish the login code...
-		rw.Header().Add("test-header", "JWT")
+		authCookie := http.Cookie{
+			Name: constants.LoginCookieName,
+			// TODO: make a lightweight jwt for this
+			Value:    "make a lightweight JWT for this I do not want to store a session id...",
+			Secure:   true,
+			HttpOnly: true,
+		}
+		http.SetCookie(rw, &authCookie)
 		http.Redirect(rw, r, "/static/hooray.html", http.StatusFound)
 	}
 }

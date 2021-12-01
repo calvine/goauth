@@ -12,6 +12,11 @@
     <form method="POST">
         <label>Email: <input type="email" name="email" required placeholder="email address" value="{{ .email }}" /></label>
         <label>Password: <input type="password" name="password" required placeholder="password" /></label>
+        <section class="error_container">
+            {{ if .HasErrorMessage }}
+            <span>{{ .ErrorMsg }}</span>
+            {{ end }}
+        </section>
         <input type="hidden" name="csrf_token" value="{{ .CSRFToken }}" />
         <input type="submit" value="Login" />
     </form>

@@ -1,6 +1,10 @@
 package viewmodels
 
 type LoginTemplateData struct {
-	CSRF  string
-	Email string
+	CallbackURL     string
+	CSRFToken       string
+	Email           string
+	HasErrorMessage bool
+	ErrorMsg        string
+	Password        string
 }
