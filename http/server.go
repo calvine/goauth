@@ -102,6 +102,10 @@ func (hh *server) BuildRoutes() {
 		middleware.Timeout(time.Second*60),
 		middleware.RealIP,
 	)
+	hh.Mux.Route("/error", func(r chi.Router) {
+		r.Use(middleware.NoCache)
+		r.Get("/", otelhttp.NewHandler(hh.handleErrorGet(), "GET /error").ServeHTTP)
+	})
 	hh.Mux.Route("/auth", func(r chi.Router) {
 		r.Use(middleware.NoCache)
 		r.Route("/login", func(r chi.Router) {
@@ -109,6 +113,10 @@ func (hh *server) BuildRoutes() {
 			r.Get("/", otelhttp.NewHandler(hh.handleLoginGet(), "GET /auth/login").ServeHTTP) //addTrace(hh.handleLoginGet(), "GET /auth/login"))
 			// this is the post target for the login page
 			r.Post("/", otelhttp.NewHandler(hh.handleLoginPost(), "POST /auth/login").ServeHTTP)
+		})
+		r.Route("/magiclogin", func(r chi.Router) {
+			// this is the route for magic login
+			r.Get("/", otelhttp.NewHandler(hh.handleMagicLoginGet(), "GET /auth/magiclogin").ServeHTTP)
 		})
 		r.Route("/resetpassword", func(r chi.Router) {
 			// this is the route for the password reset page
@@ -152,7 +160,7 @@ func parseTemplate(name string, templateString string) (*template.Template, erro
 	return template, nil
 }
 
-func renderTemplate(rw http.ResponseWriter, template template.Template, data interface{}) errors.RichError {
+func renderTemplate(rw http.ResponseWriter, template *template.Template, data interface{}) errors.RichError {
 	err := template.Execute(rw, data)
 	if err != nil {
 		rErr := coreerrors.NewFailedTemplateRenderError(template.Name(), err, true)

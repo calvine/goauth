@@ -7,6 +7,7 @@ import (
 	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/utilities/ctxpropagation"
 	"github.com/calvine/goauth/http/internal/constants"
 	"github.com/calvine/goauth/http/internal/viewmodels"
@@ -43,7 +44,8 @@ func (s *server) handleLoginGet() http.HandlerFunc {
 		if err != nil {
 			errorMsg := "failed to create new CSRF token"
 			apptelemetry.SetSpanError(&span, err, errorMsg)
-			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
+			// s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
+			redirectToErrorPage(rw, r, errorMsg, http.StatusInternalServerError)
 			return
 		}
 		templateRenderError := loginPageTemplate.Execute(rw, viewmodels.LoginTemplateData{
@@ -83,13 +85,15 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 		csrfToken := r.FormValue("csrf_token")
 		email := r.FormValue("email")
 		password := r.FormValue("password")
+		callback := r.URL.Query().Get("cb")
 
 		_, err := s.retreiveCSRFToken(ctx, logger, csrfToken)
 		if err != nil {
 			errorMsg := "failed to retreive CSRF token"
 			logger.Error(errorMsg, zap.Reflect("error", err))
 			apptelemetry.SetSpanError(&span, err, errorMsg)
-			s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
+			// s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
+			redirectToErrorPage(rw, r, errorMsg, http.StatusInternalServerError)
 			return
 		}
 		_, err = s.loginService.LoginWithPrimaryContact(ctx, s.logger, email, core.CONTACT_TYPE_EMAIL, password, "login post handler")
@@ -97,15 +101,20 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 			var errorMsg string
 			switch err.GetErrorCode() {
 			case coreerrors.ErrCodeLoginContactNotPrimary:
+				errorMsg = "no account found or incorrect password"
 			case coreerrors.ErrCodeLoginFailedWrongPassword:
+				errorMsg = "no account found or incorrect password"
 			case coreerrors.ErrCodeLoginPrimaryContactNotConfirmed:
+				errorMsg = "contact not confirmed"
+				// TODO: Should we show a send confirmation link when this is shown?
 			case coreerrors.ErrCodeNoUserFound:
-			// TODO: add switch case here to set error message and re render login page for certain error messages
+				errorMsg = "no account found or incorrect password"
 			default:
 				errorMsg = "login attempt failed"
 				logger.Error(errorMsg, zap.Reflect("error", err))
 				apptelemetry.SetSpanError(&span, err, errorMsg)
-				s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
+				// s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
+				redirectToErrorPage(rw, r, errorMsg, http.StatusInternalServerError)
 				return
 			}
 			logger.Error(errorMsg, zap.Reflect("error", err))
@@ -114,14 +123,14 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 			if err != nil {
 				errorMsg := "failed to create new CSRF token"
 				apptelemetry.SetSpanError(&span, err, errorMsg)
-				s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
+				redirectToErrorPage(rw, r, errorMsg, http.StatusInternalServerError)
+				// s.renderErrorPage(ctx, logger, rw, errorMsg, http.StatusInternalServerError)
 				return
 			}
 			templateRenderError := loginPageTemplate.Execute(rw, viewmodels.LoginTemplateData{
-				CSRFToken:       newCSRFToken.Value,
-				Email:           email,
-				ErrorMsg:        errorMsg,
-				HasErrorMessage: true,
+				CSRFToken: newCSRFToken.Value,
+				Email:     email,
+				ErrorMsg:  errorMsg,
 				// Do Not Set Password!!!
 			})
 			if templateRenderError != nil {
@@ -141,7 +150,61 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 			HttpOnly: true,
 		}
 		http.SetCookie(rw, &authCookie)
-		http.Redirect(rw, r, "/static/hooray.html", http.StatusFound)
+		if callback != "" {
+			http.Redirect(rw, r, callback, http.StatusFound)
+		} else {
+			http.Redirect(rw, r, "/static/hooray.html", http.StatusFound)
+		}
+	}
+}
+
+func (s *server) handleMagicLoginGet() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		logger := ctxpropagation.GetLoggerFromContext(ctx)
+		span := trace.SpanFromContext(ctx)
+		defer span.End()
+
+		q := r.URL.Query()
+		magicLoginToken := q.Get("m")
+		if magicLoginToken == "" {
+			// return bad request?
+			errorMsg := "no magic token provided"
+			err := coreerrors.NewNoMagicLoginTokenFoundError(true)
+			logger.Error(errorMsg, zap.Reflect("error", err))
+			apptelemetry.SetSpanOriginalError(&span, err, errorMsg)
+			redirectToErrorPage(rw, r, errorMsg, http.StatusBadRequest)
+			return
+		}
+		token, err := s.tokenService.GetToken(ctx, logger, magicLoginToken, models.TokenTypeMagicLogin)
+		if err != nil {
+			// return error based on error returned
+			var errorMsg string
+			switch err.GetErrorCode() {
+			default:
+				errorMsg = "an unexpected error occurred"
+			}
+			logger.Error(errorMsg, zap.Reflect("error", err))
+			apptelemetry.SetSpanError(&span, err, errorMsg)
+			redirectToErrorPage(rw, r, "token provided was not valid", http.StatusBadRequest)
+			return
+		}
+		userID := token.TargetID
+		if userID == "" {
+			// return bad request or not found?
+			errorMsg := "magic token not associated with a user"
+			err := coreerrors.NewMagicLoginTokenNoUserIDError(magicLoginToken, true)
+			logger.Error(errorMsg, zap.Reflect("error", err))
+			apptelemetry.SetSpanOriginalError(&span, err, errorMsg)
+			redirectToErrorPage(rw, r, "token provided was not valid", http.StatusBadRequest)
+			return
+		}
+		// login successfull?
+		_, err = s.userService.GetUser(ctx, logger, userID, "magic login")
+		if err != nil {
+			// return proper error based on error returned above
+		}
+		// TODO: create JWT and store cookie
 	}
 }
 

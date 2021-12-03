@@ -36,7 +36,7 @@ func NewEmailService(serviceType string, options interface{}) (coreServices.Emai
 		return noopEmailService{}, nil
 	case StackEmailService:
 		return newStackEmailService(), nil
-	case FSEmailService: // TODO: implement this...
+	case FSEmailService:
 		castOptions, ok := options.(FSEmailServiceOptions)
 		if !ok {
 			return nil, coreerrors.NewInvalidSMTPEmailOptionsError("failed to cast options to FSEmailServiceOptions", nil, true)

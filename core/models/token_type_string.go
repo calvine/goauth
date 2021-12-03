@@ -13,11 +13,12 @@ func _() {
 	_ = x[TokenTypeConfirmContact-2]
 	_ = x[TokenTypePasswordReset-3]
 	_ = x[TokenTypeSession-4]
+	_ = x[TokenTypeMagicLogin-5]
 }
 
-const _TokenType_name = "TokenTypeInvalidTokenTypeCSRFTokenTypeConfirmContactTokenTypePasswordResetTokenTypeSession"
+const _TokenType_name = "TokenTypeInvalidTokenTypeCSRFTokenTypeConfirmContactTokenTypePasswordResetTokenTypeSessionTokenTypeMagicLogin"
 
-var _TokenType_index = [...]uint8{0, 16, 29, 52, 74, 90}
+var _TokenType_index = [...]uint8{0, 16, 29, 52, 74, 90, 109}
 
 func (i TokenType) String() string {
 	if i < 0 || i >= TokenType(len(_TokenType_index)-1) {

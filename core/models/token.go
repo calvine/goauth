@@ -16,6 +16,7 @@ const (
 	TokenTypeConfirmContact
 	TokenTypePasswordReset
 	TokenTypeSession
+	TokenTypeMagicLogin
 )
 
 // Token is a temporary item that can be used as a shared secret like a password reset token or a confirm contact token. They can be tide to a target entity like a user to ensure they are consumed by the proper targets.

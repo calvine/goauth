@@ -41,6 +41,10 @@ func (us userService) GetName() string {
 	return "userService"
 }
 
+func (us userService) GetUser(ctx context.Context, logger *zap.Logger, userID string, initiator string) (models.User, errors.RichError) {
+	return models.User{}, coreerrors.NewNotImplementedError(true)
+}
+
 func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, logger *zap.Logger, contactType string, contactPrincipal string, initiator string) (models.User, models.Contact, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "GetUserAndContactByConfirmedContact")
 	defer span.End()

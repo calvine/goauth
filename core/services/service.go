@@ -29,6 +29,8 @@ type LoginService interface {
 
 // UserService is a service that facilitates access to user related data.
 type UserService interface {
+	// GetUser gets a user by user id
+	GetUser(ctx context.Context, logger *zap.Logger, userID string, initiator string) (models.User, errors.RichError)
 	// GetUserAndContactByConfirmedContact gets a user and specified contact record via a confirmed contact
 	GetUserAndContactByConfirmedContact(ctx context.Context, logger *zap.Logger, contactType string, contactPrincipal string, initiator string) (models.User, models.Contact, errors.RichError)
 	// RegisterUserAndPrimaryContact registers a new user. it has several responsibilities.

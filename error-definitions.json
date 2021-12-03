@@ -188,7 +188,8 @@
         "message": "contact for login is not a primary contact",
         "includeMap": false,
         "tags": [
-            "login"
+            "login",
+            "security"
         ],
         "metaData": [
             { "name": "contactId", "dataType": "string"},
@@ -201,7 +202,8 @@
         "message": "primary contact for login is not confirmed",
         "includeMap": false,
         "tags": [
-            "login"
+            "login",
+            "security"
         ],
         "metaData": [
             { "name": "contactId", "dataType": "string"},
@@ -214,7 +216,8 @@
         "message": "contact for password reset is not a primary contact",
         "includeMap": false,
         "tags": [
-            "login"
+            "login",
+            "security"
         ],
         "metaData": [
             { "name": "contactId", "dataType": "string"},
@@ -227,10 +230,45 @@
         "message": "attempted login by locked out user",
         "includeMap": false,
         "tags": [
-            "login"
+            "login",
+            "security"
         ],
         "metaData": [
             { "name": "userID", "dataType": "string"}
+        ]
+    },
+    {
+        "code": "LoginFailedWrongPassword",
+        "message": "login for user failed due to incorrect password",
+        "includeMap": false,
+        "tags": [
+            "login",
+            "security"
+        ],
+        "metaData": [
+            { "name": "userID", "dataType": "string"}
+        ]
+    },
+    {
+        "code": "NoMagicLoginTokenFound",
+        "message": "the magic login token was not found in the request",
+        "includeMap": false,
+        "tags": [
+            "login",
+            "security"
+        ],
+        "metaData": []
+    },
+    {
+        "code": "MagicLoginTokenNoUserID",
+        "message": "the magic login token was not tied to a user id",
+        "includeMap": false,
+        "tags": [
+            "login",
+            "security"
+        ],
+        "metaData": [
+            { "name": "tokenString", "dataType": "string" }
         ]
     },
     {
@@ -240,17 +278,6 @@
         "metaData": [
             { "name": "actual", "dataType": "string"},
             { "name": "expected", "dataType": "string"}
-        ]
-    },
-    {
-        "code": "LoginFailedWrongPassword",
-        "message": "login for user failed due to incorrect password",
-        "includeMap": false,
-        "tags": [
-            "security"
-        ],
-        "metaData": [
-            { "name": "userID", "dataType": "string"}
         ]
     },
     {

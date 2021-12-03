@@ -211,6 +211,35 @@ func _testUserServiceGetName(t *testing.T, userService services.UserService) {
 	}
 }
 
+func _testUserServiceGetUser(t *testing.T, userService services.UserService) {
+	logger := zaptest.NewLogger(t)
+	type testCase struct {
+		name              string
+		userID            string
+		expectedErrorCode string
+	}
+	testCases := []testCase{
+		{
+			name:   "GIVEN a valid user id EXPECT",
+			userID: "",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			user, err := userService.GetUser(context.TODO(), logger, tc.userID, userServiceTest_CreatedBy)
+			if err != nil {
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+			} else {
+				if user.ID != tc.userID {
+					t.Errorf("\tuser id did not match expected: got - %s expected - %s", user.ID, tc.userID)
+				}
+			}
+		})
+	}
+}
+
 func _testGetUserAndContactByConfirmedContact(t *testing.T, userService services.UserService) {
 	logger := zaptest.NewLogger(t)
 	type testCase struct {

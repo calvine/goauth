@@ -11,17 +11,20 @@
         <header>Uh oh... an error occurred</header>
         <section>
             <section>
+                <p>Error code: {{ .ErrorCode }}</p>
                 {{ if .ErrorMessage }}
                 <p>An error occurred: {{ .ErrorMessage }}</p>
                 {{ else }}
                 <p>An unexpected error occurred.</p>
                 {{ end }}
             </section>
-            {{ if .SupportContact }}
             <section>
+            {{ if .SupportContact }}
                 <p>If this continues to occurr please contact {{ .SupportContact }} with the request id {{ .RequestID }}</p>
-            </section>
+            {{ else }}
+                <p>Oops an internal server error occurred... Request id: {{ .RequestID }}</p>
             {{ end }}
+            </section>
         </section>
     </main>
 </body>

@@ -15,7 +15,7 @@
         <form method="POST">
             <label>Email: <input type="email" name="principal" required placeholder="email address" value="{{ .Principal}}" /></label>
             <section class="error_container">
-                {{ if .HasErrorMessage }}
+                {{ if .ErrorMsg }}
                 <span>{{ .ErrorMsg }}</span>
                 {{ end }}
             </section>

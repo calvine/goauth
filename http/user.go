@@ -45,8 +45,7 @@ func (s *server) handleConfirmContactGet() http.HandlerFunc {
 				zap.Reflect("error", err),
 			)
 			apptelemetry.SetSpanError(&span, err, errorMsg)
-			// FIXME: redirect to specific error page... or alternatively just render an error page template here.
-			http.Error(rw, errorMsg, errorCode)
+			redirectToErrorPage(rw, r, errorMsg, errorCode)
 			return
 		}
 		// TODO: success code here

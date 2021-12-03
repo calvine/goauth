@@ -12,7 +12,7 @@ const ErrCodeLoginPrimaryContactNotConfirmed = "LoginPrimaryContactNotConfirmed"
 // NewLoginPrimaryContactNotConfirmedError creates a new specific error
 func NewLoginPrimaryContactNotConfirmedError(contactId string, principal string, principalType string, includeStack bool) errors.RichError {
 	msg := "primary contact for login is not confirmed"
-	err := errors.NewRichError(ErrCodeLoginPrimaryContactNotConfirmed, msg).AddMetaData("contactId", contactId).AddMetaData("principal", principal).AddMetaData("principalType", principalType).WithTags([]string{"login"})
+	err := errors.NewRichError(ErrCodeLoginPrimaryContactNotConfirmed, msg).AddMetaData("contactId", contactId).AddMetaData("principal", principal).AddMetaData("principalType", principalType).WithTags([]string{"login", "security"})
 	if includeStack {
 		err = err.WithStack(1)
 	}
