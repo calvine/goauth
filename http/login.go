@@ -186,7 +186,7 @@ func (s *server) handleMagicLoginGet() http.HandlerFunc {
 			}
 			logger.Error(errorMsg, zap.Reflect("error", err))
 			apptelemetry.SetSpanError(&span, err, errorMsg)
-			redirectToErrorPage(rw, r, "token provided was not valid", http.StatusBadRequest)
+			redirectToErrorPage(rw, r, errorMsg, http.StatusBadRequest)
 			return
 		}
 		userID := token.TargetID
