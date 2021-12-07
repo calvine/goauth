@@ -33,6 +33,27 @@ type StandardClaims struct {
 	JWTID          string   `json:"jwi,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7
 }
 
+func (claims StandardClaims) ValidateClaims() errors.RichError {
+	if len(claims.Subject) == 0 {
+		// subject must be populated
+	}
+	now := time.Now()
+	exp := claims.ExpirationTime.Time()
+	if exp.Before(now) {
+		// token is expired
+	}
+	iat := claims.IssuedAt.Time()
+	if iat.After(now) {
+		// issued at is in the future some how...
+	}
+	nbf := claims.NotBefore.Time()
+	if nbf.Before(now) {
+		// token not before has not yet passed
+	}
+	// TODO: validate audience, issuer, and that jwt id is populated?
+	return nil
+}
+
 func splitEncodedJWT(encodedJWT string) ([]string, errors.RichError) {
 	parts := strings.Split(encodedJWT, ".")
 	if len(parts) != 3 {
@@ -80,25 +101,4 @@ func decodeBody(encodedBody string) (StandardClaims, errors.RichError) {
 		return body, err
 	}
 	return body, nil
-}
-
-func ValidateClaims(claims StandardClaims) errors.RichError {
-	if len(claims.Subject) == 0 {
-		// subject must be populated
-	}
-	now := time.Now()
-	exp := claims.ExpirationTime.Time()
-	if exp.Before(now) {
-		// token is expired
-	}
-	iat := claims.IssuedAt.Time()
-	if iat.After(now) {
-		// issued at is in the future some how...
-	}
-	nbf := claims.NotBefore.Time()
-	if nbf.Before(now) {
-		// token not before has not yet passed
-	}
-	// TODO: validate audience, issuer, and that jwt id is populated?
-	return nil
 }
