@@ -57,6 +57,10 @@ func TestUserService(t *testing.T) {
 		_testUserServiceGetName(t, userService)
 	})
 
+	t.Run("GetUser", func(t *testing.T) {
+		_testUserServiceGetUser(t, userService)
+	})
+
 	t.Run("GetUserAndContactByConfirmedContact", func(t *testing.T) {
 		_testGetUserAndContactByConfirmedContact(t, userService)
 	})
@@ -220,8 +224,13 @@ func _testUserServiceGetUser(t *testing.T, userService services.UserService) {
 	}
 	testCases := []testCase{
 		{
-			name:   "GIVEN a valid user id EXPECT",
-			userID: "",
+			name:   "GIVEN a valid user id EXPECT user to be returned",
+			userID: userServiceTest_ConfirmedUser.ID,
+		},
+		{
+			name:              "GIVEN a non existant user id EXPECT error code no user found",
+			userID:            "not-an-id", // TODO: need to have access to an id generator, so we can let this test work properly reguardless of the underlying data store used...
+			expectedErrorCode: coreerrors.ErrCodeNoUserFound,
 		},
 	}
 	for _, tc := range testCases {

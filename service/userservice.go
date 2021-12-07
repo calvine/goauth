@@ -42,7 +42,15 @@ func (us userService) GetName() string {
 }
 
 func (us userService) GetUser(ctx context.Context, logger *zap.Logger, userID string, initiator string) (models.User, errors.RichError) {
-	return models.User{}, coreerrors.NewNotImplementedError(true)
+	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "GetUser")
+	defer span.End()
+	user, err := us.userRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		logger.Error("userRepo.GetUserByID call failed", zap.Reflect("error", err))
+		apptelemetry.SetSpanError(&span, err, "")
+		return models.User{}, err
+	}
+	return user, err
 }
 
 func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, logger *zap.Logger, contactType string, contactPrincipal string, initiator string) (models.User, models.Contact, errors.RichError) {

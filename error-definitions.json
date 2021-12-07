@@ -272,6 +272,67 @@
         ]
     },
     {
+        "code": "JWTMalformed",
+        "message": "encoded jwt is malformed",
+        "includeMap": false,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": [
+            { "name": "message", "dataType": "string" },
+            { "name": "JWT", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "JWTMissingSignature",
+        "message": "jwt is missing a signature",
+        "includeMap": false,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": [
+            { "name": "JWT", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "JWTInvalidType",
+        "message": "jwt type is invalid",
+        "includeMap": true,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": [
+            { "name": "providedType", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "JWTAlgorithmInvalid",
+        "message": "jwt algorithm is invalid",
+        "includeMap": true,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": [
+            { "name": "providedAlgorithm", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "JWTSignatureInvalid",
+        "message": "jwt signature is invalid",
+        "includeMap": true,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": [
+            { "name": "JWT", "dataType": "string" }
+        ]
+    },
+    {
         "code": "WrongType",
         "message": "unexpected type encountered",
         "includeMap": false,
