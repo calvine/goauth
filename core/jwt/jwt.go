@@ -110,7 +110,7 @@ func (claims StandardClaims) Encode() (string, errors.RichError) {
 	return encodedClaims, nil
 }
 
-func calculateHMACSignature(secret string, encodedHeaderAndBody string, hashFunc func() hash.Hash) string {
+func CalculateHMACSignature(secret string, encodedHeaderAndBody string, hashFunc func() hash.Hash) string {
 	hmac := hmac.New(hashFunc, []byte(secret))
 	signatureBytes := hmac.Sum([]byte(encodedHeaderAndBody))
 	encodedSignature := base64.StdEncoding.EncodeToString(signatureBytes)
