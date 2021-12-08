@@ -309,15 +309,27 @@
         ]
     },
     {
-        "code": "JWTAlgorithmInvalid",
-        "message": "jwt algorithm is invalid",
-        "includeMap": true,
+        "code": "JWTAlgorithmNotAllowed",
+        "message": "jwt algorithm is not allowed",
+        "includeMap": false,
         "tags": [
             "security",
             "jwt"
         ],
         "metaData": [
-            { "name": "providedAlgorithm", "dataType": "string" }
+            { "name": "algorithm", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "JWTAlgorithmNotImplemented",
+        "message": "jwt algorithm is not implemented",
+        "includeMap": false,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": [
+            { "name": "algorithm", "dataType": "string" }
         ]
     },
     {
@@ -330,6 +342,83 @@
         ],
         "metaData": [
             { "name": "JWT", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "JWTMissingSubject",
+        "message": "jwt is missing subject",
+        "includeMap": true,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": []
+    },
+    {
+        "code": "JWTExipred",
+        "message": "jwt is expired",
+        "includeMap": true,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": [
+            { "name": "exp", "dataType": "time.Time", "importPath": "time" }
+        ]
+    },
+    {
+        "code": "JWTInvalidIssuedAt",
+        "message": "jwt issued at is invalid",
+        "includeMap": true,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": [
+            { "name": "iat", "dataType": "time.Time", "importPath": "time" }
+        ]
+    },
+    {
+        "code": "JWTNotBeforeInFuture",
+        "message": "jwt not before has not yet happened yet",
+        "includeMap": true,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": [
+            { "name": "nbf", "dataType": "time.Time", "importPath": "time" }
+        ]
+    },
+    {
+        "code": "JWTValidatorNoAlgorithmSpecified",
+        "message": "jwt validator has no algorithms specified",
+        "includeMap": false,
+        "tags": [
+            "config",
+            "jwt"
+        ],
+        "metaData": []
+    },
+    {
+        "code": "JWTValidatorNoHMACSecretProvided",
+        "message": "jwt validator allows HMAC algorithms but was not provided an HMAC secret",
+        "includeMap": false,
+        "tags": [
+            "config",
+            "jwt"
+        ],
+        "metaData": []
+    },
+    {
+        "code": "JWTEncodingFailed",
+        "message": "jwt encoding failed",
+        "includeMap": false,
+        "tags": [
+            "jwt"
+        ],
+        "metaData": [
+            { "name": "cause", "dataType": "error" }
         ]
     },
     {
