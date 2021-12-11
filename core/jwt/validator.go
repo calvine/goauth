@@ -4,14 +4,15 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 	"strings"
-	"time"
 
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/richerror/errors"
+	"github.com/google/uuid"
 )
 
 type JWTValidator interface {
-	ValidateHeader(header HeaderFields) ([]errors.RichError, bool)
+	GetID() string
+	ValidateHeader(header Header) ([]errors.RichError, bool)
 	ValidateClaims(claims StandardClaims) ([]errors.RichError, bool)
 	ValidateSignature(alg string, encodedHeaderAndBody string, signature string) (bool, errors.RichError)
 }
@@ -19,14 +20,16 @@ type JWTValidator interface {
 type jwtValidator struct {
 	id                string
 	allowedAlgorithms map[string]bool // These are maps to avoid having to loop to find matching items
+	issuerRequired    bool
 	expectedIssuer    string
-	allowedAudience   map[string]bool // These are maps to avoid having to loop to find matching items
 	audienceRequired  bool
+	allowAnyAudience  bool
+	allowedAudience   map[string]bool // These are maps to avoid having to loop to find matching items
 	expireRequired    bool
 	issuedAtRequired  bool
 	notBeforeRequired bool
 	subjectRequired   bool
-	jwiRequired       bool
+	jtiRequired       bool
 	hmacSecret        string
 	// TODO: add public private key stuff for additional validation
 }
@@ -34,32 +37,40 @@ type jwtValidator struct {
 type JWTValidatorOptions struct {
 	ID                string
 	AllowedAlgorithms []string
+	IssuerRequired    bool
 	ExpectedIssuer    string
-	AllowedAudience   []string
 	AudienceRequired  bool
+	AllowAnyAudience  bool
+	AllowedAudience   []string
 	ExpireRequired    bool
 	IssuedAtRequired  bool
 	NotBeforeRequired bool
 	SubjectRequired   bool
-	JWIRequired       bool
+	JTIRequired       bool
 	HMACSecret        string
 	// TODO: add public private key stuff for additional validation
 }
 
 // NewJWTValidator creates a JWT validator. I imagine these will end up getting cached if multiple are needed.
 func NewJWTValidator(validatorOptions JWTValidatorOptions) (JWTValidator, errors.RichError) {
+	if validatorOptions.ID == "" {
+		// If we dont get and ID we make one up...
+		validatorOptions.ID = uuid.New().String()
+	}
 	validator := jwtValidator{
 		id:                validatorOptions.ID,
-		expectedIssuer:    validatorOptions.ExpectedIssuer,
+		issuerRequired:    validatorOptions.IssuerRequired,
+		expectedIssuer:    validatorOptions.ExpectedIssuer, // should we allow
 		expireRequired:    validatorOptions.ExpireRequired,
 		audienceRequired:  validatorOptions.AudienceRequired,
+		allowAnyAudience:  validatorOptions.AllowAnyAudience,
 		issuedAtRequired:  validatorOptions.IssuedAtRequired,
 		notBeforeRequired: validatorOptions.NotBeforeRequired,
 		subjectRequired:   validatorOptions.SubjectRequired,
-		jwiRequired:       validatorOptions.JWIRequired,
+		jtiRequired:       validatorOptions.JTIRequired,
 		hmacSecret:        validatorOptions.HMACSecret,
 	}
-	if len(validator.allowedAlgorithms) == 0 {
+	if len(validatorOptions.AllowedAlgorithms) == 0 {
 		// You have to specify allowed algorithms
 		return validator, coreerrors.NewJWTValidatorNoAlgorithmSpecifiedError(true)
 	}
@@ -76,6 +87,10 @@ func NewJWTValidator(validatorOptions JWTValidatorOptions) (JWTValidator, errors
 	}
 
 	if validator.audienceRequired {
+		if !validator.allowAnyAudience && len(validatorOptions.AllowedAudience) == 0 {
+			// you require an audience, but did not allow any audiences
+			return validator, coreerrors.NewJWTValidatorAudienceRequiredButNoneProvidedError(true)
+		}
 		validator.allowedAudience = make(map[string]bool)
 		for _, a := range validatorOptions.AllowedAudience {
 			validator.allowedAlgorithms[a] = true
@@ -85,13 +100,18 @@ func NewJWTValidator(validatorOptions JWTValidatorOptions) (JWTValidator, errors
 	return validator, nil
 }
 
-func (v jwtValidator) ValidateHeader(header HeaderFields) ([]errors.RichError, bool) {
-	errs := make([]errors.RichError, 0, 2)
+func (v jwtValidator) GetID() string {
+	return v.id
+}
+
+func (v jwtValidator) ValidateHeader(header Header) ([]errors.RichError, bool) {
+	errs := make([]errors.RichError, 0, 1)
 	valid := true
 
 	_, ok := v.allowedAlgorithms[header.Algorithm]
 	if !ok {
 		errs = append(errs, coreerrors.NewJWTAlgorithmNotAllowedError(header.Algorithm, true))
+		valid = false
 	}
 
 	// not validating type per: https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.9
@@ -104,37 +124,63 @@ func (v jwtValidator) ValidateHeader(header HeaderFields) ([]errors.RichError, b
 
 func (v jwtValidator) ValidateClaims(claims StandardClaims) ([]errors.RichError, bool) {
 	errs := make([]errors.RichError, 0, 4)
-	valid := true
-	if len(claims.Subject) == 0 {
-		// subject must be populated
-		err := coreerrors.NewJWTMissingSubjectError(nil, true)
+	err := validateIssuer(claims.Issuer, v.expectedIssuer, v.issuerRequired)
+	if err != nil {
 		errs = append(errs, err)
-		valid = false
 	}
-	now := time.Now()
-	exp := claims.ExpirationTime.Time()
-	if !exp.IsZero() && exp.Before(now) {
-		// token is expired
-		err := coreerrors.NewJWTExipredError(exp, nil, true)
+	err = validateExpire(claims.ExpirationTime, v.expireRequired)
+	if err != nil {
 		errs = append(errs, err)
-		valid = false
 	}
-	iat := claims.IssuedAt.Time()
-	if iat.After(now) {
-		// issued at is in the future some how...
-		err := coreerrors.NewJWTInvalidIssuedAtError(iat, nil, true)
+	err = validateSubject(claims.Subject, v.subjectRequired)
+	if err != nil {
 		errs = append(errs, err)
-		valid = false
 	}
-	nbf := claims.NotBefore.Time()
-	if nbf.Before(now) {
-		// token not before has not yet passed
-		err := coreerrors.NewJWTNotBeforeInFutureError(nbf, nil, true)
+
+	err = validateJti(claims.JWTID, v.jtiRequired)
+	if err != nil {
 		errs = append(errs, err)
-		valid = false
 	}
+
+	err = validateIat(claims.IssuedAt, v.issuedAtRequired)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	err = validateNbf(claims.NotBefore, v.notBeforeRequired)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	// if len(claims.Subject) == 0 {
+	// 	// subject must be populated
+	// 	err := coreerrors.NewJWTMissingSubjectError(nil, true)
+	// 	errs = append(errs, err)
+	// 	valid = false
+	// }
+	// now := time.Now()
+	// exp := claims.ExpirationTime.Time()
+	// if !exp.IsZero() && exp.Before(now) {
+	// 	// token is expired
+	// 	err := coreerrors.NewJWTExipredError(exp, nil, true)
+	// 	errs = append(errs, err)
+	// 	valid = false
+	// }
+	// iat := claims.IssuedAt.Time()
+	// if iat.After(now) {
+	// 	// issued at is in the future some how...
+	// 	err := coreerrors.NewJWTInvalidIssuedAtError(iat, nil, true)
+	// 	errs = append(errs, err)
+	// 	valid = false
+	// }
+	// nbf := claims.NotBefore.Time()
+	// if nbf.Before(now) {
+	// 	// token not before has not yet passed
+	// 	err := coreerrors.NewJWTNotBeforeInFutureError(nbf, nil, true)
+	// 	errs = append(errs, err)
+	// 	valid = false
+	// }
 	// TODO: validate audience, issuer, and that jwt id is populated?Its a
-	return errs, valid
+	return errs, len(errs) == 0
 }
 
 func (v jwtValidator) ValidateSignature(alg string, encodedHeaderAndBody string, signature string) (bool, errors.RichError) {
@@ -147,7 +193,66 @@ func (v jwtValidator) ValidateSignature(alg string, encodedHeaderAndBody string,
 	case Alg_HS512:
 		calculatedSignature = CalculateHMACSignature(v.hmacSecret, encodedHeaderAndBody, sha512.New)
 	default:
+		// The none algorithm is not in this list intentonally... it is bad do not use it...
 		return false, coreerrors.NewJWTAlgorithmNotImplementedError(alg, true)
 	}
 	return signature == calculatedSignature, nil
+}
+
+func validateIssuer(issuer, expectedIssuer string, issuerRequired bool) errors.RichError {
+	if len(issuer) == 0 {
+		if issuerRequired {
+			return coreerrors.NewJWTIssuerMissingError(true)
+		}
+	} else if issuer != expectedIssuer {
+		return coreerrors.NewJWTIssuerInvalidError(issuer, expectedIssuer, true)
+	}
+	return nil
+}
+
+func validateExpire(exp Time, expireRequired bool) errors.RichError {
+	if exp.IsZero() {
+		if expireRequired {
+			return coreerrors.NewJWTExpireMissingError(true)
+		}
+	} else if exp.IsInPast() {
+		return coreerrors.NewJWTExpiredError(exp.Time(), true)
+	}
+	return nil
+}
+
+func validateSubject(subject string, subjectRequired bool) errors.RichError {
+	if subjectRequired && len(subject) == 0 {
+		return coreerrors.NewJWTSubjectMissingError(true)
+	}
+	return nil
+}
+
+func validateJti(id string, jtiRequired bool) errors.RichError {
+	if jtiRequired && len(id) == 0 {
+		return coreerrors.NewJWTIDMissingError(true)
+	}
+	return nil
+}
+
+func validateIat(iat Time, iatRequired bool) errors.RichError {
+	if iat.IsZero() {
+		if iatRequired {
+			return coreerrors.NewJWTIssuedAtMissingError(true)
+		}
+	} else if iat.IsInFuture() {
+		return coreerrors.NewJWTIssuedAtInvalidError(iat.Time(), true)
+	}
+	return nil
+}
+
+func validateNbf(nbf Time, nbfRequired bool) errors.RichError {
+	if nbf.IsZero() {
+		if nbfRequired {
+			return coreerrors.NewJWTNotBeforeMissingError(true)
+		}
+	} else if nbf.IsInFuture() {
+		return coreerrors.NewJWTNotBeforeInFutureError(nbf.Time(), true)
+	}
+	return nil
 }

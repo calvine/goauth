@@ -119,7 +119,7 @@ func _testAddContact(t *testing.T, contactRepo repo.ContactRepo) {
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				if tc.expectedUserID != tc.contactToAdd.UserID {
 					t.Errorf("\tuser id expected: got - %s expected - %s", tc.contactToAdd.UserID, tc.expectedUserID)
@@ -155,7 +155,7 @@ func _testGetContactByID(t *testing.T, contactRepo repo.ContactRepo) {
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				if tc.contactID != contact.ID {
 					t.Errorf("\tcontact id expected: got - %s expected - %s", contact.ID, tc.contactID)
@@ -196,7 +196,7 @@ func _testGetPrimaryContactByUserID(t *testing.T, contactRepo repo.ContactRepo) 
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				if !contact.IsPrimary {
 					t.Errorf("\tcontact returned is not primary contact: %v", contact)
@@ -244,7 +244,7 @@ func _testGetContactsByUserID(t *testing.T, contactRepo repo.ContactRepo) {
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				numContactsFound := len(contacts)
 				if numContactsFound != numExpectedContacts {
@@ -310,7 +310,7 @@ func _testGetContactsByUserIDAndType(t *testing.T, contactRepo repo.ContactRepo)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				numContactsFound := len(contacts)
 				if numContactsFound != numExpectedContacts {
@@ -363,7 +363,7 @@ func _testUpdateContact(t *testing.T, contactRepo repo.ContactRepo) {
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				if tc.contactToUpdate.Principal != tc.newPrincipal {
 					t.Errorf("\tupdated contact principal was not expected: got - %s expected - %s", tc.contactToUpdate.Principal, tc.newPrincipal)
@@ -417,7 +417,7 @@ func _testGetExistingConfirmedContactsCountByPrincipalAndType(t *testing.T, cont
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				if numContacts != tc.expectedNumberOfContacts {
 					t.Errorf("\tnumber of contacts returned does not match expected: got - %d expected - %d", numContacts, tc.expectedNumberOfContacts)
@@ -452,27 +452,27 @@ func _testSwapPrimaryContacts(t *testing.T, contactRepo repo.ContactRepo) {
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				if tc.previousPrimaryContact.IsPrimary {
-					t.Errorf("expected previous primary contact isPimary to be false")
+					t.Errorf("\texpected previous primary contact isPimary to be false")
 				}
 				if !tc.newPrimaryContact.IsPrimary {
-					t.Errorf("expected new primary contact isPrimary to be true")
+					t.Errorf("\texpected new primary contact isPrimary to be true")
 				}
 				ppc, err := contactRepo.GetContactByID(context.TODO(), tc.previousPrimaryContact.ID)
 				if err != nil {
-					t.Errorf("failed to retreive new primary contact for evaluation %s: %s", err.GetErrorCode(), err.Error())
+					t.Errorf("\tfailed to retreive new primary contact for evaluation %s: %s", err.GetErrorCode(), err.Error())
 				}
 				if ppc.IsPrimary {
-					t.Error("previous primary contact should no longer be marked as primary")
+					t.Error("\tprevious primary contact should no longer be marked as primary")
 				}
 				npc, err := contactRepo.GetContactByID(context.TODO(), tc.newPrimaryContact.ID)
 				if err != nil {
-					t.Errorf("failed to retreive new primary contact for evaluation %s: %s", err.GetErrorCode(), err.Error())
+					t.Errorf("\tfailed to retreive new primary contact for evaluation %s: %s", err.GetErrorCode(), err.Error())
 				}
 				if !npc.IsPrimary {
-					t.Error("new primary contact should be marked as primary")
+					t.Error("\tnew primary contact should be marked as primary")
 				}
 			}
 		})

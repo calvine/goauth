@@ -13,9 +13,9 @@ func TestNewFullUserWithData(t *testing.T) {
 	profile := models.Profile{}
 	fullUser := NewFullUserWithData(user, nil, nil, &profile)
 	if reflect.DeepEqual(fullUser, emptyFullUser) {
-		t.Error("expected full user to be populated", fullUser)
+		t.Error("\texpected full user to be populated", fullUser)
 	}
 	if &profile == &fullUser.Profile {
-		t.Error("memory addresses for profile and fullUser.Profile should not be the same", &profile, &fullUser.Profile)
+		t.Error("\tmemory addresses for profile and fullUser.Profile should not be the same", &profile, &fullUser.Profile)
 	}
 }

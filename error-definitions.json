@@ -285,8 +285,8 @@
         ]
     },
     {
-        "code": "JWTMissingSignature",
-        "message": "jwt is missing a signature",
+        "code": "JWTSignatureMissing",
+        "message": "jwt signature is missing",
         "includeMap": false,
         "tags": [
             "security",
@@ -345,9 +345,9 @@
         ]
     },
     {
-        "code": "JWTMissingSubject",
-        "message": "jwt is missing subject",
-        "includeMap": true,
+        "code": "JWTIssuerMissing",
+        "message": "jwt issuer is missing",
+        "includeMap": false,
         "tags": [
             "security",
             "jwt"
@@ -355,9 +355,32 @@
         "metaData": []
     },
     {
-        "code": "JWTExipred",
+        "code": "JWTIssuerInvalid",
+        "message": "jwt issuer is invalid",
+        "includeMap": false,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": [
+            { "name": "actual", "dataType": "string" },
+            { "name": "expected", "dataType": "string" }            
+        ]
+    },
+    {
+        "code": "JWTSubjectMissing",
+        "message": "jwt subject is missing",
+        "includeMap": false,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": []
+    },
+    {
+        "code": "JWTExpired",
         "message": "jwt is expired",
-        "includeMap": true,
+        "includeMap": false,
         "tags": [
             "security",
             "jwt"
@@ -367,9 +390,19 @@
         ]
     },
     {
-        "code": "JWTInvalidIssuedAt",
+        "code": "JWTExpireMissing",
+        "message": "jwt expire is missing",
+        "includeMap": false,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": []
+    },
+    {
+        "code": "JWTIssuedAtInvalid",
         "message": "jwt issued at is invalid",
-        "includeMap": true,
+        "includeMap": false,
         "tags": [
             "security",
             "jwt"
@@ -379,9 +412,19 @@
         ]
     },
     {
+        "code": "JWTIssuedAtMissing",
+        "message": "jwt issued at is missing",
+        "includeMap": false,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": []
+    },
+    {
         "code": "JWTNotBeforeInFuture",
         "message": "jwt not before has not yet happened yet",
-        "includeMap": true,
+        "includeMap": false,
         "tags": [
             "security",
             "jwt"
@@ -389,6 +432,26 @@
         "metaData": [
             { "name": "nbf", "dataType": "time.Time", "importPath": "time" }
         ]
+    },
+    {
+        "code": "JWTNotBeforeMissing",
+        "message": "jwt not before is missing",
+        "includeMap": false,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": []
+    },
+    {
+        "code": "JWTIDMissing",
+        "message": "jwt id (jti) is missing",
+        "includeMap": false,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": []
     },
     {
         "code": "JWTValidatorNoAlgorithmSpecified",
@@ -403,6 +466,16 @@
     {
         "code": "JWTValidatorNoHMACSecretProvided",
         "message": "jwt validator allows HMAC algorithms but was not provided an HMAC secret",
+        "includeMap": false,
+        "tags": [
+            "config",
+            "jwt"
+        ],
+        "metaData": []
+    },
+    {
+        "code": "JWTValidatorAudienceRequiredButNoneProvided",
+        "message": "jwt validator required audience but no allowed audience",
         "includeMap": false,
         "tags": [
             "config",
@@ -622,6 +695,25 @@
         "includeMap": true,
         "metaData": [
             { "name": "cause", "dataType": "error" }
+        ]
+    },
+    {
+        "code": "Base64DecodeStringFailed",
+        "message": "base 64 string is invalid",
+        "tags": [],
+        "includeMap": false,
+        "metaData": [
+            { "name": "cause", "dataType": "error" },
+            { "name": "base64String", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "Base64URLStringInvalid",
+        "message": "base 64 url string is invalid",
+        "tags": [],
+        "includeMap": false,
+        "metaData": [
+            { "name": "base64String", "dataType": "string" }
         ]
     }   
 ]

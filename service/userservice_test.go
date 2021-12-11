@@ -211,7 +211,7 @@ func _testUserServiceGetName(t *testing.T, userService services.UserService) {
 	serviceName := userService.GetName()
 	expectedServiceName := "userService"
 	if serviceName != expectedServiceName {
-		t.Errorf("service name is not what was expected: got %s - expected %s", serviceName, expectedServiceName)
+		t.Errorf("\tservice name is not what was expected: got %s - expected %s", serviceName, expectedServiceName)
 	}
 }
 
@@ -239,7 +239,7 @@ func _testUserServiceGetUser(t *testing.T, userService services.UserService) {
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				if user.ID != tc.userID {
 					t.Errorf("\tuser id did not match expected: got - %s expected - %s", user.ID, tc.userID)
@@ -293,7 +293,7 @@ func _testGetUserAndContactByConfirmedContact(t *testing.T, userService services
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				if user.ID != tc.expectedUserID {
 					t.Errorf("\tuser id did not match expected: got - %s expected - %s", user.ID, tc.expectedUserID)
@@ -351,7 +351,7 @@ func _testRegisterUserAndPrimaryContact(t *testing.T, userService services.UserS
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				ses, ok := userServiceTest_EmailService.(*stackEmailService)
 				if !ok {
@@ -400,7 +400,7 @@ func _testGetUserPrimaryContact(t *testing.T, userService services.UserService) 
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				if contact.ID != tc.expectedContactID {
 					t.Errorf("\tcontact id not expected value: got - %s expected - %s", contact.ID, tc.expectedContactID)
@@ -437,7 +437,7 @@ func _testGetUsersContacts(t *testing.T, userService services.UserService) {
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				numContactsReturned := len(contacts)
 				numExpectedContacts := len(tc.expectedContactIDs)
@@ -497,7 +497,7 @@ func _testGetUsersConfirmedContacts(t *testing.T, userService services.UserServi
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				numContactsReturned := len(contacts)
 				numExpectedContacts := len(tc.expectedContactIDs)
@@ -563,7 +563,7 @@ func _testGetUsersContactsOfType(t *testing.T, userService services.UserService)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				numContactsReturned := len(contacts)
 				numExpectedContacts := len(tc.expectedContactIDs)
@@ -631,7 +631,7 @@ func _testGetUsersConfirmedContactsOfType(t *testing.T, userService services.Use
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				numContactsReturned := len(contacts)
 				numExpectedContacts := len(tc.expectedContactIDs)
@@ -741,7 +741,7 @@ func _testAddContact(t *testing.T, userService services.UserService) {
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				if newContact.ID == "" {
 					t.Error("\tcontact added does not have a contact id")
@@ -828,18 +828,18 @@ func _testSetContactAsPrimary(t *testing.T, userService services.UserService, co
 		t.Run(tc.name, func(t *testing.T) {
 			currentPrimaryContact, err := contactRepo.GetPrimaryContactByUserID(context.TODO(), tc.userID, tc.contactType)
 			if err != nil {
-				t.Errorf("failed to retreive current primary contact for user")
+				t.Errorf("\tfailed to retreive current primary contact for user")
 				return
 			}
 			err = userService.SetContactAsPrimary(context.TODO(), logger, tc.userID, tc.newPrimaryContactID, userServiceTest_CreatedBy)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				contactsOfType, err := contactRepo.GetContactsByUserIDAndType(context.TODO(), tc.userID, tc.contactType)
 				if err != nil {
-					t.Errorf("failed to return users contacts for test confirmation: %s - %s", err.GetErrorCode(), err.Error())
+					t.Errorf("\tfailed to return users contacts for test confirmation: %s - %s", err.GetErrorCode(), err.Error())
 					return
 				}
 				var previousPrimaryContact, newPrimaryContact models.Contact
@@ -856,19 +856,19 @@ func _testSetContactAsPrimary(t *testing.T, userService services.UserService, co
 
 				}
 				if numPrimaryContacts != 1 {
-					t.Errorf("there should only be one primary contact, but there were %d", numPrimaryContacts)
+					t.Errorf("\tthere should only be one primary contact, but there were %d", numPrimaryContacts)
 				}
 				if previousPrimaryContact.IsPrimary {
-					t.Error("previous primary contact should not still be marked as primary")
+					t.Error("\tprevious primary contact should not still be marked as primary")
 				}
 				if !newPrimaryContact.IsPrimary {
-					t.Error("new primary contact should be marked as primary")
+					t.Error("\tnew primary contact should be marked as primary")
 				}
 				if currentPrimaryContact.ID != tc.expectedCurrentPrimaryContactID {
-					t.Errorf("previous contact id not expected value: got - %s expected - %s", currentPrimaryContact.ID, tc.expectedCurrentPrimaryContactID)
+					t.Errorf("\tprevious contact id not expected value: got - %s expected - %s", currentPrimaryContact.ID, tc.expectedCurrentPrimaryContactID)
 				}
 				if newPrimaryContact.ID != tc.newPrimaryContactID {
-					t.Errorf("previous contact id not expected value: got - %s expected - %s", newPrimaryContact.ID, tc.newPrimaryContactID)
+					t.Errorf("\tprevious contact id not expected value: got - %s expected - %s", newPrimaryContact.ID, tc.newPrimaryContactID)
 				}
 			}
 		})
@@ -922,11 +922,11 @@ func _testConfirmContact(t *testing.T, userService services.UserService, contact
 			} else {
 				newConfirmToken, err := models.NewToken(tc.contactToConfirm.ID, models.TokenTypeConfirmContact, tc.tokenValidFor)
 				if err != nil {
-					t.Errorf("failed to create new confirm contact token: %s - %s", err.GetErrorCode(), err.Error())
+					t.Errorf("\tfailed to create new confirm contact token: %s - %s", err.GetErrorCode(), err.Error())
 				}
 				err = tokenRepo.PutToken(context.TODO(), newConfirmToken)
 				if err != nil {
-					t.Errorf("failed to new confirm contact token in repo for validation: %s - %s", err.GetErrorCode(), err.Error())
+					t.Errorf("\tfailed to new confirm contact token in repo for validation: %s - %s", err.GetErrorCode(), err.Error())
 				}
 				confirmContactToken = newConfirmToken.Value
 			}
@@ -934,14 +934,14 @@ func _testConfirmContact(t *testing.T, userService services.UserService, contact
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				newlyConfirmedContact, err := contactRepo.GetContactByID(context.TODO(), tc.contactToConfirm.ID)
 				if err != nil {
-					t.Errorf("failed to retreive newly confirmed contact from repo for validation: %s - %s", err.GetErrorCode(), err.Error())
+					t.Errorf("\tfailed to retreive newly confirmed contact from repo for validation: %s - %s", err.GetErrorCode(), err.Error())
 				}
 				if !newlyConfirmedContact.IsConfirmed() {
-					t.Error("newly confirmed contact is not confirmed in the underlying data store.")
+					t.Error("\tnewly confirmed contact is not confirmed in the underlying data store.")
 				}
 			}
 		})

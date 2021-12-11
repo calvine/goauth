@@ -36,11 +36,11 @@ func TestMongoRepos(t *testing.T) {
 		client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(connectionString))
 		defer client.Disconnect(context.TODO())
 		if err != nil {
-			t.Error("failed to connect to mongo server", err)
+			t.Error("\tfailed to connect to mongo server", err)
 		}
 		err = client.Ping(context.TODO(), nil)
 		if err != nil {
-			t.Error("failed to ping mongo server before test", err)
+			t.Error("\tfailed to ping mongo server before test", err)
 		}
 		testUserRepo := NewUserRepoWithNames(client, "test_goauth", USER_COLLECTION)
 		var userRepo repo.UserRepo = testUserRepo
@@ -48,7 +48,7 @@ func TestMongoRepos(t *testing.T) {
 		cleanUpDataSource := func(t *testing.T, _ repotest.RepoTestHarnessInput) {
 			err := testUserRepo.mongoClient.Database(testUserRepo.dbName).Collection(testUserRepo.collectionName).Drop(context.TODO())
 			if err != nil {
-				t.Error("failed to cleanup database", err)
+				t.Error("\tfailed to cleanup database", err)
 			}
 		}
 		testHarnessInput := repotest.RepoTestHarnessInput{

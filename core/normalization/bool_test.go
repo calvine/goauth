@@ -306,11 +306,11 @@ func TestReadBoolValue(t *testing.T) {
 			// 	t.Logf("error returned but it was expected: %s", err.Error())
 			// }
 			if test.ExpectedError && err == nil {
-				t.Error("expected an error to be thrown", test, test.Name)
+				t.Error("\texpected an error to be thrown", test, test.Name)
 			} else if !test.ExpectedError && err != nil {
-				t.Error("failed to read value as bool", value, err, test.Name)
+				t.Error("\tfailed to read value as bool", value, err, test.Name)
 			} else if b != test.ExpectedOutput {
-				t.Error("expected parsed bool value to be true", b, test.Name)
+				t.Error("\texpected parsed bool value to be true", b, test.Name)
 			}
 		})
 	}

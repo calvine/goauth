@@ -41,3 +41,17 @@ func (t Time) Time() time.Time {
 func (t Time) String(layout string) string {
 	return t.Time().Format(layout)
 }
+
+func (t Time) IsZero() bool {
+	return time.Time(t).IsZero()
+}
+
+func (t Time) IsInPast() bool {
+	now := time.Now()
+	return time.Time(t).Before(now)
+}
+
+func (t Time) IsInFuture() bool {
+	now := time.Now()
+	return time.Time(t).After(now)
+}

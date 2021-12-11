@@ -80,7 +80,7 @@ func TestNormalizeContactPrincipal(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			normalizedContactPrincipal := NormalizeContactPrincipal(tc.contactType, tc.contactPrincipal)
 			if normalizedContactPrincipal != tc.expectedNormalizedContactPrincipal {
-				t.Errorf("normalized contact principal is not expected: got - %s expect - %s", normalizedContactPrincipal, tc.expectedNormalizedContactPrincipal)
+				t.Errorf("\tnormalized contact principal is not expected: got - %s expect - %s", normalizedContactPrincipal, tc.expectedNormalizedContactPrincipal)
 			}
 		})
 	}

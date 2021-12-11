@@ -49,10 +49,10 @@ func _testAddUser(t *testing.T, userRepo repo.UserRepo) {
 	err := userRepo.AddUser(context.TODO(), &testUser1, createdByID)
 	if err != nil {
 		t.Log(err.Error())
-		t.Error("failed to add user to database", err.GetErrorCode())
+		t.Error("\tfailed to add user to database", err.GetErrorCode())
 	}
 	if testUser1.AuditData.CreatedByID != createdByID {
-		t.Error("failed to set the test user 1 CreatedByID to the right value", testUser1.AuditData.CreatedByID, createdByID)
+		t.Error("\tfailed to set the test user 1 CreatedByID to the right value", testUser1.AuditData.CreatedByID, createdByID)
 	}
 }
 
@@ -63,18 +63,18 @@ func _testUpdateUser(t *testing.T, userRepo repo.UserRepo) {
 	err := userRepo.UpdateUser(context.TODO(), &testUser1, testUser1.ID)
 	if err != nil {
 		t.Log(err.Error())
-		t.Error("failed to update user", err.GetErrorCode())
+		t.Error("\tfailed to update user", err.GetErrorCode())
 	}
 	if !testUser1.AuditData.ModifiedOnDate.Value.After(preUpdateDate) {
-		t.Error("ModifiedOnDate should be after the preUpdate for test", preUpdateDate, testUser1.AuditData.ModifiedOnDate)
+		t.Error("\tModifiedOnDate should be after the preUpdate for test", preUpdateDate, testUser1.AuditData.ModifiedOnDate)
 	}
 	retreivedUser, err := userRepo.GetUserByID(context.TODO(), testUser1.ID)
 	if err != nil {
 		t.Log(err.Error())
-		t.Error("failed to retreive updated user to check that fields were updated.", err.GetErrorCode())
+		t.Error("\tfailed to retreive updated user to check that fields were updated.", err.GetErrorCode())
 	}
 	if retreivedUser.PasswordHash != newPasswordHash {
-		t.Error("password hash did not update.", retreivedUser.PasswordHash, newPasswordHash)
+		t.Error("\tpassword hash did not update.", retreivedUser.PasswordHash, newPasswordHash)
 	}
 }
 
@@ -83,10 +83,10 @@ func _testGetUserByID(t *testing.T, userRepo repo.UserRepo) {
 	retreivedUser, err := userRepo.GetUserByID(context.TODO(), userID)
 	if err != nil {
 		t.Log(err.Error())
-		t.Error("error getting user with id", userID, err.GetErrorCode())
+		t.Error("\terror getting user with id", userID, err.GetErrorCode())
 	}
 	if retreivedUser.PasswordHash != initialTestUser.PasswordHash {
-		t.Error("retreivedUser should have same data as user with id tested", retreivedUser, initialTestUser)
+		t.Error("\tretreivedUser should have same data as user with id tested", retreivedUser, initialTestUser)
 	}
 }
 
@@ -95,10 +95,10 @@ func _testGetUserByPrimaryContact(t *testing.T, userRepo repo.UserRepo) {
 	retreivedUser, err := userRepo.GetUserByPrimaryContact(context.TODO(), contactType, principal)
 	if err != nil {
 		t.Log(err.Error())
-		t.Error("failed to retreive user via primary contact info", contactType, principal, err.GetErrorCode())
+		t.Error("\tfailed to retreive user via primary contact info", contactType, principal, err.GetErrorCode())
 	}
 	if retreivedUser.ID != initialTestUser.ID {
-		t.Error("expected retreivedUser and initialTestUser ID to match", retreivedUser.ID, initialTestUser.ID)
+		t.Error("\texpected retreivedUser and initialTestUser ID to match", retreivedUser.ID, initialTestUser.ID)
 	}
 }
 
@@ -138,7 +138,7 @@ func _testGetUserAndContactByConfrimedContact(t *testing.T, userRepo repo.UserRe
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
-				t.Errorf("expected an error to occurr: %s", tc.expectedErrorCode)
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				if tc.expectedUserID != retreivedUser.ID {
 					t.Errorf("\tuser id expected: got - %s expected - %s", retreivedUser.ID, tc.expectedUserID)
