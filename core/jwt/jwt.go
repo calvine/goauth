@@ -28,9 +28,9 @@ const (
 )
 
 type Header struct {
-	Algorithm   string `json:"alg"` // https://datatracker.ietf.org/doc/html/rfc7518#section-3.1
-	ContentType string `json:"cty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-5.2
-	TokenType   string `json:"typ"` // TODO: use this... https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.9
+	Algorithm   string `json:"alg"`           // https://datatracker.ietf.org/doc/html/rfc7518#section-3.1
+	ContentType string `json:"cty,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-5.2
+	TokenType   string `json:"typ"`           // TODO: use this... https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.9
 }
 
 type StandardClaims struct {
