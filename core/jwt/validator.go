@@ -82,18 +82,19 @@ func NewJWTValidator(validatorOptions JWTValidatorOptions) (JWTValidator, errors
 		if !validatHMACSecret && strings.HasPrefix(a, "HS") {
 			return validator, coreerrors.NewJWTValidatorNoHMACSecretProvidedError(true)
 		}
-		// TODO have other validation based on
+		// TODO: have other validation based on the algorithm
 		validator.allowedAlgorithms[a] = true
 	}
 
-	if validator.audienceRequired {
-		if !validator.allowAnyAudience && len(validatorOptions.AllowedAudience) == 0 {
+	if !validator.allowAnyAudience {
+		if validator.audienceRequired && len(validatorOptions.AllowedAudience) == 0 {
 			// you require an audience, but did not allow any audiences
 			return validator, coreerrors.NewJWTValidatorAudienceRequiredButNoneProvidedError(true)
-		}
-		validator.allowedAudience = make(map[string]bool)
-		for _, a := range validatorOptions.AllowedAudience {
-			validator.allowedAlgorithms[a] = true
+		} else {
+			validator.allowedAudience = make(map[string]bool)
+			for _, a := range validatorOptions.AllowedAudience {
+				validator.allowedAudience[a] = true
+			}
 		}
 	}
 
@@ -136,50 +137,22 @@ func (v jwtValidator) ValidateClaims(claims StandardClaims) ([]errors.RichError,
 	if err != nil {
 		errs = append(errs, err)
 	}
-
 	err = validateJti(claims.JWTID, v.jtiRequired)
 	if err != nil {
 		errs = append(errs, err)
 	}
-
 	err = validateIat(claims.IssuedAt, v.issuedAtRequired)
 	if err != nil {
 		errs = append(errs, err)
 	}
-
 	err = validateNbf(claims.NotBefore, v.notBeforeRequired)
 	if err != nil {
 		errs = append(errs, err)
 	}
-	// if len(claims.Subject) == 0 {
-	// 	// subject must be populated
-	// 	err := coreerrors.NewJWTMissingSubjectError(nil, true)
-	// 	errs = append(errs, err)
-	// 	valid = false
-	// }
-	// now := time.Now()
-	// exp := claims.ExpirationTime.Time()
-	// if !exp.IsZero() && exp.Before(now) {
-	// 	// token is expired
-	// 	err := coreerrors.NewJWTExipredError(exp, nil, true)
-	// 	errs = append(errs, err)
-	// 	valid = false
-	// }
-	// iat := claims.IssuedAt.Time()
-	// if iat.After(now) {
-	// 	// issued at is in the future some how...
-	// 	err := coreerrors.NewJWTInvalidIssuedAtError(iat, nil, true)
-	// 	errs = append(errs, err)
-	// 	valid = false
-	// }
-	// nbf := claims.NotBefore.Time()
-	// if nbf.Before(now) {
-	// 	// token not before has not yet passed
-	// 	err := coreerrors.NewJWTNotBeforeInFutureError(nbf, nil, true)
-	// 	errs = append(errs, err)
-	// 	valid = false
-	// }
-	// TODO: validate audience, issuer, and that jwt id is populated?Its a
+	err = validateAudience(claims.Audience, v.allowedAudience, v.audienceRequired, v.allowAnyAudience)
+	if err != nil {
+		errs = append(errs, err)
+	}
 	return errs, len(errs) == 0
 }
 
@@ -253,6 +226,28 @@ func validateNbf(nbf Time, nbfRequired bool) errors.RichError {
 		}
 	} else if nbf.IsInFuture() {
 		return coreerrors.NewJWTNotBeforeInFutureError(nbf.Time(), true)
+	}
+	return nil
+}
+
+func validateAudience(audience []string, allowedAudiences map[string]bool, audienceRequired, allowAnyAudience bool) errors.RichError {
+	if len(audience) == 0 {
+		if audienceRequired {
+			return coreerrors.NewJWTValidatorAudienceMissingError(true)
+		}
+	} else if allowAnyAudience {
+		return nil
+	} else {
+		var err errors.RichError
+		for _, a := range audience {
+			_, found := allowedAudiences[a]
+			if !found {
+				// TODO: come back and let this collect all invalid audiences, but for not just one will do...
+				err = coreerrors.NewJWTValidatorAudienceInvalidError(a, true)
+				break
+			}
+		}
+		return err
 	}
 	return nil
 }

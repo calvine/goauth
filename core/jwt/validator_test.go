@@ -38,6 +38,17 @@ func TestNewJWTValidator(t *testing.T) {
 			jwtValidatorOptions: JWTValidatorOptions{},
 			expectedErrorCode:   coreerrors.ErrCodeJWTValidatorNoAlgorithmSpecified,
 		},
+		{
+			name: "GIVEN jwt validator options with aidience required true and no allowed audiences provided and allowAnyAudience false EXPECT error code jwt validator audience required but none provided",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				HMACSecret:       "test",
+				AudienceRequired: true,
+			},
+			expectedErrorCode: coreerrors.ErrCodeJWTValidatorAudienceRequiredButNoneProvided,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -321,9 +332,166 @@ func TestValidateClaims(t *testing.T) {
 			},
 		},
 		// audience tests
-		// {
-		// 	name: "GIVEN EXPECT ",
-		// },
+		{
+			name: "GIVEN a jwt with audiences in allowed audiences and audiences are required EXPECT success",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				AllowedAudience: []string{
+					"test1",
+					"test2",
+				},
+				AudienceRequired: true,
+				HMACSecret:       "test",
+			},
+			body: StandardClaims{
+				Audience: []string{
+					"test1",
+				},
+			},
+			expectValid: true,
+		},
+		{
+			name: "GIVEN a jwt with audiences in allowed audiences and audiences are not required EXPECT success",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				AllowedAudience: []string{
+					"test1",
+					"test2",
+				},
+				AudienceRequired: false,
+				HMACSecret:       "test",
+			},
+			body: StandardClaims{
+				Audience: []string{
+					"test2",
+				},
+			},
+			expectValid: true,
+		},
+		{
+			name: "GIVEN a jwt with audiences in allowed audiences and audiences are not required EXPECT success",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				AllowedAudience: []string{
+					"test1",
+					"test2",
+				},
+				AudienceRequired: false,
+				HMACSecret:       "test",
+			},
+			body: StandardClaims{
+				Audience: []string{
+					"test1",
+					"test2",
+				},
+			},
+			expectValid: true,
+		},
+		{
+			name: "GIVEN a jwt with audiences and allow any audience is true and audiences are required EXPECT success",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				AllowAnyAudience: true,
+				AudienceRequired: true,
+				HMACSecret:       "test",
+			},
+			body: StandardClaims{
+				Audience: []string{
+					"other1",
+				},
+			},
+			expectValid: true,
+		},
+		{
+			name: "GIVEN a jwt with audiences and allow any audience is true and audiences are not required EXPECT success",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				AllowAnyAudience: true,
+				AudienceRequired: false,
+				HMACSecret:       "test",
+			},
+			body: StandardClaims{
+				Audience: []string{
+					"other2",
+				},
+			},
+			expectValid: true,
+		},
+		{
+			name: "GIVEN a jwt no audience and audiences are required EXPECT error code jwt audience missing",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				AllowedAudience: []string{
+					"test1",
+					"test2",
+				},
+				AudienceRequired: true,
+				HMACSecret:       "test",
+			},
+			body:        StandardClaims{},
+			expectValid: false,
+			expectedErrorCodes: []string{
+				coreerrors.ErrCodeJWTValidatorAudienceMissing,
+			},
+		},
+		{
+			name: "GIVEN a jwt with an audiences not in allowed audiences and audiences are required EXPECT error code jwt audience invalid",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				AllowedAudience: []string{
+					"test1",
+					"test2",
+				},
+				AudienceRequired: true,
+				HMACSecret:       "test",
+			},
+			body: StandardClaims{
+				Audience: []string{
+					"other1",
+				},
+			},
+			expectValid: false,
+			expectedErrorCodes: []string{
+				coreerrors.ErrCodeJWTValidatorAudienceInvalid,
+			},
+		},
+		{
+			name: "GIVEN a jwt with an audiences not in allowed audiences and audiences are not required EXPECT error code jwt audience invalid",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				AllowedAudience: []string{
+					"test1",
+					"test2",
+				},
+				AudienceRequired: false,
+				HMACSecret:       "test",
+			},
+			body: StandardClaims{
+				Audience: []string{
+					"other2",
+				},
+			},
+			expectValid: false,
+			expectedErrorCodes: []string{
+				coreerrors.ErrCodeJWTValidatorAudienceInvalid,
+			},
+		},
 		// issued at tests
 		{
 			name: "GIVEN a jwt with a valid issued at EXPECT success",
@@ -413,9 +581,93 @@ func TestValidateClaims(t *testing.T) {
 			},
 		},
 		// not before tests
-		// {
-		// 	name: "GIVEN EXPECT ",
-		// },
+		{
+			name: "GIVEN a jwt with a valid not before EXPECT success",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				HMACSecret: "test",
+			},
+			body: StandardClaims{
+				NotBefore: Time(time.Now().Add(time.Second * -10)),
+			},
+			expectValid: true,
+		},
+		{
+			name: "GIVEN a jwt with a valid not before and not before is required EXPECT success",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				NotBeforeRequired: true,
+				HMACSecret:        "test",
+			},
+			body: StandardClaims{
+				NotBefore: Time(time.Now().Add(time.Second * -10)),
+			},
+			expectValid: true,
+		},
+		{
+			name: "GIVEN a jwt with no not before and not before is not required EXPECT success",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				NotBeforeRequired: false,
+				HMACSecret:        "test",
+			},
+			body:        StandardClaims{},
+			expectValid: true,
+		},
+		{
+			name:        "GIVEN a jwt that has an invalid not before EXPECT error code jwt not before invalid",
+			expectValid: false,
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				HMACSecret: "test",
+			},
+			body: StandardClaims{
+				NotBefore: Time(time.Now().Add(time.Second * 10)), // in the future
+			},
+			expectedErrorCodes: []string{
+				coreerrors.ErrCodeJWTNotBeforeInFuture,
+			},
+		},
+		{
+			name:        "GIVEN a jwt that has an invalid not before and not before is required EXPECT error code jwt not before invalid",
+			expectValid: false,
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				NotBeforeRequired: true,
+				HMACSecret:        "test",
+			},
+			body: StandardClaims{
+				NotBefore: Time(time.Now().Add(time.Second * 10)),
+			},
+			expectedErrorCodes: []string{
+				coreerrors.ErrCodeJWTNotBeforeInFuture,
+			},
+		},
+		{
+			name:        "GIVEN a jwt that has no not before but expire is required EXPECT error code jwt not before missing",
+			expectValid: false,
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				NotBeforeRequired: true,
+				HMACSecret:        "test",
+			},
+			body: StandardClaims{},
+			expectedErrorCodes: []string{
+				coreerrors.ErrCodeJWTNotBeforeMissing,
+			},
+		},
 		// subject tests
 		{
 			name: "GIVEN jwt with subject when the subject is required EXPECT success",
@@ -547,7 +799,7 @@ func TestValidateClaims(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			validator, err := NewJWTValidator(tc.jwtValidatorOptions)
 			if err != nil {
-				t.Errorf("\texpected an error to occurr while building JWT validator: %s", err.GetErrorCode())
+				t.Errorf("\tunexpected an error to occurr while building JWT validator: %s", err.GetErrorCode())
 			}
 			errs, valid := validator.ValidateClaims(tc.body)
 			numErrors := len(errs)

@@ -475,13 +475,35 @@
     },
     {
         "code": "JWTValidatorAudienceRequiredButNoneProvided",
-        "message": "jwt validator required audience but no allowed audience",
+        "message": "jwt validator requires specific audiences but none were provided", 
         "includeMap": false,
         "tags": [
             "config",
             "jwt"
         ],
         "metaData": []
+    },
+    {
+        "code": "JWTValidatorAudienceMissing",
+        "message": "jwt validator required audience but no allowed audience",
+        "includeMap": false,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": []
+    },
+    {
+        "code": "JWTValidatorAudienceInvalid",
+        "message": "jwt audience not allowed",
+        "includeMap": false,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": [
+            { "name": "audience", "dataType": "string" }
+        ]
     },
     {
         "code": "JWTEncodingFailed",

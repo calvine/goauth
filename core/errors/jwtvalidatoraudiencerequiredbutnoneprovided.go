@@ -6,12 +6,12 @@ import (
 	"github.com/calvine/richerror/errors"
 )
 
-// ErrCodeJWTValidatorAudienceRequiredButNoneProvided jwt validator required audience but no allowed audience
+// ErrCodeJWTValidatorAudienceRequiredButNoneProvided jwt validator requires specific audiences but none were provided
 const ErrCodeJWTValidatorAudienceRequiredButNoneProvided = "JWTValidatorAudienceRequiredButNoneProvided"
 
 // NewJWTValidatorAudienceRequiredButNoneProvidedError creates a new specific error
 func NewJWTValidatorAudienceRequiredButNoneProvidedError(includeStack bool) errors.RichError {
-	msg := "jwt validator required audience but no allowed audience"
+	msg := "jwt validator requires specific audiences but none were provided"
 	err := errors.NewRichError(ErrCodeJWTValidatorAudienceRequiredButNoneProvided, msg).WithTags([]string{"config", "jwt"})
 	if includeStack {
 		err = err.WithStack(1)
