@@ -58,12 +58,20 @@ func splitEncodedJWT(encodedJWT string) ([]string, errors.RichError) {
 	return parts, nil
 }
 
+func DecodeJWTPartRaw(part string) ([]byte, errors.RichError) {
+	raw, err := Base64UrlDecode(part)
+	if err != nil {
+		errMsg := "failed to base 64 decode data"
+		err := coreerrors.NewJWTMalformedError(errMsg, string(part), true)
+		return nil, err
+	}
+	return raw, nil
+}
+
 func DecodeHeader(encodedHeader string) (Header, errors.RichError) {
 	var header Header
-	rawHeader, err := Base64UrlDecode(encodedHeader)
+	rawHeader, err := DecodeJWTPartRaw(encodedHeader)
 	if err != nil {
-		errMsg := "failed to base 64 decode header data"
-		err := coreerrors.NewJWTMalformedError(errMsg, string(encodedHeader), true)
 		return header, err
 	}
 	nerr := json.Unmarshal(rawHeader, &header)
@@ -75,12 +83,10 @@ func DecodeHeader(encodedHeader string) (Header, errors.RichError) {
 	return header, nil
 }
 
-func DecodeBody(encodedBody string) (StandardClaims, errors.RichError) {
+func DecodeStandardClaims(encodedBody string) (StandardClaims, errors.RichError) {
 	var body StandardClaims
-	rawBody, err := Base64UrlDecode(encodedBody)
+	rawBody, err := DecodeJWTPartRaw(encodedBody)
 	if err != nil {
-		errMsg := "failed to base 64 decode body data"
-		err := coreerrors.NewJWTMalformedError(errMsg, string(encodedBody), true)
 		return body, err
 	}
 	nerr := json.Unmarshal(rawBody, &body)

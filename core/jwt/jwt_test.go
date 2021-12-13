@@ -57,13 +57,15 @@ func TestDecodeHeader(t *testing.T) {
 	testCases := []testCase{}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := DecodeHeader(tc.encodedHeader)
+			decodedHeader, err := DecodeHeader(tc.encodedHeader)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
-
+				if decodedHeader != tc.expectedHeader {
+					t.Errorf("\tdecodedHeader value was not expected: got - %v expected - %v", decodedHeader, tc.expectedHeader)
+				}
 			}
 		})
 	}
@@ -87,7 +89,7 @@ func TestHeaderEncode(t *testing.T) {
 				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				if encodedHeader != tc.expectedEncodedHeader {
-					t.Errorf("encodedHeader not expected: got - %s expected - %s", encodedHeader, tc.expectedEncodedHeader)
+					t.Errorf("\tencodedHeader not expected: got - %s expected - %s", encodedHeader, tc.expectedEncodedHeader)
 				}
 			}
 		})
@@ -97,20 +99,23 @@ func TestHeaderEncode(t *testing.T) {
 
 func TestDecodeBody(t *testing.T) {
 	type testCase struct {
-		name              string
-		encodedBody       string
-		expectedErrorCode string
+		name                   string
+		encodedBody            string
+		expectedStandardClaims StandardClaims
+		expectedErrorCode      string
 	}
 	testCases := []testCase{}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := DecodeBody(tc.encodedBody)
+			_, err := DecodeStandardClaims(tc.encodedBody)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
-
+				// if decodedStandardClaims != tc.expectedStandardClaims {
+				// 	t.Errorf("")
+				// }
 			}
 		})
 	}
@@ -134,7 +139,7 @@ func TestStandardClaimEncode(t *testing.T) {
 				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
 				if encodedStandardClaims != tc.expectedEncodedStandardClaims {
-					t.Errorf("encodedStandardClaims not expected: got - %s expected - %s", encodedStandardClaims, tc.expectedEncodedStandardClaims)
+					t.Errorf("\tencodedStandardClaims not expected: got - %s expected - %s", encodedStandardClaims, tc.expectedEncodedStandardClaims)
 				}
 			}
 		})
