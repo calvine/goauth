@@ -51,6 +51,7 @@ func TestDecodeHeader(t *testing.T) {
 	type testCase struct {
 		name              string
 		encodedHeader     string
+		expectedHeader    Header
 		expectedErrorCode string
 	}
 	testCases := []testCase{}
@@ -71,20 +72,23 @@ func TestDecodeHeader(t *testing.T) {
 
 func TestHeaderEncode(t *testing.T) {
 	type testCase struct {
-		name              string
-		header            Header
-		expectedErrorCode string
+		name                  string
+		header                Header
+		expectedEncodedHeader string
+		expectedErrorCode     string
 	}
 	testCases := []testCase{}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := tc.header.Encode()
+			encodedHeader, err := tc.header.Encode()
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
-
+				if encodedHeader != tc.expectedEncodedHeader {
+					t.Errorf("encodedHeader not expected: got - %s expected - %s", encodedHeader, tc.expectedEncodedHeader)
+				}
 			}
 		})
 	}
@@ -115,20 +119,23 @@ func TestDecodeBody(t *testing.T) {
 
 func TestStandardClaimEncode(t *testing.T) {
 	type testCase struct {
-		name              string
-		body              StandardClaims
-		expectedErrorCode string
+		name                          string
+		body                          StandardClaims
+		expectedEncodedStandardClaims string
+		expectedErrorCode             string
 	}
 	testCases := []testCase{}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := tc.body.Encode()
+			encodedStandardClaims, err := tc.body.Encode()
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
-
+				if encodedStandardClaims != tc.expectedEncodedStandardClaims {
+					t.Errorf("encodedStandardClaims not expected: got - %s expected - %s", encodedStandardClaims, tc.expectedEncodedStandardClaims)
+				}
 			}
 		})
 	}

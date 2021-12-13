@@ -373,7 +373,7 @@ func TestValidateClaims(t *testing.T) {
 			expectValid: true,
 		},
 		{
-			name: "GIVEN a jwt with audiences in allowed audiences and audiences are not required EXPECT success",
+			name: "GIVEN a jwt with multiple audiences in allowed audiences and audiences are not required EXPECT success",
 			jwtValidatorOptions: JWTValidatorOptions{
 				AllowedAlgorithms: []string{
 					Alg_HS256,
@@ -426,6 +426,30 @@ func TestValidateClaims(t *testing.T) {
 				},
 			},
 			expectValid: true,
+		},
+		{
+			name: "GIVEN a jwt with multiple audiences and one invalid audience in allowed audiences and audiences are not required EXPECT success",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				AllowedAudience: []string{
+					"test1",
+					"test2",
+				},
+				AudienceRequired: false,
+				HMACSecret:       "test",
+			},
+			body: StandardClaims{
+				Audience: []string{
+					"test1",
+					"other2",
+				},
+			},
+			expectValid: false,
+			expectedErrorCodes: []string{
+				coreerrors.ErrCodeJWTValidatorAudienceInvalid,
+			},
 		},
 		{
 			name: "GIVEN a jwt no audience and audiences are required EXPECT error code jwt audience missing",
@@ -825,7 +849,6 @@ func TestValidateClaims(t *testing.T) {
 			}
 		})
 	}
-	t.Error("\ttest not implemented yet...")
 }
 
 func TestValidateSignature(t *testing.T) {
