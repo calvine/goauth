@@ -43,7 +43,7 @@ type StandardClaims struct {
 	JWTID          string   `json:"jti,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7
 }
 
-func splitEncodedJWT(encodedJWT string) ([]string, errors.RichError) {
+func SplitEncodedJWT(encodedJWT string) ([]string, errors.RichError) {
 	parts := strings.Split(encodedJWT, ".")
 	if len(parts) != 3 {
 		errMsg := "there should be exactly three parts"

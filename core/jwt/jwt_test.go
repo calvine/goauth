@@ -32,7 +32,7 @@ func Test_splitEncodedJWT(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			parts, err := splitEncodedJWT(tc.encodedJWT)
+			parts, err := SplitEncodedJWT(tc.encodedJWT)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
@@ -54,7 +54,16 @@ func TestDecodeHeader(t *testing.T) {
 		expectedHeader    Header
 		expectedErrorCode string
 	}
-	testCases := []testCase{}
+	testCases := []testCase{
+		{
+			name:          "GIVEN a valid encoded jwt header EXPECT success",
+			encodedHeader: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+			expectedHeader: Header{
+				Algorithm: Alg_HS256,
+				TokenType: Type_JWT,
+			},
+		},
+	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			decodedHeader, err := DecodeHeader(tc.encodedHeader)
@@ -69,7 +78,6 @@ func TestDecodeHeader(t *testing.T) {
 			}
 		})
 	}
-	t.Error("\ttest not implemented yet...")
 }
 
 func TestHeaderEncode(t *testing.T) {
@@ -79,7 +87,11 @@ func TestHeaderEncode(t *testing.T) {
 		expectedEncodedHeader string
 		expectedErrorCode     string
 	}
-	testCases := []testCase{}
+	testCases := []testCase{
+		{
+			name: "GIVEN  EXPECT ",
+		},
+	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			encodedHeader, err := tc.header.Encode()
@@ -97,17 +109,17 @@ func TestHeaderEncode(t *testing.T) {
 	t.Error("\ttest not implemented yet...")
 }
 
-func TestDecodeBody(t *testing.T) {
+func TestDecodeStandardClaims(t *testing.T) {
 	type testCase struct {
 		name                   string
-		encodedBody            string
+		encodedStandardClaims  string
 		expectedStandardClaims StandardClaims
 		expectedErrorCode      string
 	}
 	testCases := []testCase{}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := DecodeStandardClaims(tc.encodedBody)
+			_, err := DecodeStandardClaims(tc.encodedStandardClaims)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
