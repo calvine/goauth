@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/richerror/errors"
 	"github.com/google/uuid"
 )
@@ -230,7 +231,7 @@ func validateNbf(nbf Time, nbfRequired bool) errors.RichError {
 	return nil
 }
 
-func validateAudience(audience []string, allowedAudiences map[string]bool, audienceRequired, allowAnyAudience bool) errors.RichError {
+func validateAudience(audience utilities.CSString, allowedAudiences map[string]bool, audienceRequired, allowAnyAudience bool) errors.RichError {
 	if len(audience) == 0 {
 		if audienceRequired {
 			return coreerrors.NewJWTValidatorAudienceMissingError(true)
@@ -238,8 +239,9 @@ func validateAudience(audience []string, allowedAudiences map[string]bool, audie
 	} else if allowAnyAudience {
 		return nil
 	} else {
+		audienceSlice := audience.ToSlice()
 		var err errors.RichError
-		for _, a := range audience {
+		for _, a := range audienceSlice {
 			_, found := allowedAudiences[a]
 			if !found {
 				// TODO: come back and let this collect all invalid audiences, but for not just one will do...

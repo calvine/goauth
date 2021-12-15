@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/richerror/errors"
 )
 
@@ -29,18 +30,18 @@ const (
 
 type Header struct {
 	Algorithm   string `json:"alg"`           // https://datatracker.ietf.org/doc/html/rfc7518#section-3.1
-	ContentType string `json:"cty,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-5.2
 	TokenType   string `json:"typ"`           // TODO: use this... https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.9
+	ContentType string `json:"cty,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-5.2
 }
 
 type StandardClaims struct {
-	Issuer         string   `json:"iss"`           // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1
-	Subject        string   `json:"sub"`           // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.2
-	Audience       []string `json:"aud,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3
-	ExpirationTime Time     `json:"exp,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4
-	NotBefore      Time     `json:"nbf,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.5
-	IssuedAt       Time     `json:"iat,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6
-	JWTID          string   `json:"jti,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7
+	Issuer         string             `json:"iss"`           // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1
+	Subject        string             `json:"sub"`           // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.2
+	Audience       utilities.CSString `json:"aud,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3
+	ExpirationTime Time               `json:"exp,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4
+	NotBefore      Time               `json:"nbf,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.5
+	IssuedAt       Time               `json:"iat,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6
+	JWTID          string             `json:"jti,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7
 }
 
 func SplitEncodedJWT(encodedJWT string) ([]string, errors.RichError) {

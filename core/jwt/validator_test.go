@@ -346,9 +346,7 @@ func TestValidateClaims(t *testing.T) {
 				HMACSecret:       "test",
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"test1",
-				},
+				Audience: "test1",
 			},
 			expectValid: true,
 		},
@@ -366,9 +364,7 @@ func TestValidateClaims(t *testing.T) {
 				HMACSecret:       "test",
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"test2",
-				},
+				Audience: "test2",
 			},
 			expectValid: true,
 		},
@@ -386,10 +382,7 @@ func TestValidateClaims(t *testing.T) {
 				HMACSecret:       "test",
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"test1",
-					"test2",
-				},
+				Audience: "test1,test2",
 			},
 			expectValid: true,
 		},
@@ -404,9 +397,7 @@ func TestValidateClaims(t *testing.T) {
 				HMACSecret:       "test",
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"other1",
-				},
+				Audience: "other1",
 			},
 			expectValid: true,
 		},
@@ -421,9 +412,7 @@ func TestValidateClaims(t *testing.T) {
 				HMACSecret:       "test",
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"other2",
-				},
+				Audience: "other2",
 			},
 			expectValid: true,
 		},
@@ -441,10 +430,7 @@ func TestValidateClaims(t *testing.T) {
 				HMACSecret:       "test",
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"test1",
-					"other2",
-				},
+				Audience: "test1,other2",
 			},
 			expectValid: false,
 			expectedErrorCodes: []string{
@@ -484,9 +470,7 @@ func TestValidateClaims(t *testing.T) {
 				HMACSecret:       "test",
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"other1",
-				},
+				Audience: "other1",
 			},
 			expectValid: false,
 			expectedErrorCodes: []string{
@@ -507,9 +491,7 @@ func TestValidateClaims(t *testing.T) {
 				HMACSecret:       "test",
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"other2",
-				},
+				Audience: "other2",
 			},
 			expectValid: false,
 			expectedErrorCodes: []string{
