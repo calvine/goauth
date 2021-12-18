@@ -216,7 +216,6 @@ func DecodeStandardClaims(encodedBody string) (StandardClaims, errors.RichError)
 func (header Header) Encode() (string, errors.RichError) {
 	headerJSONString, err := json.Marshal(header)
 	if err != nil {
-		// do somthing
 		return "", coreerrors.NewJWTEncodingFailedError(err, true)
 	}
 	encodedClaims := Base64UrlEncode(headerJSONString)
@@ -228,7 +227,6 @@ func (header Header) Encode() (string, errors.RichError) {
 func (claims StandardClaims) Encode() (string, errors.RichError) {
 	claimJSONString, err := json.Marshal(claims)
 	if err != nil {
-		// do somthing
 		return "", coreerrors.NewJWTEncodingFailedError(err, true)
 	}
 	encodedClaims := Base64UrlEncode(claimJSONString)
