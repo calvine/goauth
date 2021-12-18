@@ -1,26 +1,27 @@
 package jwt
 
 import (
-	"crypto/sha256"
-	"crypto/sha512"
 	"strings"
 
 	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/richerror/errors"
 	"github.com/google/uuid"
 )
 
 type JWTValidator interface {
 	GetID() string
+	GetJWTSignerFromAlg(alg string) (JWTSigner, errors.RichError)
 	ValidateHeader(header Header) ([]errors.RichError, bool)
 	ValidateClaims(claims StandardClaims) ([]errors.RichError, bool)
-	ValidateSignature(alg string, encodedHeaderAndBody string, signature string) (bool, errors.RichError)
+	ValidateSignature(algorithm string, encodedHeaderAndBody string, signature string) (bool, errors.RichError)
 }
 
 type jwtValidator struct {
 	id                string
 	allowedAlgorithms map[string]bool // These are maps to avoid having to loop to find matching items
 	issuerRequired    bool
+	allowAnyIssuer    bool
 	expectedIssuer    string
 	audienceRequired  bool
 	allowAnyAudience  bool
@@ -30,7 +31,7 @@ type jwtValidator struct {
 	notBeforeRequired bool
 	subjectRequired   bool
 	jtiRequired       bool
-	hmacSecret        string
+	hmacOptions       HMACSigningOptions
 	// TODO: add public private key stuff for additional validation
 }
 
@@ -38,6 +39,7 @@ type JWTValidatorOptions struct {
 	ID                string
 	AllowedAlgorithms []string
 	IssuerRequired    bool
+	AllowAnyIssuer    bool
 	ExpectedIssuer    string
 	AudienceRequired  bool
 	AllowAnyAudience  bool
@@ -47,7 +49,7 @@ type JWTValidatorOptions struct {
 	NotBeforeRequired bool
 	SubjectRequired   bool
 	JTIRequired       bool
-	HMACSecret        string
+	HMACOptions       HMACSigningOptions
 	// TODO: add public private key stuff for additional validation
 }
 
@@ -60,6 +62,7 @@ func NewJWTValidator(validatorOptions JWTValidatorOptions) (JWTValidator, errors
 	validator := jwtValidator{
 		id:                validatorOptions.ID,
 		issuerRequired:    validatorOptions.IssuerRequired,
+		allowAnyIssuer:    validatorOptions.AllowAnyIssuer,
 		expectedIssuer:    validatorOptions.ExpectedIssuer, // should we allow
 		expireRequired:    validatorOptions.ExpireRequired,
 		audienceRequired:  validatorOptions.AudienceRequired,
@@ -68,7 +71,7 @@ func NewJWTValidator(validatorOptions JWTValidatorOptions) (JWTValidator, errors
 		notBeforeRequired: validatorOptions.NotBeforeRequired,
 		subjectRequired:   validatorOptions.SubjectRequired,
 		jtiRequired:       validatorOptions.JTIRequired,
-		hmacSecret:        validatorOptions.HMACSecret,
+		hmacOptions:       validatorOptions.HMACOptions,
 	}
 	if len(validatorOptions.AllowedAlgorithms) == 0 {
 		// You have to specify allowed algorithms
@@ -76,10 +79,10 @@ func NewJWTValidator(validatorOptions JWTValidatorOptions) (JWTValidator, errors
 	}
 	validator.allowedAlgorithms = make(map[string]bool)
 
-	validatHMACSecret := len(validator.hmacSecret) > 0
+	hasMACSecret := len(validator.hmacOptions.Secret) > 0
 
 	for _, a := range validatorOptions.AllowedAlgorithms {
-		if !validatHMACSecret && strings.HasPrefix(a, "HS") {
+		if !hasMACSecret && strings.HasPrefix(a, "HS") {
 			return validator, coreerrors.NewJWTValidatorNoHMACSecretProvidedError(true)
 		}
 		// TODO: have other validation based on the algorithm
@@ -98,7 +101,18 @@ func NewJWTValidator(validatorOptions JWTValidatorOptions) (JWTValidator, errors
 		}
 	}
 
+	if validator.allowAnyIssuer && len(validator.expectedIssuer) != 0 {
+		return validator, coreerrors.NewJWTValidatorAllowAnyIssuerAndExpectedIssuerProvidedError(true)
+	}
+
 	return validator, nil
+}
+
+func (v jwtValidator) GetJWTSignerFromAlg(alg string) (JWTSigner, errors.RichError) {
+	if strings.HasPrefix(alg, "HS") {
+		return v.hmacOptions, nil
+	}
+	return nil, coreerrors.NewJWTAlgorithmNotImplementedError(alg, true)
 }
 
 func (v jwtValidator) GetID() string {
@@ -125,7 +139,7 @@ func (v jwtValidator) ValidateHeader(header Header) ([]errors.RichError, bool) {
 
 func (v jwtValidator) ValidateClaims(claims StandardClaims) ([]errors.RichError, bool) {
 	errs := make([]errors.RichError, 0, 4)
-	err := validateIssuer(claims.Issuer, v.expectedIssuer, v.issuerRequired)
+	err := validateIssuer(claims.Issuer, v.expectedIssuer, v.issuerRequired, v.allowAnyIssuer)
 	if err != nil {
 		errs = append(errs, err)
 	}
@@ -157,27 +171,23 @@ func (v jwtValidator) ValidateClaims(claims StandardClaims) ([]errors.RichError,
 }
 
 func (v jwtValidator) ValidateSignature(alg string, encodedHeaderAndBody string, signature string) (bool, errors.RichError) {
-	var calculatedSignature string
-	switch alg {
-	case Alg_HS256:
-		calculatedSignature = CalculateHMACSignature(v.hmacSecret, encodedHeaderAndBody, sha256.New)
-	case Alg_HS384:
-		calculatedSignature = CalculateHMACSignature(v.hmacSecret, encodedHeaderAndBody, sha512.New384)
-	case Alg_HS512:
-		calculatedSignature = CalculateHMACSignature(v.hmacSecret, encodedHeaderAndBody, sha512.New)
-	default:
-		// The none algorithm is not in this list intentonally... it is bad do not use it...
-		return false, coreerrors.NewJWTAlgorithmNotImplementedError(alg, true)
+	signer, err := v.GetJWTSignerFromAlg(alg)
+	if err != nil {
+		return false, err
+	}
+	calculatedSignature, err := signer.Sign(alg, encodedHeaderAndBody)
+	if err != nil {
+		return false, err
 	}
 	return signature == calculatedSignature, nil
 }
 
-func validateIssuer(issuer, expectedIssuer string, issuerRequired bool) errors.RichError {
+func validateIssuer(issuer, expectedIssuer string, issuerRequired bool, allowAnyIssuer bool) errors.RichError {
 	if len(issuer) == 0 {
 		if issuerRequired {
 			return coreerrors.NewJWTIssuerMissingError(true)
 		}
-	} else if issuer != expectedIssuer {
+	} else if !allowAnyIssuer && issuer != expectedIssuer {
 		return coreerrors.NewJWTIssuerInvalidError(issuer, expectedIssuer, true)
 	}
 	return nil
@@ -230,7 +240,7 @@ func validateNbf(nbf Time, nbfRequired bool) errors.RichError {
 	return nil
 }
 
-func validateAudience(audience []string, allowedAudiences map[string]bool, audienceRequired, allowAnyAudience bool) errors.RichError {
+func validateAudience(audience utilities.CSString, allowedAudiences map[string]bool, audienceRequired, allowAnyAudience bool) errors.RichError {
 	if len(audience) == 0 {
 		if audienceRequired {
 			return coreerrors.NewJWTValidatorAudienceMissingError(true)
@@ -238,8 +248,9 @@ func validateAudience(audience []string, allowedAudiences map[string]bool, audie
 	} else if allowAnyAudience {
 		return nil
 	} else {
+		audienceSlice := audience.ToSlice()
 		var err errors.RichError
-		for _, a := range audience {
+		for _, a := range audienceSlice {
 			_, found := allowedAudiences[a]
 			if !found {
 				// TODO: come back and let this collect all invalid audiences, but for not just one will do...

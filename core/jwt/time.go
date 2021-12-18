@@ -8,6 +8,22 @@ import (
 // Time is an alias of time.Time and is useful for unix time stamps coming in from jtws
 type Time time.Time
 
+func NewTime() Time {
+	return Time(time.Now().UTC())
+}
+
+func NewTimeLocal() Time {
+	return Time(time.Now())
+}
+
+func FromDuration(d time.Duration) Time {
+	return Time(time.Now().Add(d).UTC())
+}
+
+func FromDurationLocal(d time.Duration) Time {
+	return Time(time.Now().Add(d))
+}
+
 func (t Time) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.FormatInt(time.Time(t).Unix(), 10)), nil
 }

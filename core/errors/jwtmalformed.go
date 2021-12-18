@@ -10,9 +10,9 @@ import (
 const ErrCodeJWTMalformed = "JWTMalformed"
 
 // NewJWTMalformedError creates a new specific error
-func NewJWTMalformedError(message string, JWT string, includeStack bool) errors.RichError {
+func NewJWTMalformedError(message string, jwt string, includeStack bool) errors.RichError {
 	msg := "encoded jwt is malformed"
-	err := errors.NewRichError(ErrCodeJWTMalformed, msg).AddMetaData("message", message).AddMetaData("JWT", JWT).WithTags([]string{"security", "jwt"})
+	err := errors.NewRichError(ErrCodeJWTMalformed, msg).AddMetaData("message", message).AddMetaData("jwt", jwt).WithTags([]string{"security", "jwt"})
 	if includeStack {
 		err = err.WithStack(1)
 	}

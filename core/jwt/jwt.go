@@ -1,20 +1,50 @@
 package jwt
 
 import (
-	"crypto/hmac"
-	"encoding/base64"
 	"encoding/json"
 	"hash"
 	"strings"
+	"time"
 
 	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/richerror/errors"
+	"github.com/google/uuid"
 )
 
 // JSON Web Token (JWT) 		https://datatracker.ietf.org/doc/html/rfc7519
 // JSON Web Signature (JWS) 	https://datatracker.ietf.org/doc/html/rfc7515
 // JSON Web Encryption (JWE)	https://datatracker.ietf.org/doc/html/rfc7516
 // JSON Web Algorithms (JWA)	https://datatracker.ietf.org/doc/html/rfc7518
+
+type HashFunc func() hash.Hash
+
+type Header struct {
+	Algorithm   string `json:"alg"`           // https://datatracker.ietf.org/doc/html/rfc7518#section-3.1
+	TokenType   string `json:"typ"`           // TODO: use this... https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.9
+	ContentType string `json:"cty,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-5.2
+}
+
+type StandardClaims struct {
+	Issuer         string             `json:"iss,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1
+	Subject        string             `json:"sub,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.2
+	Audience       utilities.CSString `json:"aud,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3
+	ExpirationTime Time               `json:"exp,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4
+	NotBefore      Time               `json:"nbf,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.5
+	IssuedAt       Time               `json:"iat,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6
+	JWTID          string             `json:"jti,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7
+}
+
+type JWTSigner interface {
+	// Sign produces a signature for a given encoded header and body with the given algorithm
+	Sign(alg string, encodedHeaderAndBody string) (string, errors.RichError)
+}
+
+type JWT struct {
+	Header    Header
+	Claims    StandardClaims
+	Signature string
+}
 
 const (
 	Alg_HS256 = "HS256"
@@ -24,23 +54,108 @@ const (
 
 	Alg_NONE = "none" // This should never ever ever ever be used!
 
-	Type_JWT = "JWT"
+	Typ_JWT = "JWT"
 )
 
-type Header struct {
-	Algorithm   string `json:"alg"`           // https://datatracker.ietf.org/doc/html/rfc7518#section-3.1
-	ContentType string `json:"cty,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-5.2
-	TokenType   string `json:"typ"`           // TODO: use this... https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.9
+func NewUnsignedJWT(alg string, iss string, aud []string, sub string, duration time.Duration, notBefore time.Time) JWT {
+	header := Header{
+		Algorithm: alg,
+		TokenType: Typ_JWT,
+	}
+
+	claims := StandardClaims{
+		Issuer:         iss,
+		Audience:       utilities.NewCSString(aud), // if no audience is provided this will be an empty string and opitted from the token for json marshaling
+		IssuedAt:       NewTime(),
+		Subject:        sub,
+		ExpirationTime: FromDuration(duration),
+		NotBefore:      Time(notBefore),
+		JWTID:          uuid.NewString(),
+	}
+
+	return JWT{
+		Header: header,
+		Claims: claims,
+	}
 }
 
-type StandardClaims struct {
-	Issuer         string   `json:"iss"`           // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1
-	Subject        string   `json:"sub"`           // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.2
-	Audience       []string `json:"aud,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3
-	ExpirationTime Time     `json:"exp,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4
-	NotBefore      Time     `json:"nbf,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.5
-	IssuedAt       Time     `json:"iat,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6
-	JWTID          string   `json:"jti,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7
+func DecodeAndValidateJWT(jwt string, validator JWTValidator) (JWT, errors.RichError) {
+	parts, err := SplitEncodedJWT(jwt)
+	if err != nil {
+		return JWT{}, err
+	}
+	header, err := DecodeHeader(parts[0])
+	if err != nil {
+		return JWT{}, err
+	}
+	// validate signature
+	valid, err := validator.ValidateSignature(header.Algorithm, strings.Join(parts[:2], "."), parts[2])
+	if err != nil {
+		return JWT{}, err
+	}
+	if !valid {
+		return JWT{}, coreerrors.NewJWTSignatureInvalidError(jwt, nil, true)
+	}
+	claims, err := DecodeStandardClaims(parts[1])
+	if err != nil {
+		return JWT{}, err
+	}
+	// validate claims
+	claimErrors, valid := validator.ValidateClaims(claims)
+	if !valid {
+		rErr := coreerrors.NewJWTStandardClaimsInvalidError(jwt, true)
+		for _, e := range claimErrors {
+			rErr.AddError(e)
+		}
+		return JWT{}, rErr
+	}
+	return JWT{
+		Header:    header,
+		Claims:    claims,
+		Signature: parts[2],
+	}, nil
+
+}
+
+// ENcodeSignedJWT encodes a signed JWT. If no signature is set an error is returned
+func (jwt JWT) EncodeSignedJWT() (string, errors.RichError) {
+	parts := make([]string, 0, 3)
+	encodedHeader, err := jwt.Header.Encode()
+	if err != nil {
+		return "", err
+	}
+	encodedBody, err := jwt.Claims.Encode()
+	if err != nil {
+		return "", err
+	}
+	parts = append(parts, encodedHeader, encodedBody)
+	if len(jwt.Signature) == 0 {
+		return "", coreerrors.NewJWTSignatureMissingError(strings.Join(parts, "."), true)
+	}
+	parts = append(parts, jwt.Signature)
+	return strings.Join(parts, "."), nil
+}
+
+func (jwt *JWT) EncodeAndSign(signer JWTSigner) (string, errors.RichError) {
+	parts := make([]string, 0, 3)
+	encodedHeader, err := jwt.Header.Encode()
+	if err != nil {
+		return "", err
+	}
+	encodedBody, err := jwt.Claims.Encode()
+	if err != nil {
+		return "", err
+	}
+	parts = append(parts, encodedHeader, encodedBody)
+	encodedHeaderAndBody := strings.Join(parts[:2], ".")
+	// NOTE: this code is not intended work with the none algorithm. it should not be used...
+	signature, err := signer.Sign(jwt.Header.Algorithm, encodedHeaderAndBody)
+	if err != nil {
+		return "", err
+	}
+	jwt.Signature = signature
+	parts = append(parts, signature)
+	return strings.Join(parts, "."), nil
 }
 
 func SplitEncodedJWT(encodedJWT string) ([]string, errors.RichError) {
@@ -120,49 +235,4 @@ func (claims StandardClaims) Encode() (string, errors.RichError) {
 	// removing trailing = signs per https://datatracker.ietf.org/doc/html/rfc7515#section-2 definition of Base64url Encoding
 	encodedClaims = strings.TrimRight(encodedClaims, "=")
 	return encodedClaims, nil
-}
-
-func CalculateHMACSignature(secret string, encodedHeaderAndBody string, hashFunc func() hash.Hash) string {
-	hmac := hmac.New(hashFunc, []byte(secret))
-	hmac.Write([]byte(encodedHeaderAndBody))
-	signatureBytes := hmac.Sum(nil)
-	encodedSignature := Base64UrlEncode(signatureBytes)
-	return encodedSignature
-}
-
-// Base64UrlEncode implemented per https://datatracker.ietf.org/doc/html/rfc7515#appendix-C
-func Base64UrlEncode(s []byte) string {
-	encodedString := base64.StdEncoding.EncodeToString(s)
-	// trim trailing '='
-	encodedString = strings.Split(encodedString, "=")[0]
-	// convert all '-' to '+'
-	encodedString = strings.Replace(encodedString, "+", "-", -1)
-	// convert all '/' to '_'
-	encodedString = strings.Replace(encodedString, "/", "_", -1)
-	return encodedString
-}
-
-// Base64UrlDecode implemented per https://datatracker.ietf.org/doc/html/rfc7515#appendix-C
-func Base64UrlDecode(encodedString string) ([]byte, errors.RichError) {
-	decodedEncodedString := encodedString
-	// convert all '+' to '-'
-	decodedEncodedString = strings.Replace(decodedEncodedString, "-", "+", -1)
-	// convert all '_' to '/'
-	decodedEncodedString = strings.Replace(decodedEncodedString, "_", "/", -1)
-	// add padding '=' back
-	switch len(decodedEncodedString) % 4 {
-	case 0:
-		// do nothing
-	case 2:
-		decodedEncodedString += "=="
-	case 3:
-		decodedEncodedString += "="
-	default:
-		return nil, coreerrors.NewBase64URLStringInvalidError(encodedString, true)
-	}
-	decodedString, err := base64.StdEncoding.DecodeString(decodedEncodedString)
-	if err != nil {
-		return nil, coreerrors.NewBase64DecodeStringFailedError(err, decodedEncodedString, true)
-	}
-	return []byte(decodedString), nil
 }

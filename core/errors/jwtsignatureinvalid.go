@@ -10,9 +10,9 @@ import (
 const ErrCodeJWTSignatureInvalid = "JWTSignatureInvalid"
 
 // NewJWTSignatureInvalidError creates a new specific error
-func NewJWTSignatureInvalidError(JWT string, fields map[string]interface{}, includeStack bool) errors.RichError {
+func NewJWTSignatureInvalidError(jwt string, fields map[string]interface{}, includeStack bool) errors.RichError {
 	msg := "jwt signature is invalid"
-	err := errors.NewRichError(ErrCodeJWTSignatureInvalid, msg).WithMetaData(fields).AddMetaData("JWT", JWT).WithTags([]string{"security", "jwt"})
+	err := errors.NewRichError(ErrCodeJWTSignatureInvalid, msg).WithMetaData(fields).AddMetaData("jwt", jwt).WithTags([]string{"security", "jwt"})
 	if includeStack {
 		err = err.WithStack(1)
 	}

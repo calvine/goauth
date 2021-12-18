@@ -281,7 +281,7 @@
         ],
         "metaData": [
             { "name": "message", "dataType": "string" },
-            { "name": "JWT", "dataType": "string" }
+            { "name": "jwt", "dataType": "string" }
         ]
     },
     {
@@ -293,7 +293,7 @@
             "jwt"
         ],
         "metaData": [
-            { "name": "JWT", "dataType": "string" }
+            { "name": "jwt", "dataType": "string" }
         ]
     },
     {
@@ -341,7 +341,19 @@
             "jwt"
         ],
         "metaData": [
-            { "name": "JWT", "dataType": "string" }
+            { "name": "jwt", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "JWTStandardClaimsInvalid",
+        "message": "jwt standard claims are invalid",
+        "includeMap": false,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": [
+            { "name": "jwt", "dataType": "string" }
         ]
     },
     {
@@ -476,6 +488,16 @@
     {
         "code": "JWTValidatorAudienceRequiredButNoneProvided",
         "message": "jwt validator requires specific audiences but none were provided", 
+        "includeMap": false,
+        "tags": [
+            "config",
+            "jwt"
+        ],
+        "metaData": []
+    },
+    {
+        "code": "JWTValidatorAllowAnyIssuerAndExpectedIssuerProvided",
+        "message": "jwt validator cannot have allow any issuer set to true and expected issuer have a value", 
         "includeMap": false,
         "tags": [
             "config",

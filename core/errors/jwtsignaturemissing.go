@@ -10,9 +10,9 @@ import (
 const ErrCodeJWTSignatureMissing = "JWTSignatureMissing"
 
 // NewJWTSignatureMissingError creates a new specific error
-func NewJWTSignatureMissingError(JWT string, includeStack bool) errors.RichError {
+func NewJWTSignatureMissingError(jwt string, includeStack bool) errors.RichError {
 	msg := "jwt signature is missing"
-	err := errors.NewRichError(ErrCodeJWTSignatureMissing, msg).AddMetaData("JWT", JWT).WithTags([]string{"security", "jwt"})
+	err := errors.NewRichError(ErrCodeJWTSignatureMissing, msg).AddMetaData("jwt", jwt).WithTags([]string{"security", "jwt"})
 	if includeStack {
 		err = err.WithStack(1)
 	}

@@ -208,7 +208,7 @@ func (s *server) handleMagicLoginGet() http.HandlerFunc {
 	}
 }
 
-func setLoginState(rw http.ResponseWriter, user models.User)
+// func setLoginState(rw http.ResponseWriter, user models.User)
 
 // func (s *server) handleAuthGet() http.HandlerFunc {
 // 	var (

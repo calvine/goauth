@@ -21,8 +21,24 @@ func TestNewJWTValidator(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret: "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
+		},
+		{
+			name: "GIVEN jwt validator options with allow any issuer true and a value set for expected issuer EXPECT error code jwt validator no hmac secret provided",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
+				AllowAnyIssuer: true,
+				ExpectedIssuer: "goauth",
+			},
+			expectedErrorCode: coreerrors.ErrCodeJWTValidatorAllowAnyIssuerAndExpectedIssuerProvided,
 		},
 		{
 			name: "GIVEN jwt validator options with HS algorithms allowed and no hmacSecret set EXPECT error code jwt validator no hmac secret provided",
@@ -44,7 +60,9 @@ func TestNewJWTValidator(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:       "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				AudienceRequired: true,
 			},
 			expectedErrorCode: coreerrors.ErrCodeJWTValidatorAudienceRequiredButNoneProvided,
@@ -83,7 +101,9 @@ func TestValidateHeader(t *testing.T) {
 					Alg_HS384,
 					Alg_HS512,
 				},
-				HMACSecret: "test secret",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test secret",
+				},
 			},
 			header: Header{
 				Algorithm: Alg_HS256,
@@ -97,7 +117,9 @@ func TestValidateHeader(t *testing.T) {
 					Alg_HS384,
 					Alg_HS512,
 				},
-				HMACSecret: "test secret",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test secret",
+				},
 			},
 			header: Header{
 				Algorithm: Alg_HS256,
@@ -156,7 +178,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:     "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				ExpectedIssuer: "goauth",
 				IssuerRequired: false,
 			},
@@ -171,8 +195,27 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:     "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				ExpectedIssuer: "goauth",
+				IssuerRequired: true,
+			},
+			body: StandardClaims{
+				Issuer: "goauth",
+			},
+			expectValid: true,
+		},
+		{
+			name: "GIVEN claims with an issuer and allow any issuer is true when issuer is required EXPECT success",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+				},
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
+				AllowAnyIssuer: true,
 				IssuerRequired: true,
 			},
 			body: StandardClaims{
@@ -186,7 +229,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:     "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				IssuerRequired: false,
 			},
 			expectValid: true,
@@ -198,7 +243,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:     "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				ExpectedIssuer: "goauth",
 				IssuerRequired: false,
 			},
@@ -216,7 +263,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:     "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				ExpectedIssuer: "goauth",
 				IssuerRequired: true,
 			},
@@ -234,7 +283,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:     "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				IssuerRequired: true,
 			},
 			body:        StandardClaims{},
@@ -250,7 +301,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret: "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
 				ExpirationTime: Time(time.Now().Add(time.Second * 10)),
@@ -264,7 +317,9 @@ func TestValidateClaims(t *testing.T) {
 					Alg_HS256,
 				},
 				ExpireRequired: true,
-				HMACSecret:     "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
 				ExpirationTime: Time(time.Now().Add(time.Second * 10)),
@@ -278,7 +333,9 @@ func TestValidateClaims(t *testing.T) {
 					Alg_HS256,
 				},
 				ExpireRequired: false,
-				HMACSecret:     "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body:        StandardClaims{},
 			expectValid: true,
@@ -290,7 +347,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret: "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
 				ExpirationTime: Time(time.Now().Add(time.Second * -1)),
@@ -307,7 +366,9 @@ func TestValidateClaims(t *testing.T) {
 					Alg_HS256,
 				},
 				ExpireRequired: true,
-				HMACSecret:     "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
 				ExpirationTime: Time(time.Now().Add(time.Second * -1)),
@@ -324,7 +385,9 @@ func TestValidateClaims(t *testing.T) {
 					Alg_HS256,
 				},
 				ExpireRequired: true,
-				HMACSecret:     "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{},
 			expectedErrorCodes: []string{
@@ -343,12 +406,12 @@ func TestValidateClaims(t *testing.T) {
 					"test2",
 				},
 				AudienceRequired: true,
-				HMACSecret:       "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"test1",
-				},
+				Audience: "test1",
 			},
 			expectValid: true,
 		},
@@ -363,12 +426,12 @@ func TestValidateClaims(t *testing.T) {
 					"test2",
 				},
 				AudienceRequired: false,
-				HMACSecret:       "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"test2",
-				},
+				Audience: "test2",
 			},
 			expectValid: true,
 		},
@@ -383,13 +446,12 @@ func TestValidateClaims(t *testing.T) {
 					"test2",
 				},
 				AudienceRequired: false,
-				HMACSecret:       "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"test1",
-					"test2",
-				},
+				Audience: "test1,test2",
 			},
 			expectValid: true,
 		},
@@ -401,12 +463,12 @@ func TestValidateClaims(t *testing.T) {
 				},
 				AllowAnyAudience: true,
 				AudienceRequired: true,
-				HMACSecret:       "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"other1",
-				},
+				Audience: "other1",
 			},
 			expectValid: true,
 		},
@@ -418,12 +480,12 @@ func TestValidateClaims(t *testing.T) {
 				},
 				AllowAnyAudience: true,
 				AudienceRequired: false,
-				HMACSecret:       "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"other2",
-				},
+				Audience: "other2",
 			},
 			expectValid: true,
 		},
@@ -438,13 +500,12 @@ func TestValidateClaims(t *testing.T) {
 					"test2",
 				},
 				AudienceRequired: false,
-				HMACSecret:       "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"test1",
-					"other2",
-				},
+				Audience: "test1,other2",
 			},
 			expectValid: false,
 			expectedErrorCodes: []string{
@@ -462,7 +523,9 @@ func TestValidateClaims(t *testing.T) {
 					"test2",
 				},
 				AudienceRequired: true,
-				HMACSecret:       "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body:        StandardClaims{},
 			expectValid: false,
@@ -481,12 +544,12 @@ func TestValidateClaims(t *testing.T) {
 					"test2",
 				},
 				AudienceRequired: true,
-				HMACSecret:       "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"other1",
-				},
+				Audience: "other1",
 			},
 			expectValid: false,
 			expectedErrorCodes: []string{
@@ -504,12 +567,12 @@ func TestValidateClaims(t *testing.T) {
 					"test2",
 				},
 				AudienceRequired: false,
-				HMACSecret:       "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
-				Audience: []string{
-					"other2",
-				},
+				Audience: "other2",
 			},
 			expectValid: false,
 			expectedErrorCodes: []string{
@@ -523,7 +586,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret: "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
 				IssuedAt: Time(time.Now().Add(time.Second * -10)),
@@ -537,7 +602,9 @@ func TestValidateClaims(t *testing.T) {
 					Alg_HS256,
 				},
 				IssuedAtRequired: true,
-				HMACSecret:       "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
 				IssuedAt: Time(time.Now().Add(time.Second * -10)),
@@ -551,7 +618,9 @@ func TestValidateClaims(t *testing.T) {
 					Alg_HS256,
 				},
 				IssuedAtRequired: false,
-				HMACSecret:       "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body:        StandardClaims{},
 			expectValid: true,
@@ -563,7 +632,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret: "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
 				IssuedAt: Time(time.Now().Add(time.Second * 10)), // in the future
@@ -580,7 +651,9 @@ func TestValidateClaims(t *testing.T) {
 					Alg_HS256,
 				},
 				IssuedAtRequired: true,
-				HMACSecret:       "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
 				IssuedAt: Time(time.Now().Add(time.Second * 10)),
@@ -597,7 +670,9 @@ func TestValidateClaims(t *testing.T) {
 					Alg_HS256,
 				},
 				IssuedAtRequired: true,
-				HMACSecret:       "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{},
 			expectedErrorCodes: []string{
@@ -611,7 +686,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret: "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
 				NotBefore: Time(time.Now().Add(time.Second * -10)),
@@ -625,7 +702,9 @@ func TestValidateClaims(t *testing.T) {
 					Alg_HS256,
 				},
 				NotBeforeRequired: true,
-				HMACSecret:        "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
 				NotBefore: Time(time.Now().Add(time.Second * -10)),
@@ -639,7 +718,9 @@ func TestValidateClaims(t *testing.T) {
 					Alg_HS256,
 				},
 				NotBeforeRequired: false,
-				HMACSecret:        "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body:        StandardClaims{},
 			expectValid: true,
@@ -651,7 +732,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret: "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
 				NotBefore: Time(time.Now().Add(time.Second * 10)), // in the future
@@ -668,7 +751,9 @@ func TestValidateClaims(t *testing.T) {
 					Alg_HS256,
 				},
 				NotBeforeRequired: true,
-				HMACSecret:        "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{
 				NotBefore: Time(time.Now().Add(time.Second * 10)),
@@ -685,7 +770,9 @@ func TestValidateClaims(t *testing.T) {
 					Alg_HS256,
 				},
 				NotBeforeRequired: true,
-				HMACSecret:        "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			body: StandardClaims{},
 			expectedErrorCodes: []string{
@@ -699,7 +786,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:      "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				SubjectRequired: true,
 			},
 			body: StandardClaims{
@@ -713,7 +802,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:      "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				SubjectRequired: false,
 			},
 			body: StandardClaims{
@@ -727,7 +818,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:      "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				SubjectRequired: false,
 			},
 			body:        StandardClaims{},
@@ -739,7 +832,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:      "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				SubjectRequired: true,
 			},
 			body:        StandardClaims{},
@@ -755,7 +850,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:  "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				JTIRequired: true,
 			},
 			body: StandardClaims{
@@ -769,7 +866,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:  "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				JTIRequired: false,
 			},
 			body: StandardClaims{
@@ -783,7 +882,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:  "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				JTIRequired: true,
 			},
 			body: StandardClaims{
@@ -797,7 +898,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:  "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				JTIRequired: false,
 			},
 			body:        StandardClaims{},
@@ -809,7 +912,9 @@ func TestValidateClaims(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret:  "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 				JTIRequired: true,
 			},
 			body:        StandardClaims{},
@@ -868,7 +973,9 @@ func TestValidateSignature(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret: "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			alg:                  Alg_HS256,
 			encodedHeaderAndBody: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",
@@ -881,7 +988,9 @@ func TestValidateSignature(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS384,
 				},
-				HMACSecret: "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			alg:                  Alg_HS384,
 			encodedHeaderAndBody: "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",
@@ -894,7 +1003,9 @@ func TestValidateSignature(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS512,
 				},
-				HMACSecret: "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			alg:                  Alg_HS512,
 			encodedHeaderAndBody: "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",
@@ -907,7 +1018,9 @@ func TestValidateSignature(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS256,
 				},
-				HMACSecret: "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			alg:                  Alg_HS256,
 			encodedHeaderAndBody: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",
@@ -920,7 +1033,9 @@ func TestValidateSignature(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS384,
 				},
-				HMACSecret: "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			alg:                  Alg_HS384,
 			encodedHeaderAndBody: "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",
@@ -933,7 +1048,9 @@ func TestValidateSignature(t *testing.T) {
 				AllowedAlgorithms: []string{
 					Alg_HS512,
 				},
-				HMACSecret: "test",
+				HMACOptions: HMACSigningOptions{
+					Secret: "test",
+				},
 			},
 			alg:                  Alg_HS512,
 			encodedHeaderAndBody: "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",
