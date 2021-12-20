@@ -1,12 +1,15 @@
 package http
 
 import (
+	"context"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/jwt"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/utilities/ctxpropagation"
 	"github.com/calvine/goauth/http/internal/constants"
@@ -208,7 +211,41 @@ func (s *server) handleMagicLoginGet() http.HandlerFunc {
 	}
 }
 
-// func setLoginState(rw http.ResponseWriter, user models.User)
+type setLoginStateOptions struct {
+	user     models.User
+	signer   jwt.Signer
+	duration time.Duration
+}
+
+func setLoginState(ctx context.Context, logger *zap.Logger, rw http.ResponseWriter, options setLoginStateOptions) errors.RichError {
+	span := trace.SpanFromContext(ctx)
+	defer span.End()
+	jwToken := jwt.NewUnsignedJWT(jwt.Alg_HS256, "goauth", []string{}, options.user.ID, options.duration, time.Now())
+	// hmacOptions, err := jwt.NewHMACSigningOptions("test")
+	// if err != nil {
+	// 	errorMsg := "building signing options failed"
+	// 	logger.Error(errorMsg, zap.Reflect("error", err))
+	// 	apptelemetry.SetSpanOriginalError(&span, err, errorMsg)
+	// 	return err
+	// }
+	encodedJWT, err := jwToken.SignAndEncode(options.signer)
+	if err != nil {
+		errorMsg := "signing and encoding jwt failed"
+		logger.Error(errorMsg, zap.Reflect("error", err))
+		apptelemetry.SetSpanOriginalError(&span, err, errorMsg)
+		return err
+	}
+	// encodedHWT, err := jwt.SignAndEncode()
+	cookie := http.Cookie{
+		Name:     constants.LoginCookieName,
+		Value:    encodedJWT,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode, // TODO: Evaluate what the best setting is for this. Starting with strict.
+	}
+	http.SetCookie(rw, &cookie)
+	return nil
+}
 
 // func (s *server) handleAuthGet() http.HandlerFunc {
 // 	var (

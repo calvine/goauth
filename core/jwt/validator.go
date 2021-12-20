@@ -11,7 +11,7 @@ import (
 
 type JWTValidator interface {
 	GetID() string
-	GetJWTSignerFromAlg(alg string) (JWTSigner, errors.RichError)
+	GetSignerFromAlg(alg string) (Signer, errors.RichError)
 	ValidateHeader(header Header) ([]errors.RichError, bool)
 	ValidateClaims(claims StandardClaims) ([]errors.RichError, bool)
 	ValidateSignature(algorithm string, encodedHeaderAndBody string, signature string) (bool, errors.RichError)
@@ -108,7 +108,7 @@ func NewJWTValidator(validatorOptions JWTValidatorOptions) (JWTValidator, errors
 	return validator, nil
 }
 
-func (v jwtValidator) GetJWTSignerFromAlg(alg string) (JWTSigner, errors.RichError) {
+func (v jwtValidator) GetSignerFromAlg(alg string) (Signer, errors.RichError) {
 	if strings.HasPrefix(alg, "HS") {
 		return v.hmacOptions, nil
 	}
@@ -171,7 +171,7 @@ func (v jwtValidator) ValidateClaims(claims StandardClaims) ([]errors.RichError,
 }
 
 func (v jwtValidator) ValidateSignature(alg string, encodedHeaderAndBody string, signature string) (bool, errors.RichError) {
-	signer, err := v.GetJWTSignerFromAlg(alg)
+	signer, err := v.GetSignerFromAlg(alg)
 	if err != nil {
 		return false, err
 	}

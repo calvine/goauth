@@ -35,7 +35,7 @@ type StandardClaims struct {
 	JWTID          string             `json:"jti,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7
 }
 
-type JWTSigner interface {
+type Signer interface {
 	// Sign produces a signature for a given encoded header and body with the given algorithm
 	Sign(alg string, encodedHeaderAndBody string) (string, errors.RichError)
 }
@@ -136,7 +136,7 @@ func (jwt JWT) EncodeSignedJWT() (string, errors.RichError) {
 	return strings.Join(parts, "."), nil
 }
 
-func (jwt *JWT) EncodeAndSign(signer JWTSigner) (string, errors.RichError) {
+func (jwt *JWT) SignAndEncode(signer Signer) (string, errors.RichError) {
 	parts := make([]string, 0, 3)
 	encodedHeader, err := jwt.Header.Encode()
 	if err != nil {

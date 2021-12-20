@@ -100,11 +100,11 @@ func TestDecodeAndValidateJWT(t *testing.T) {
 	}
 }
 
-func TestEncodeAndSign(t *testing.T) {
+func TestSignAndEncode(t *testing.T) {
 	type testCase struct {
 		name               string
 		jwt                JWT
-		signer             JWTSigner
+		signer             Signer
 		expectedEncodedJWT string
 		expectedErrorCode  string
 	}
@@ -134,7 +134,7 @@ func TestEncodeAndSign(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			encodedJWT, err := tc.jwt.EncodeAndSign(tc.signer)
+			encodedJWT, err := tc.jwt.SignAndEncode(tc.signer)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
