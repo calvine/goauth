@@ -221,6 +221,7 @@ func setLoginState(ctx context.Context, logger *zap.Logger, rw http.ResponseWrit
 	span := trace.SpanFromContext(ctx)
 	defer span.End()
 	jwToken := jwt.NewUnsignedJWT(jwt.Alg_HS256, "goauth", []string{}, options.user.ID, options.duration, time.Now())
+	span.AddEvent("unsigned jwt created")
 	// hmacOptions, err := jwt.NewHMACSigningOptions("test")
 	// if err != nil {
 	// 	errorMsg := "building signing options failed"
@@ -235,6 +236,7 @@ func setLoginState(ctx context.Context, logger *zap.Logger, rw http.ResponseWrit
 		apptelemetry.SetSpanOriginalError(&span, err, errorMsg)
 		return err
 	}
+	span.AddEvent("JWT signed and encoded")
 	// encodedHWT, err := jwt.SignAndEncode()
 	cookie := http.Cookie{
 		Name:     constants.LoginCookieName,
@@ -244,6 +246,7 @@ func setLoginState(ctx context.Context, logger *zap.Logger, rw http.ResponseWrit
 		SameSite: http.SameSiteStrictMode, // TODO: Evaluate what the best setting is for this. Starting with strict.
 	}
 	http.SetCookie(rw, &cookie)
+	span.AddEvent("sign in cookie set")
 	return nil
 }
 
