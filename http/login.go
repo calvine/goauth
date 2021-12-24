@@ -217,7 +217,7 @@ type setLoginStateOptions struct {
 	duration time.Duration
 }
 
-func setLoginState(ctx context.Context, logger *zap.Logger, rw http.ResponseWriter, options setLoginStateOptions) errors.RichError {
+func (server) setLoginState(ctx context.Context, logger *zap.Logger, rw http.ResponseWriter, options setLoginStateOptions) errors.RichError {
 	span := trace.SpanFromContext(ctx)
 	defer span.End()
 	jwToken := jwt.NewUnsignedJWT(jwt.Alg_HS256, "goauth", []string{}, options.user.ID, options.duration, time.Now())
@@ -248,6 +248,41 @@ func setLoginState(ctx context.Context, logger *zap.Logger, rw http.ResponseWrit
 	http.SetCookie(rw, &cookie)
 	span.AddEvent("sign in cookie set")
 	return nil
+}
+
+func (server) getAuthStatus(ctx context.Context, logger *zap.Logger, r *http.Request) (core.AuthStatus, errors.RichError) {
+	span := trace.SpanFromContext(ctx)
+	defer span.End()
+	authCookie, err := r.Cookie(constants.LoginCookieName)
+	if err != nil {
+		// if err == http.ErrNoCookie {
+		// according to the r.Cookie method the only possible error is ErrNoCookie,
+		// so any error here will be treated as if the cookie was just not there.
+		logger.Debug("request did not contain auth cookie")
+		return core.Unauthenticated, nil
+	}
+	jwtParts, rErr := jwt.SplitEncodedJWT(authCookie.Value)
+	if rErr != nil {
+		errMsg := "failed to split encoded jwt from auth cookie!"
+		logger.Error(errMsg, zap.Reflect("err", rErr), zap.String("cookie_value", authCookie.Value))
+		apptelemetry.SetSpanOriginalError(&span, rErr, errMsg)
+		return core.Invalid, rErr
+	}
+	header, rErr := jwt.DecodeHeader(jwtParts[0])
+	if rErr != nil {
+		errMsg := "failed to decode header from auth cookie jwt"
+		logger.Error(errMsg, zap.Reflect("err", rErr))
+		apptelemetry.SetSpanOriginalError(&span, rErr, errMsg)
+	}
+	// get / make jwt validator...
+	// if valid the we are authenticated
+	// handle expired?
+	if len(header.KeyID) == 0 {
+
+	} else {
+
+	}
+	return core.Unauthenticated, nil
 }
 
 // func (s *server) handleAuthGet() http.HandlerFunc {

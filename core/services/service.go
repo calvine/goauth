@@ -107,3 +107,6 @@ type TokenService interface {
 
 	Service
 }
+
+type JWTKeyService interface {
+}

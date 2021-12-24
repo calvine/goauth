@@ -506,8 +506,18 @@
         "metaData": []
     },
     {
+        "code": "JWTValidatorKeyIDMissing",
+        "message": "jwt validator required jwy key id but no jwt key id was provided",
+        "includeMap": false,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": []
+    },
+    {
         "code": "JWTValidatorAudienceMissing",
-        "message": "jwt validator required audience but no allowed audience",
+        "message": "jwt validator required audience but no audience was provided",
         "includeMap": false,
         "tags": [
             "security",

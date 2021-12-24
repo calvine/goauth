@@ -19,7 +19,8 @@ type JWTValidator interface {
 
 type jwtValidator struct {
 	id                string
-	allowedAlgorithms map[string]bool // These are maps to avoid having to loop to find matching items
+	allowedAlgorithms map[string]bool // These are maps to avoid having to loop to find matching items\
+	keyIDRequired     bool
 	issuerRequired    bool
 	allowAnyIssuer    bool
 	expectedIssuer    string
@@ -38,6 +39,7 @@ type jwtValidator struct {
 type JWTValidatorOptions struct {
 	ID                string
 	AllowedAlgorithms []string
+	KeyIDRequired     bool
 	IssuerRequired    bool
 	AllowAnyIssuer    bool
 	ExpectedIssuer    string
@@ -61,6 +63,7 @@ func NewJWTValidator(validatorOptions JWTValidatorOptions) (JWTValidator, errors
 	}
 	validator := jwtValidator{
 		id:                validatorOptions.ID,
+		keyIDRequired:     validatorOptions.KeyIDRequired,
 		issuerRequired:    validatorOptions.IssuerRequired,
 		allowAnyIssuer:    validatorOptions.AllowAnyIssuer,
 		expectedIssuer:    validatorOptions.ExpectedIssuer, // should we allow
@@ -121,12 +124,15 @@ func (v jwtValidator) GetID() string {
 
 func (v jwtValidator) ValidateHeader(header Header) ([]errors.RichError, bool) {
 	errs := make([]errors.RichError, 0, 1)
-	valid := true
 
 	_, ok := v.allowedAlgorithms[header.Algorithm]
 	if !ok {
 		errs = append(errs, coreerrors.NewJWTAlgorithmNotAllowedError(header.Algorithm, true))
-		valid = false
+	}
+
+	err := validateKeyID(header.KeyID, v.keyIDRequired)
+	if err != nil {
+		errs = append(errs, err)
 	}
 
 	// not validating type per: https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.9
@@ -134,7 +140,7 @@ func (v jwtValidator) ValidateHeader(header Header) ([]errors.RichError, bool) {
 	// 	// add error
 	// }
 
-	return errs, valid
+	return errs, len(errs) == 0
 }
 
 func (v jwtValidator) ValidateClaims(claims StandardClaims) ([]errors.RichError, bool) {
@@ -180,6 +186,13 @@ func (v jwtValidator) ValidateSignature(alg string, encodedHeaderAndBody string,
 		return false, err
 	}
 	return signature == calculatedSignature, nil
+}
+
+func validateKeyID(keyID string, keyIDRequired bool) errors.RichError {
+	if keyIDRequired && len(keyID) == 0 {
+		return coreerrors.NewJWTValidatorKeyIDMissingError(true)
+	}
+	return nil
 }
 
 func validateIssuer(issuer, expectedIssuer string, issuerRequired bool, allowAnyIssuer bool) errors.RichError {

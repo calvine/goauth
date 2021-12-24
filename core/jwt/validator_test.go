@@ -93,8 +93,9 @@ func TestValidateHeader(t *testing.T) {
 		expectedErrorCodes  []string
 	}
 	testCases := []testCase{
+		// algorithm tests
 		{
-			name: "GIVEN a header with an allowed algorithm EXPECT no errors to occurr",
+			name: "GIVEN a header with an allowed algorithm EXPECT no errors to occur",
 			jwtValidatorOptions: JWTValidatorOptions{
 				AllowedAlgorithms: []string{
 					Alg_HS256,
@@ -126,6 +127,66 @@ func TestValidateHeader(t *testing.T) {
 			},
 			expectedErrorCodes: []string{
 				coreerrors.ErrCodeJWTAlgorithmNotAllowed,
+			},
+			expectValid: false,
+		},
+		// keyid tests
+		{
+			name: "GIVEN a header with a key id while key id is not required algorithm EXPECT no errors to occur",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+					Alg_HS384,
+					Alg_HS512,
+				},
+				HMACOptions: HMACSigningOptions{
+					Secret: "test secret",
+				},
+				KeyIDRequired: false,
+			},
+			header: Header{
+				Algorithm: Alg_HS256,
+				KeyID:     "1234",
+			},
+			expectValid: true,
+		},
+		{
+			name: "GIVEN a header with a key id while key id is required EXPECT no errors to occur",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+					Alg_HS384,
+					Alg_HS512,
+				},
+				HMACOptions: HMACSigningOptions{
+					Secret: "test secret",
+				},
+				KeyIDRequired: true,
+			},
+			header: Header{
+				Algorithm: Alg_HS256,
+				KeyID:     "1234",
+			},
+			expectValid: true,
+		},
+		{
+			name: "GIVEN a header with no key id while the key id is required EXPECT error code jwt validator missing key id",
+			jwtValidatorOptions: JWTValidatorOptions{
+				AllowedAlgorithms: []string{
+					Alg_HS256,
+					Alg_HS384,
+					Alg_HS512,
+				},
+				HMACOptions: HMACSigningOptions{
+					Secret: "test secret",
+				},
+				KeyIDRequired: true,
+			},
+			header: Header{
+				Algorithm: Alg_HS256,
+			},
+			expectedErrorCodes: []string{
+				coreerrors.ErrCodeJWTValidatorKeyIDMissing,
 			},
 			expectValid: false,
 		},

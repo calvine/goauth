@@ -23,6 +23,7 @@ type Header struct {
 	Algorithm   string `json:"alg"`           // https://datatracker.ietf.org/doc/html/rfc7518#section-3.1
 	TokenType   string `json:"typ"`           // TODO: use this... https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.9
 	ContentType string `json:"cty,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-5.2
+	KeyID       string `json:"kid,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.4`
 }
 
 type StandardClaims struct {
@@ -33,6 +34,7 @@ type StandardClaims struct {
 	NotBefore      Time               `json:"nbf,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.5
 	IssuedAt       Time               `json:"iat,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6
 	JWTID          string             `json:"jti,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7
+	Scopes         utilities.CSString `json:"scopes,omitempty"`
 }
 
 type Signer interface {
