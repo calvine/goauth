@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/calvine/goauth/core"
+	"github.com/calvine/goauth/core/jwt"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/models/email"
 	"github.com/calvine/richerror/errors"
@@ -109,4 +110,7 @@ type TokenService interface {
 }
 
 type JWTKeyService interface {
+	GetHMACKeyInfoByKeyID(ctx context.Context, logger *zap.Logger, keyID string) (jwt.HMACSigningOptions, errors.RichError)
+
+	Service
 }

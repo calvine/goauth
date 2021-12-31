@@ -40,16 +40,17 @@ const (
 )
 
 type RepoTestHarnessInput struct {
-	UserRepo              *repo.UserRepo
-	ContactRepo           *repo.ContactRepo
-	AddressRepo           *repo.AddressRepo
-	ProfileRepo           *repo.ProfileRepo
-	AppRepo               *repo.AppRepo
-	TokenRepo             *repo.TokenRepo
-	AuditLogRepo          *repo.AuditLogRepo
-	IDGenerator           func(getZeroId bool) string
-	SetupTestDataSource   func(t *testing.T, input RepoTestHarnessInput)
-	CleanupTestDataSource func(t *testing.T, input RepoTestHarnessInput)
+	UserRepo               *repo.UserRepo
+	ContactRepo            *repo.ContactRepo
+	AddressRepo            *repo.AddressRepo
+	ProfileRepo            *repo.ProfileRepo
+	AppRepo                *repo.AppRepo
+	TokenRepo              *repo.TokenRepo
+	AuditLogRepo           *repo.AuditLogRepo
+	JWTSigningMaterialRepo *repo.JWTSigningMaterialRepo
+	IDGenerator            func(getZeroId bool) string
+	SetupTestDataSource    func(t *testing.T, input RepoTestHarnessInput)
+	CleanupTestDataSource  func(t *testing.T, input RepoTestHarnessInput)
 }
 
 // NOTE: The way I created the repo test harness the tests need to run
@@ -120,6 +121,15 @@ func RunReposTestHarness(t *testing.T, input RepoTestHarnessInput) {
 			testAuditLogRepo(t, input)
 		} else {
 			t.Skip("no implementation for provided for auditLogRepo")
+		}
+	})
+
+	t.Run("jwtSigningMaterialRepo", func(t *testing.T) {
+		if input.JWTSigningMaterialRepo != nil {
+			testJWTSigningMaterialRepo(t, input)
+		} else {
+			t.Error("need to implement this repo for memory and mongo, then un comment the line below...")
+			// t.Skip("no implementation for provided for jwtSigningMaterialRepo")
 		}
 	})
 }

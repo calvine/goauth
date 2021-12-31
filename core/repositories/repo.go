@@ -114,3 +114,10 @@ type AppRepo interface {
 
 	Repo
 }
+
+type JWTSigningMaterialRepo interface {
+	GetJWTSigningMaterialByKeyID(ctx context.Context, keyID string) (models.JWTSigningMaterial, errors.RichError)
+	AddJWTSigningMaterial(ctx context.Context, jwtSigningMaterial *models.JWTSigningMaterial, createdBy string) errors.RichError
+
+	Repo
+}
