@@ -46,7 +46,12 @@ func _testAddJWTSigningMaterial(t *testing.T, jwtSigningMaterialRepo repo.JWTSig
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
-				// TODO: other validation
+				if tc.signingMaterialToAdd.AuditData.CreatedByID == "" {
+					t.Error("\texpected created by id to be populated")
+				}
+				if tc.signingMaterialToAdd.AuditData.CreatedOnDate.IsZero() {
+					t.Error("\texpected created on date to be populated")
+				}
 			}
 		})
 	}
@@ -77,6 +82,9 @@ func _testGetJWTSigningMaterialByKeyID(t *testing.T, jwtSigningMaterialRepo repo
 				}
 				if jsm.Expiration.Value != tc.expectedJWTSigningMaterial.Expiration.Value {
 					t.Errorf("\texpiration is not expected value: got - %v expected - %v", jsm.Expiration.Value, tc.expectedJWTSigningMaterial.Expiration.Value)
+				}
+				if jsm.Disabled != tc.expectedJWTSigningMaterial.Disabled {
+					t.Errorf("\tdisabled is not expected value: got - %v expected - %v", jsm.Disabled, tc.expectedJWTSigningMaterial.Disabled)
 				}
 			}
 		})
