@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 
+	"github.com/calvine/goauth/core/apptelemetry"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/richerror/errors"
@@ -32,6 +33,8 @@ func (jwtSigningMaterialRepo) GetType() string {
 }
 
 func (jsm jwtSigningMaterialRepo) GetJWTSigningMaterialByKeyID(ctx context.Context, keyID string) (models.JWTSigningMaterial, errors.RichError) {
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, jsm.GetName(), "GetJWTSigningMaterialByKeyID", jsm.GetType())
+	defer span.End()
 	// material, ok := (*jsm.material)[keyID]
 	// if !ok {
 	// 	fields := make(map[string]interface{})
@@ -42,6 +45,8 @@ func (jsm jwtSigningMaterialRepo) GetJWTSigningMaterialByKeyID(ctx context.Conte
 }
 
 func (jsm jwtSigningMaterialRepo) AddJWTSigningMaterial(ctx context.Context, jwtSigningMaterial *models.JWTSigningMaterial, createdBy string) errors.RichError {
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, jsm.GetName(), "AddJWTSigningMaterial", jsm.GetType())
+	defer span.End()
 	// _, alreadyExists := (*jsm.material)[jwtSigningMaterial.KeyID]
 	// if alreadyExists {
 	// 	return coreerrors.NewJWTSigningMaterialKeyIDNotUniqueError(jwtSigningMaterial.KeyID, true)
