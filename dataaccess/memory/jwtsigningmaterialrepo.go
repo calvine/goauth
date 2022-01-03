@@ -22,7 +22,7 @@ func NewMemoryJWTSigningMaterialRepo() repo.JWTSigningMaterialRepo {
 }
 
 func (jwtSigningMaterialRepo) GetName() string {
-	return "userRepo"
+	return "jwtSigningMaterialRepo"
 }
 
 func (jwtSigningMaterialRepo) GetType() string {
