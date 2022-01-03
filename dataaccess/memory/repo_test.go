@@ -23,11 +23,13 @@ func TestMemoryRepos(t *testing.T) {
 	}
 	appRepo := NewMemoryAppRepo()
 	tokenRepo := NewMemoryTokenRepo()
+	jwtSigningMaterialRepo := NewMemoryJWTSigningMaterialRepo()
 	testHarnessInput := repotest.RepoTestHarnessInput{
-		UserRepo:    &userRepo,
-		ContactRepo: &contactRepo,
-		AppRepo:     &appRepo,
-		TokenRepo:   &tokenRepo,
+		UserRepo:               &userRepo,
+		ContactRepo:            &contactRepo,
+		AppRepo:                &appRepo,
+		TokenRepo:              &tokenRepo,
+		JWTSigningMaterialRepo: &jwtSigningMaterialRepo,
 		IDGenerator: func(getZeroId bool) string {
 			if getZeroId {
 				return uuid.UUID{}.String()

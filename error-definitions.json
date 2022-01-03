@@ -150,6 +150,22 @@
         "metaData": []
     },
     {
+        "code": "NoJWTSigningMaterialFound",
+        "message": "no jwt signing material found for given query",
+        "includeMap": false,
+        "metaData": [
+            { "name": "keyID", "dataType": "string"}
+        ]
+    },
+    {
+        "code": "JWTSigningMaterialKeyIDNotUnique",
+        "message": "key id for jwt signing material already exists",
+        "includeMap": false,
+        "metaData": [
+            { "name": "keyID", "dataType": "string"}
+        ]
+    },
+    {
         "code": "InvalidAppCreation",
         "message": "this app had bad or missing required fields",
         "includeMap": true,

@@ -5,10 +5,19 @@ import (
 	"testing"
 	"time"
 
+	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/nullable"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/internal/testutils"
+)
+
+const (
+	jwtSigningMaterialRepoCreatedByID = "memory jwt signing material repo test"
+
+	jwtSigningMateriaKeyID1 = "123"
+	jwtSigningMateriaKeyID2 = "456"
+	jwtSigningMateriaKeyID3 = "789"
 )
 
 var (
@@ -22,7 +31,7 @@ var (
 func setupJWTSigningMaterialRepoTestData(_ *testing.T, testingHarness RepoTestHarnessInput) {
 	nonExistantJWTSigningMaterialID = testingHarness.IDGenerator(false)
 	jwtSigningMaterial1 = models.JWTSigningMaterial{
-		KeyID: "123",
+		KeyID: jwtSigningMateriaKeyID1,
 		Secret: nullable.NullableString{
 			HasValue: true,
 			Value:    "testsecret",
@@ -33,7 +42,7 @@ func setupJWTSigningMaterialRepoTestData(_ *testing.T, testingHarness RepoTestHa
 		Disabled: false,
 	}
 	jwtSigningMaterial2 = models.JWTSigningMaterial{
-		KeyID: "456",
+		KeyID: jwtSigningMateriaKeyID2,
 		Secret: nullable.NullableString{
 			HasValue: true,
 			Value:    "testsecret2",
@@ -45,7 +54,7 @@ func setupJWTSigningMaterialRepoTestData(_ *testing.T, testingHarness RepoTestHa
 		Disabled: false,
 	}
 	jwtSigningMaterial3 = models.JWTSigningMaterial{
-		KeyID: "789",
+		KeyID: jwtSigningMateriaKeyID3,
 		Secret: nullable.NullableString{
 			HasValue: true,
 			Value:    "testsecret3",
@@ -87,10 +96,17 @@ func _testAddJWTSigningMaterial(t *testing.T, jwtSigningMaterialRepo repo.JWTSig
 			name:                 "GIVEN disabled jwt signing material EXPECT success",
 			signingMaterialToAdd: &jwtSigningMaterial3,
 		},
+		{
+			name: "GIVEN jwt signing material witha  duplicate key id EXPECT error code jwt signing material key id not unique",
+			signingMaterialToAdd: &models.JWTSigningMaterial{
+				KeyID: jwtSigningMateriaKeyID1, // this was added in the first test case
+			},
+			expectedErrorCode: coreerrors.ErrCodeJWTSigningMaterialKeyIDNotUnique,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := jwtSigningMaterialRepo.AddJWTSigningMaterial(context.TODO(), tc.signingMaterialToAdd, "")
+			err := jwtSigningMaterialRepo.AddJWTSigningMaterial(context.TODO(), tc.signingMaterialToAdd, jwtSigningMaterialRepoCreatedByID)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
@@ -114,7 +130,18 @@ func _testGetJWTSigningMaterialByKeyID(t *testing.T, jwtSigningMaterialRepo repo
 		expectedJWTSigningMaterial models.JWTSigningMaterial
 		expectedErrorCode          string
 	}
-	testCases := []testCase{}
+	testCases := []testCase{
+		{
+			name:                       "GIVEN given a valid key id for a jwt signing material EXPECT success",
+			keyID:                      jwtSigningMateriaKeyID1,
+			expectedJWTSigningMaterial: jwtSigningMaterial1,
+		},
+		{
+			name:              "GIVEN given a valid key id for a jwt signing material EXPECT error code no jwt signing material found",
+			keyID:             nonExistantJWTSigningMaterialID,
+			expectedErrorCode: coreerrors.ErrCodeNoJWTSigningMaterialFound,
+		},
+	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			jsm, err := jwtSigningMaterialRepo.GetJWTSigningMaterialByKeyID(context.TODO(), tc.keyID)
@@ -138,5 +165,4 @@ func _testGetJWTSigningMaterialByKeyID(t *testing.T, jwtSigningMaterialRepo repo
 			}
 		})
 	}
-	t.Error("test not implemented")
 }
