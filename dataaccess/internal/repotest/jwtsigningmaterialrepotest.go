@@ -3,8 +3,10 @@ package repotest
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/calvine/goauth/core/models"
+	"github.com/calvine/goauth/core/nullable"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/internal/testutils"
 )
@@ -12,13 +14,48 @@ import (
 var (
 	nonExistantJWTSigningMaterialID string
 
-	jwtSigningMaterial1 models.JWTSigningMaterial = models.JWTSigningMaterial{}
-	jwtSigningMaterial2 models.JWTSigningMaterial = models.JWTSigningMaterial{}
-	jwtSigningMaterial3 models.JWTSigningMaterial = models.JWTSigningMaterial{}
+	jwtSigningMaterial1 models.JWTSigningMaterial
+	jwtSigningMaterial2 models.JWTSigningMaterial
+	jwtSigningMaterial3 models.JWTSigningMaterial
 )
 
 func setupJWTSigningMaterialRepoTestData(_ *testing.T, testingHarness RepoTestHarnessInput) {
 	nonExistantJWTSigningMaterialID = testingHarness.IDGenerator(false)
+	jwtSigningMaterial1 = models.JWTSigningMaterial{
+		KeyID: "123",
+		Secret: nullable.NullableString{
+			HasValue: true,
+			Value:    "testsecret",
+		},
+		Expiration: nullable.NullableTime{
+			HasValue: false,
+		},
+		Disabled: false,
+	}
+	jwtSigningMaterial2 = models.JWTSigningMaterial{
+		KeyID: "456",
+		Secret: nullable.NullableString{
+			HasValue: true,
+			Value:    "testsecret2",
+		},
+		Expiration: nullable.NullableTime{
+			HasValue: true,
+			Value:    time.Now().Add(time.Hour),
+		},
+		Disabled: false,
+	}
+	jwtSigningMaterial3 = models.JWTSigningMaterial{
+		KeyID: "789",
+		Secret: nullable.NullableString{
+			HasValue: true,
+			Value:    "testsecret3",
+		},
+		Expiration: nullable.NullableTime{
+			HasValue: true,
+			Value:    time.Now().Add(time.Hour),
+		},
+		Disabled: true,
+	}
 }
 
 func testJWTSigningMaterialRepo(t *testing.T, testHarness RepoTestHarnessInput) {
@@ -37,7 +74,20 @@ func _testAddJWTSigningMaterial(t *testing.T, jwtSigningMaterialRepo repo.JWTSig
 		signingMaterialToAdd *models.JWTSigningMaterial
 		expectedErrorCode    string
 	}
-	testCases := []testCase{}
+	testCases := []testCase{
+		{
+			name:                 "GIVEN jwt signing material with no expiration EXPECT success",
+			signingMaterialToAdd: &jwtSigningMaterial1,
+		},
+		{
+			name:                 "GIVEN jwt signing material EXPECT success",
+			signingMaterialToAdd: &jwtSigningMaterial2,
+		},
+		{
+			name:                 "GIVEN disabled jwt signing material EXPECT success",
+			signingMaterialToAdd: &jwtSigningMaterial3,
+		},
+	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := jwtSigningMaterialRepo.AddJWTSigningMaterial(context.TODO(), tc.signingMaterialToAdd, "")
@@ -55,7 +105,6 @@ func _testAddJWTSigningMaterial(t *testing.T, jwtSigningMaterialRepo repo.JWTSig
 			}
 		})
 	}
-	t.Error("test not implemented")
 }
 
 func _testGetJWTSigningMaterialByKeyID(t *testing.T, jwtSigningMaterialRepo repo.JWTSigningMaterialRepo) {
