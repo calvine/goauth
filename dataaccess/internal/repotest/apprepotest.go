@@ -6,7 +6,7 @@ import (
 
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
-	"github.com/calvine/richerror/errors"
+	"github.com/calvine/goauth/internal/testutils"
 )
 
 var (
@@ -59,8 +59,8 @@ func testAppRepo(t *testing.T, testHarness RepoTestHarnessInput) {
 	t.Run("GetAppsByOwnerID", func(t *testing.T) {
 		_testGetAppsByOwnerID(t, *testHarness.AppRepo)
 	})
-	t.Run("GetAppsByClientID", func(t *testing.T) {
-		_testGetAppsByClientID(t, *testHarness.AppRepo)
+	t.Run("GetAppByClientID", func(t *testing.T) {
+		_testGetAppByClientID(t, *testHarness.AppRepo)
 	})
 	t.Run("UpdateApp", func(t *testing.T) {
 		_testUpdateApp(t, *testHarness.AppRepo)
@@ -89,125 +89,157 @@ func testAppRepo(t *testing.T, testHarness RepoTestHarnessInput) {
 func _testAddApp(t *testing.T, appRepo repo.AppRepo) {
 	type testCase struct {
 		name              string
+		appToAdd          *models.App
 		expectedErrorCode string
 	}
-	testCases := []testCase{}
+	testCases := []testCase{
+		// TODO: write tests
+	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// TODO: implement table driven tests...
-			// if err != nil {
-			// 	testutils.HandleTestError(t, err, tc.expectedErrorCode)
-			// } else if tc.expectedErrorCode != "" {
-			// 	t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
-			// } else {
-			// 	// non failure test code here
-			// }
+			err := appRepo.AddApp(context.TODO(), tc.appToAdd, appRepoCreatedByID)
+			if err != nil {
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
+			} else {
+
+				if anotherTestApp.ID == "" {
+					t.Error(" app client id should not be empty")
+				}
+				if anotherTestApp.ClientID == "" {
+					t.Error(" app client id should not be empty")
+				}
+				if anotherTestApp.ClientSecretHash == "" {
+					t.Error(" app client secret hash should not be empty")
+				}
+			}
 		})
 	}
-	var err errors.RichError
-	anotherTestApp, _, err = models.NewApp("fake owner id", "Uber App", "https://uber.app/callback", "https://uber.app/assets/logo")
-	if err != nil {
-		t.Log(err.Error())
-		t.Errorf("failed to create app for test: %s", err.GetErrorCode())
-	}
-	err = appRepo.AddApp(context.TODO(), &anotherTestApp, appRepoCreatedByID)
-	if err != nil {
-		t.Log(err.Error())
-		t.Errorf("failed to add app to underlying data store: %s", err.GetErrorCode())
-	}
-	if anotherTestApp.ID == "" {
-		t.Error(" app client id should not be empty")
-	}
-	if anotherTestApp.ClientID == "" {
-		t.Error(" app client id should not be empty")
-	}
-	if anotherTestApp.ClientSecretHash == "" {
-		t.Error(" app client secret hash should not be empty")
-	}
+	// var err errors.RichError
+	// anotherTestApp, _, err = models.NewApp("fake owner id", "Uber App", "https://uber.app/callback", "https://uber.app/assets/logo")
+	// if err != nil {
+	// 	t.Log(err.Error())
+	// 	t.Errorf("failed to create app for test: %s", err.GetErrorCode())
+	// }
+	// err = appRepo.AddApp(context.TODO(), &anotherTestApp, appRepoCreatedByID)
+	// if err != nil {
+	// 	t.Log(err.Error())
+	// 	t.Errorf("failed to add app to underlying data store: %s", err.GetErrorCode())
+	// }
+	// if anotherTestApp.ID == "" {
+	// 	t.Error(" app client id should not be empty")
+	// }
+	// if anotherTestApp.ClientID == "" {
+	// 	t.Error(" app client id should not be empty")
+	// }
+	// if anotherTestApp.ClientSecretHash == "" {
+	// 	t.Error(" app client secret hash should not be empty")
+	// }
 }
 
 func _testGetAppByID(t *testing.T, appRepo repo.AppRepo) {
 	type testCase struct {
 		name              string
+		appID             string
+		expectedApp       models.App
 		expectedErrorCode string
 	}
-	testCases := []testCase{}
+	testCases := []testCase{
+		// TODO: write tests
+	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// TODO: implement table driven tests...
-			// if err != nil {
-			// 	testutils.HandleTestError(t, err, tc.expectedErrorCode)
-			// } else if tc.expectedErrorCode != "" {
-			// 	t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
-			// } else {
-			// 	// non failure test code here
-			// }
+			app, err := appRepo.GetAppByID(context.TODO(), tc.appID)
+			if err != nil {
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
+			} else {
+				if tc.expectedApp.ID != app.ID {
+					t.Errorf("retreived app id does not match expected app is: got %s - expected %s", app.ID, tc.expectedApp.ID)
+				}
+			}
 		})
 	}
-	app, err := appRepo.GetAppByID(context.TODO(), initialTestApp.ID)
-	if err != nil {
-		t.Log(err.Error())
-		t.Errorf("failed to get app from underlying data store: %s", err.GetErrorCode())
-	}
-	if initialTestApp.ID != app.ID {
-		t.Errorf("retreived app id does not match expected app is: got %s - expected %s", app.ID, initialTestApp.ID)
-	}
+	// app, err := appRepo.GetAppByID(context.TODO(), initialTestApp.ID)
+	// if err != nil {
+	// 	t.Log(err.Error())
+	// 	t.Errorf("failed to get app from underlying data store: %s", err.GetErrorCode())
+	// }
+	// if initialTestApp.ID != app.ID {
+	// 	t.Errorf("retreived app id does not match expected app is: got %s - expected %s", app.ID, initialTestApp.ID)
+	// }
 }
 
 func _testGetAppsByOwnerID(t *testing.T, appRepo repo.AppRepo) {
 	type testCase struct {
 		name              string
+		ownerID           string
+		expectedApps      []models.App
 		expectedErrorCode string
 	}
-	testCases := []testCase{}
+	testCases := []testCase{
+		// TODO: write tests
+	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// TODO: implement table driven tests...
-			// if err != nil {
-			// 	testutils.HandleTestError(t, err, tc.expectedErrorCode)
-			// } else if tc.expectedErrorCode != "" {
-			// 	t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
-			// } else {
-			// 	// non failure test code here
-			// }
+			apps, err := appRepo.GetAppsByOwnerID(context.TODO(), tc.ownerID)
+			if err != nil {
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
+			} else {
+				numExpected := len(tc.expectedApps)
+				numGot := len(apps)
+				if numExpected != numGot {
+					t.Errorf("expected number of apps to get back not expected: got - %d expected - %d", numGot, numExpected)
+				}
+			}
 		})
 	}
-	apps, err := appRepo.GetAppsByOwnerID(context.TODO(), initialTestUser.ID)
-	if err != nil {
-		t.Log(err.Error())
-		t.Errorf("failed to get apps from underlying data store: %s", err.GetErrorCode())
-	}
-	if len(apps) != 2 {
-		t.Errorf("expected to get back two apps based on provided owner id: %v", apps)
-	}
+	// apps, err := appRepo.GetAppsByOwnerID(context.TODO(), initialTestUser.ID)
+	// if err != nil {
+	// 	t.Log(err.Error())
+	// 	t.Errorf("failed to get apps from underlying data store: %s", err.GetErrorCode())
+	// }
+	// if len(apps) != 2 {
+	// 	t.Errorf("expected to get back two apps based on provided owner id: %v", apps)
+	// }
 }
 
-func _testGetAppsByClientID(t *testing.T, appRepo repo.AppRepo) {
+func _testGetAppByClientID(t *testing.T, appRepo repo.AppRepo) {
 	type testCase struct {
 		name              string
+		clientID          string
+		expectedApp       models.App
 		expectedErrorCode string
 	}
-	testCases := []testCase{}
+	testCases := []testCase{
+		// TODO: write tests
+	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// TODO: implement table driven tests...
-			// if err != nil {
-			// 	testutils.HandleTestError(t, err, tc.expectedErrorCode)
-			// } else if tc.expectedErrorCode != "" {
-			// 	t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
-			// } else {
-			// 	// non failure test code here
-			// }
+			app, err := appRepo.GetAppByClientID(context.TODO(), tc.clientID)
+			if err != nil {
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
+			} else {
+				if tc.expectedApp.ID != app.ID {
+					t.Errorf("retreived app id does not match expected app is: got %s - expected %s", app.ID, tc.expectedApp.ID)
+				}
+			}
 		})
 	}
-	app, err := appRepo.GetAppByClientID(context.TODO(), initialTestApp.ClientID)
-	if err != nil {
-		t.Log(err.Error())
-		t.Errorf("failed to get apps from underlying data store: %s", err.GetErrorCode())
-	}
-	if initialTestApp.ID != app.ID {
-		t.Errorf("retreived app id does not match expected app is: got %s - expected %s", app.ID, initialTestApp.ID)
-	}
+	// app, err := appRepo.GetAppByClientID(context.TODO(), initialTestApp.ClientID)
+	// if err != nil {
+	// 	t.Log(err.Error())
+	// 	t.Errorf("failed to get apps from underlying data store: %s", err.GetErrorCode())
+	// }
+	// if initialTestApp.ID != app.ID {
+	// 	t.Errorf("retreived app id does not match expected app is: got %s - expected %s", app.ID, initialTestApp.ID)
+	// }
 }
 
 func _testUpdateApp(t *testing.T, appRepo repo.AppRepo) {

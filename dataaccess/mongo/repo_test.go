@@ -27,6 +27,7 @@ var (
 )
 
 func TestMongoRepos(t *testing.T) {
+	// TODO: put this back...
 	value, exists := true, true //os.LookupEnv(ENV_RUN_MONGO_TESTS)
 	shouldRun, _ := normalization.ReadBoolValue(value, true)
 	if exists && shouldRun {
