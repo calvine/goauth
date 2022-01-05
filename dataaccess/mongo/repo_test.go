@@ -3,7 +3,6 @@ package mongo
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/calvine/goauth/core/normalization"
@@ -28,7 +27,7 @@ var (
 )
 
 func TestMongoRepos(t *testing.T) {
-	value, exists := os.LookupEnv(ENV_RUN_MONGO_TESTS)
+	value, exists := true, true //os.LookupEnv(ENV_RUN_MONGO_TESTS)
 	shouldRun, _ := normalization.ReadBoolValue(value, true)
 	if exists && shouldRun {
 		// setup code for mongo user repo tests.
@@ -43,8 +42,10 @@ func TestMongoRepos(t *testing.T) {
 			t.Error("\tfailed to ping mongo server before test", err)
 		}
 		testUserRepo := NewUserRepoWithNames(client, "test_goauth", USER_COLLECTION)
+		testJSMRepo := NewJWTSigningMaterialRepoWithNames(client, "test_goauth", JWT_SIGNING_MATERIAL_COLLECTION)
 		var userRepo repo.UserRepo = testUserRepo
 		var contactRepo repo.ContactRepo = testUserRepo
+
 		cleanUpDataSource := func(t *testing.T, _ repotest.RepoTestHarnessInput) {
 			err := testUserRepo.mongoClient.Database(testUserRepo.dbName).Collection(testUserRepo.collectionName).Drop(context.TODO())
 			if err != nil {
@@ -52,9 +53,10 @@ func TestMongoRepos(t *testing.T) {
 			}
 		}
 		testHarnessInput := repotest.RepoTestHarnessInput{
-			UserRepo:            &userRepo,
-			ContactRepo:         &contactRepo,
-			SetupTestDataSource: cleanUpDataSource,
+			UserRepo:               &userRepo,
+			ContactRepo:            &contactRepo,
+			JWTSigningMaterialRepo: &testJSMRepo,
+			SetupTestDataSource:    cleanUpDataSource,
 			IDGenerator: func(getZeroId bool) string {
 				if getZeroId {
 					return primitive.NilObjectID.Hex()

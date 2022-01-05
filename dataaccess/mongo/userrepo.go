@@ -8,7 +8,7 @@ import (
 	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
-	repoModels "github.com/calvine/goauth/dataaccess/mongo/internal/models"
+	repomodels "github.com/calvine/goauth/dataaccess/mongo/internal/models"
 	"github.com/calvine/richerror/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -60,7 +60,7 @@ func (userRepo) GetType() string {
 func (ur userRepo) GetUserByID(ctx context.Context, id string) (models.User, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetUserByID", ur.GetType())
 	defer span.End()
-	var repoUser repoModels.RepoUser
+	var repoUser repomodels.RepoUser
 	options := options.FindOneOptions{
 		Projection: ProjUserOnly,
 	}
@@ -97,8 +97,8 @@ func (ur userRepo) GetUserAndContactByConfirmedContact(ctx context.Context, cont
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetUserAndContactByConfirmedContact", ur.GetType())
 	defer span.End()
 	var receiver struct {
-		User    repoModels.RepoUser      `bson:",inline"`
-		Contact []repoModels.RepoContact `bson:"contacts"`
+		User    repomodels.RepoUser      `bson:",inline"`
+		Contact []repomodels.RepoContact `bson:"contacts"`
 	}
 	var user models.User
 	var contact models.Contact
@@ -146,7 +146,7 @@ func (ur userRepo) GetUserAndContactByConfirmedContact(ctx context.Context, cont
 func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetUserByPrimaryContact", ur.GetType())
 	defer span.End()
-	var repoUser repoModels.RepoUser
+	var repoUser repomodels.RepoUser
 	options := options.FindOneOptions{
 		Projection: ProjUserOnly,
 	}
@@ -211,7 +211,7 @@ func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedBy
 	defer span.End()
 	user.AuditData.ModifiedByID.Set(modifiedByID)
 	user.AuditData.ModifiedOnDate.Set(time.Now().UTC())
-	repoUser, err := repoModels.CoreUser(*user).ToRepoUser()
+	repoUser, err := repomodels.CoreUser(*user).ToRepoUser()
 	if err != nil {
 		evtString := fmt.Sprintf("failed to convert user to repo user: %s", err.GetErrorMessage())
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)

@@ -10,6 +10,7 @@ import (
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/richerror/errors"
+	"github.com/google/uuid"
 )
 
 type jwtSigningMaterialRepo struct {
@@ -47,13 +48,20 @@ func (jsm jwtSigningMaterialRepo) GetJWTSigningMaterialByKeyID(ctx context.Conte
 func (jsm jwtSigningMaterialRepo) AddJWTSigningMaterial(ctx context.Context, jwtSigningMaterial *models.JWTSigningMaterial, createdBy string) errors.RichError {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, jsm.GetName(), "AddJWTSigningMaterial", jsm.GetType())
 	defer span.End()
-	_, alreadyExists := (*jsm.material)[jwtSigningMaterial.KeyID]
-	if alreadyExists {
-		rErr := coreerrors.NewJWTSigningMaterialKeyIDNotUniqueError(jwtSigningMaterial.KeyID, true)
-		evtString := fmt.Sprintf("%s: %s", rErr.GetErrorMessage(), jwtSigningMaterial.KeyID)
-		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
-		return rErr
+	if jwtSigningMaterial.KeyID == "" {
+		// if id is not set lets set one
+		jwtSigningMaterial.KeyID = uuid.New().String()
 	}
+	/*
+		This logic should be in the service level, not in the repo...
+	*/
+	// _, alreadyExists := (*jsm.material)[jwtSigningMaterial.KeyID]
+	// if alreadyExists {
+	// 	rErr := coreerrors.NewJWTSigningMaterialKeyIDNotUniqueError(jwtSigningMaterial.KeyID, true)
+	// 	evtString := fmt.Sprintf("%s: %s", rErr.GetErrorMessage(), jwtSigningMaterial.KeyID)
+	// 	apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
+	// 	return rErr
+	// }
 	jwtSigningMaterial.AuditData.CreatedByID = createdBy
 	jwtSigningMaterial.AuditData.CreatedOnDate = time.Now().UTC()
 	(*jsm.material)[jwtSigningMaterial.KeyID] = *jwtSigningMaterial

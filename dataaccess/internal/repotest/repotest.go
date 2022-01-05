@@ -128,8 +128,7 @@ func RunReposTestHarness(t *testing.T, input RepoTestHarnessInput) {
 		if input.JWTSigningMaterialRepo != nil {
 			testJWTSigningMaterialRepo(t, input)
 		} else {
-			t.Error("need to implement this repo for memory and mongo, then un comment the line below...")
-			// t.Skip("no implementation for provided for jwtSigningMaterialRepo")
+			t.Skip("no implementation for provided for jwtSigningMaterialRepo")
 		}
 	})
 }

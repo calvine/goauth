@@ -4,7 +4,7 @@ import "github.com/calvine/goauth/core/nullable"
 
 type JWTSigningMaterial struct {
 	KeyID      string                  `bson:"-"`
-	Secret     nullable.NullableString `bson:"secret"`
+	HMACSecret nullable.NullableString `bson:"hmacSecret"`
 	Expiration nullable.NullableTime   `bson:"expiration"`
 	Disabled   bool                    `bson:"disabled"`
 	AuditData  auditable               `bson:",inline"`
