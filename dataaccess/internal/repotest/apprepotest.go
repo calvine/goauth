@@ -11,15 +11,11 @@ import (
 )
 
 var (
-	testAppOwnerID                string
-	testApp                       models.App
-	testAppClientSecret           string
-	testApp2                      models.App
-	testApp2ClientSecret          string
-	anotherTestApp                models.App
-	anotherTestAppClientSecret    string
-	anotherNewTestApp             models.App
-	anotherNewTestAppClientSecret string
+	testAppOwnerID    string
+	testApp           models.App
+	testApp2          models.App
+	anotherTestApp    models.App
+	anotherNewTestApp models.App
 
 	testScope        models.Scope
 	anotherTestScope models.Scope
@@ -39,30 +35,26 @@ func setupAppRepoTestData(t *testing.T, testHarness RepoTestHarnessInput) {
 	nonExistantOwnerID = testHarness.IDGenerator(false)
 	nonExistantScopeID = testHarness.IDGenerator(false)
 	testAppOwnerID = testHarness.IDGenerator(false)
-	_testApp, _testAppClientSecret, err := models.NewApp(testAppOwnerID, "test app", "uri1", "uri2")
+	_testApp, _, err := models.NewApp(testAppOwnerID, "test app", "uri1", "uri2")
 	if err != nil {
 		t.Errorf("failed to create app for test: %s", err.Error())
 	}
 	testApp = _testApp
-	testAppClientSecret = _testAppClientSecret
-	_testApp2, _testApp2ClientSecret, err := models.NewApp(testAppOwnerID, "test app 2", "uri5", "uri6")
+	_testApp2, _, err := models.NewApp(testAppOwnerID, "test app 2", "uri5", "uri6")
 	if err != nil {
 		t.Errorf("failed to create app for test: %s", err.Error())
 	}
 	testApp2 = _testApp2
-	testApp2ClientSecret = _testApp2ClientSecret
-	_anotherTestApp, _anotherTestAppClientSecret, err := models.NewApp(testHarness.IDGenerator(false), "another test app", "uri3", "uri4")
+	_anotherTestApp, _, err := models.NewApp(testHarness.IDGenerator(false), "another test app", "uri3", "uri4")
 	if err != nil {
 		t.Errorf("failed to create app for test: %s", err.Error())
 	}
 	anotherTestApp = _anotherTestApp
-	anotherTestAppClientSecret = _anotherTestAppClientSecret
-	_anotherNewTestApp, _anotherNewTestAppClientSecret, err := models.NewApp(testHarness.IDGenerator(false), "another test app", "uri3", "uri4")
+	_anotherNewTestApp, _, err := models.NewApp(testHarness.IDGenerator(false), "another test app", "uri3", "uri4")
 	if err != nil {
 		t.Errorf("failed to create app for test: %s", err.Error())
 	}
 	anotherNewTestApp = _anotherNewTestApp
-	anotherNewTestAppClientSecret = _anotherNewTestAppClientSecret
 
 	// scopes cannot be made here... app ids need to be populated before scopes can be made
 }
@@ -356,9 +348,9 @@ func _testDeleteApp(t *testing.T, appRepo repo.AppRepo) {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
-			} else {
-				// non failure test code here
-			}
+			} //else {
+			// non failure test code here
+			//}
 		})
 	}
 }
@@ -386,9 +378,9 @@ func _testAddScope(t *testing.T, appRepo repo.AppRepo) {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
-			} else {
-				// non failure test code here
-			}
+			} //else {
+			// non failure test code here
+			//}
 		})
 	}
 }
@@ -544,9 +536,9 @@ func _testDeleteScope(t *testing.T, appRepo repo.AppRepo) {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
-			} else {
-				// non failure test code here
-			}
+			} //else {
+			// non failure test code here
+			//}
 		})
 	}
 }
