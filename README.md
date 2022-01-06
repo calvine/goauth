@@ -40,3 +40,5 @@ The idea here is to primarily lean on tracing, and add metrics after the fact. E
     * `docker container exec -it mongo bash`
     * `mongo -u root -p password`
     * `rs.initiate()`
+* To run test with mongo tests
+  * `GOAUTH_RUN_MONGO_TESTS=true go test ./...`

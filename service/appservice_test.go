@@ -118,7 +118,7 @@ func setupAppServiceTestData(t *testing.T, appRepo repo.AppRepo) {
 	}
 	testAppOne_OneScopes = make([]models.Scope, 0, numScopesToMake)
 	for i := 1; i <= numScopesToMake; i++ {
-		scope := models.NewScope(testAppOne_One.ID, fmt.Sprintf("test_app_one_one_scope_%d", i), fmt.Sprintf("test app one_one scope %d", i))
+		scope := models.NewScope(testAppOne_One.ID, fmt.Sprintf("test_app_one_one_scope_%d", i), "scope display name", fmt.Sprintf("test app one_one scope %d", i))
 		err := appRepo.AddScope(context.TODO(), &scope, createdByAppService)
 		if err != nil {
 			t.Log(err.Error())
@@ -139,7 +139,7 @@ func setupAppServiceTestData(t *testing.T, appRepo repo.AppRepo) {
 	}
 	testAppOne_TwoScopes = make([]models.Scope, 0, numScopesToMake)
 	for i := 1; i <= numScopesToMake; i++ {
-		scope := models.NewScope(testAppOne_Two.ID, fmt.Sprintf("test_app_one_two_scope_%d", i), fmt.Sprintf("test app one_two scope %d", i))
+		scope := models.NewScope(testAppOne_Two.ID, fmt.Sprintf("test_app_one_two_scope_%d", i), "scope display name", fmt.Sprintf("test app one_two scope %d", i))
 		err := appRepo.AddScope(context.TODO(), &scope, createdByAppService)
 		if err != nil {
 			t.Log(err.Error())
@@ -160,7 +160,7 @@ func setupAppServiceTestData(t *testing.T, appRepo repo.AppRepo) {
 	}
 	testAppOne_ThreeScopes = make([]models.Scope, 0, numScopesToMake)
 	for i := 1; i <= numScopesToMake; i++ {
-		scope := models.NewScope(testAppOne_Three.ID, fmt.Sprintf("test_app_one_three_scope_%d", i), fmt.Sprintf("test app one_three scope %d", i))
+		scope := models.NewScope(testAppOne_Three.ID, fmt.Sprintf("test_app_one_three_scope_%d", i), "scope display name", fmt.Sprintf("test app one_three scope %d", i))
 		err := appRepo.AddScope(context.TODO(), &scope, createdByAppService)
 		if err != nil {
 			t.Log(err.Error())
@@ -789,7 +789,7 @@ func _testAddScopeToApp(t *testing.T, appService services.AppService) {
 				Name:          "success",
 			},
 			scopeToAdd: func(t *testing.T) models.Scope {
-				scope := models.NewScope(testAppOne_Three.ID, "test_add_scope_scope", "this is a scope added as a test")
+				scope := models.NewScope(testAppOne_Three.ID, "test_add_scope_scope", "scope display name", "this is a scope added as a test")
 				return scope
 			},
 		},
@@ -800,7 +800,7 @@ func _testAddScopeToApp(t *testing.T, appService services.AppService) {
 				Name:              "failure no appID",
 			},
 			scopeToAdd: func(t *testing.T) models.Scope {
-				scope := models.NewScope("", "test scope", "https://app.com/callack")
+				scope := models.NewScope("", "test scope", "scope display name", "https://app.com/callack")
 				return scope
 			},
 		},
@@ -811,7 +811,18 @@ func _testAddScopeToApp(t *testing.T, appService services.AppService) {
 				Name:              "failure no name",
 			},
 			scopeToAdd: func(t *testing.T) models.Scope {
-				scope := models.NewScope(testAppOne_Three.ID, "", "this is a scope added as a test")
+				scope := models.NewScope(testAppOne_Three.ID, "", "scope display name", "this is a scope added as a test")
+				return scope
+			},
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeInvalidScopeCreation,
+				Name:              "failure no display name",
+			},
+			scopeToAdd: func(t *testing.T) models.Scope {
+				scope := models.NewScope(testAppOne_Three.ID, "test_add_scope_scope", "", "this is a scope added as a test")
 				return scope
 			},
 		},
@@ -822,7 +833,7 @@ func _testAddScopeToApp(t *testing.T, appService services.AppService) {
 				Name:              "failure no description",
 			},
 			scopeToAdd: func(t *testing.T) models.Scope {
-				scope := models.NewScope(testAppOne_Three.ID, "test_add_scope_scope", "")
+				scope := models.NewScope(testAppOne_Three.ID, "test_add_scope_scope", "scope display name", "")
 				return scope
 			},
 		},
@@ -833,7 +844,7 @@ func _testAddScopeToApp(t *testing.T, appService services.AppService) {
 				Name:              "failure appID does not exist in data store",
 			},
 			scopeToAdd: func(t *testing.T) models.Scope {
-				scope := models.NewScope("app id that does not exist123453214567", "test_add_scope_scope", "this is a scope added as a test")
+				scope := models.NewScope("app id that does not exist123453214567", "test_add_scope_scope", "scope display name", "this is a scope added as a test")
 				return scope
 			},
 		},
@@ -844,7 +855,7 @@ func _testAddScopeToApp(t *testing.T, appService services.AppService) {
 				Name:              "failure no valid props",
 			},
 			scopeToAdd: func(t *testing.T) models.Scope {
-				scope := models.NewScope("", "", "")
+				scope := models.NewScope("", "", "", "")
 				return scope
 			},
 		},
@@ -887,7 +898,7 @@ func _testUpdateScope(t *testing.T, appService services.AppService) {
 				Name:              "failure no appID",
 			},
 			scopeToUpdate: func(t *testing.T) models.Scope {
-				scope := models.NewScope("", "test scope", "https://app.com/callack")
+				scope := models.NewScope("", "test scope", "scope display name", "https://app.com/callack")
 				return scope
 			},
 		},
@@ -898,7 +909,18 @@ func _testUpdateScope(t *testing.T, appService services.AppService) {
 				Name:              "failure no name",
 			},
 			scopeToUpdate: func(t *testing.T) models.Scope {
-				scope := models.NewScope(testAppOne_Three.ID, "", "this is a scope added as a test")
+				scope := models.NewScope(testAppOne_Three.ID, "", "scope display name", "this is a scope added as a test")
+				return scope
+			},
+		},
+		{
+			baseData: testutilities.BaseTestCase{
+				ExpectedError:     true,
+				ExpectedErrorCode: coreerrors.ErrCodeInvalidScopeCreation,
+				Name:              "failure no display name",
+			},
+			scopeToUpdate: func(t *testing.T) models.Scope {
+				scope := models.NewScope(testAppOne_Three.ID, "test_add_scope_scope", "", "this is a scope added as a test")
 				return scope
 			},
 		},
@@ -909,7 +931,7 @@ func _testUpdateScope(t *testing.T, appService services.AppService) {
 				Name:              "failure no description",
 			},
 			scopeToUpdate: func(t *testing.T) models.Scope {
-				scope := models.NewScope(testAppOne_Three.ID, "test_add_scope_scope", "")
+				scope := models.NewScope(testAppOne_Three.ID, "test_add_scope_scope", "scope display name", "")
 				return scope
 			},
 		},
@@ -920,7 +942,7 @@ func _testUpdateScope(t *testing.T, appService services.AppService) {
 				Name:              "failure appID does not exist in data store",
 			},
 			scopeToUpdate: func(t *testing.T) models.Scope {
-				scope := models.NewScope("app id that does not exist123453214567", "test_add_scope_scope", "this is a scope added as a test")
+				scope := models.NewScope("app id that does not exist123453214567", "test_add_scope_scope", "scope display name", "this is a scope added as a test")
 				return scope
 			},
 		},
@@ -931,7 +953,7 @@ func _testUpdateScope(t *testing.T, appService services.AppService) {
 				Name:              "failure no valid props",
 			},
 			scopeToUpdate: func(t *testing.T) models.Scope {
-				scope := models.NewScope("", "", "")
+				scope := models.NewScope("", "", "", "")
 				return scope
 			},
 		},

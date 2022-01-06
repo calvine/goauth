@@ -192,7 +192,7 @@ func setupTestHarnessData(t *testing.T, input RepoTestHarnessInput) {
 		// initialTestApp2Scopes = make([]models.Scope, 0, numScopes)
 		// add scopes to test app
 		for i := 1; i <= numScopes; i++ {
-			scope := models.NewScope(initialTestApp.ID, fmt.Sprintf("app_scope_%d", i), fmt.Sprintf("permissions associated with app_scope_%d", i))
+			scope := models.NewScope(initialTestApp.ID, fmt.Sprintf("app_scope_%d", i), "scope display name", fmt.Sprintf("permissions associated with app_scope_%d", i))
 			err = (*input.AppRepo).AddScope(context.TODO(), &scope, createdByID)
 			if err != nil {
 				t.Log(err.Error())

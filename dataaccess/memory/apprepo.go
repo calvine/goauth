@@ -54,12 +54,21 @@ func (ar appRepo) GetAppByID(ctx context.Context, id string) (models.App, errors
 func (ar appRepo) GetAppByClientID(ctx context.Context, clientID string) (models.App, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, ar.GetName(), "GetAppByClientID", ar.GetType())
 	defer span.End()
+	found := false
 	var app models.App
 	for _, a := range *ar.apps {
 		if a.ClientID == clientID {
 			app = a
+			found = true
 			break
 		}
+	}
+	if !found {
+		fields := map[string]interface{}{"clientID": clientID}
+		err := coreerrors.NewNoAppFoundError(fields, true)
+		evtString := fmt.Sprintf("no app found with clientID: %s", clientID)
+		apptelemetry.SetSpanOriginalError(&span, err, evtString)
+		return app, err
 	}
 	span.AddEvent("app retreived")
 	return app, nil
@@ -178,7 +187,7 @@ func (ar appRepo) GetScopesByAppID(ctx context.Context, appID string) ([]models.
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, ar.GetName(), "GetScopesByAppID", ar.GetType())
 	defer span.End()
 	scopes, ok := (*ar.appScopes)[appID]
-	if !ok {
+	if !ok || len(scopes) == 0 {
 		fields := map[string]interface{}{"appID": appID}
 		err := coreerrors.NewNoScopeFoundError(fields, true)
 		evtString := fmt.Sprintf("no scopes found with app id: %s", appID)

@@ -9,14 +9,16 @@ type Scope struct {
 	ID          string    `bson:"-"`
 	AppID       string    `bson:"-"`
 	Name        string    `bson:"name"`
+	DisplayName string    `bson:"displayName"`
 	Description string    `bson:"description"`
 	AuditData   auditable `bson:",inline"`
 }
 
-func NewScope(appID, name, description string) Scope {
+func NewScope(appID, name, displayName, description string) Scope {
 	return Scope{
 		AppID:       appID,
 		Name:        name,
+		DisplayName: displayName,
 		Description: description,
 	}
 }
@@ -31,6 +33,9 @@ func ValidateScope(includeID bool, scope Scope) errors.RichError {
 	}
 	if scope.Name == "" {
 		fields["Name"] = "Name cannot be empty"
+	}
+	if scope.DisplayName == "" {
+		fields["DisplayName"] = "DisplayName cannot be empty"
 	}
 	if scope.Description == "" {
 		fields["Description"] = "Description cannot be empty"
