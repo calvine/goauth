@@ -12,7 +12,7 @@ const ErrCodeNoAppFound = "NoAppFound"
 // NewNoAppFoundError creates a new specific error
 func NewNoAppFoundError(fields map[string]interface{}, includeStack bool) errors.RichError {
 	msg := "no app found for given query"
-	err := errors.NewRichError(ErrCodeNoAppFound, msg).WithMetaData(fields)
+	err := errors.NewRichError(ErrCodeNoAppFound, msg).WithMetaData(fields).WithTags([]string{"repo"})
 	if includeStack {
 		err = err.WithStack(1)
 	}

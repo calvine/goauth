@@ -27,6 +27,7 @@ var (
 func setupJWTSigningMaterialRepoTestData(_ *testing.T, testingHarness RepoTestHarnessInput) {
 	nonExistantJWTSigningMaterialID = testingHarness.IDGenerator(false)
 	jwtSigningMaterial1 = models.JWTSigningMaterial{
+		AlgorithmType: "HMAC",
 		HMACSecret: nullable.NullableString{
 			HasValue: true,
 			Value:    "testsecret",
@@ -37,6 +38,7 @@ func setupJWTSigningMaterialRepoTestData(_ *testing.T, testingHarness RepoTestHa
 		Disabled: false,
 	}
 	jwtSigningMaterial2 = models.JWTSigningMaterial{
+		AlgorithmType: "HMAC",
 		HMACSecret: nullable.NullableString{
 			HasValue: true,
 			Value:    "testsecret2",
@@ -48,6 +50,7 @@ func setupJWTSigningMaterialRepoTestData(_ *testing.T, testingHarness RepoTestHa
 		Disabled: false,
 	}
 	jwtSigningMaterial3 = models.JWTSigningMaterial{
+		AlgorithmType: "OTHER",
 		HMACSecret: nullable.NullableString{
 			HasValue: true,
 			Value:    "testsecret3",
@@ -130,7 +133,7 @@ func _testGetJWTSigningMaterialByKeyID(t *testing.T, jwtSigningMaterialRepo repo
 			expectedJWTSigningMaterial: jwtSigningMaterial1,
 		},
 		{
-			name:              "GIVEN given a valid key id for a jwt signing material EXPECT error code no jwt signing material found",
+			name:              "GIVEN given an invalid key id for a jwt signing material EXPECT error code no jwt signing material found",
 			keyID:             nonExistantJWTSigningMaterialID,
 			expectedErrorCode: coreerrors.ErrCodeNoJWTSigningMaterialFound,
 		},
@@ -154,6 +157,72 @@ func _testGetJWTSigningMaterialByKeyID(t *testing.T, jwtSigningMaterialRepo repo
 				}
 				if jsm.Disabled != tc.expectedJWTSigningMaterial.Disabled {
 					t.Errorf("\tdisabled is not expected value: got - %v expected - %v", jsm.Disabled, tc.expectedJWTSigningMaterial.Disabled)
+				}
+			}
+		})
+	}
+}
+
+func _testGetJWTSigningMaterialByAlgorithmType(t *testing.T, jwtSigningMaterialRepo repo.JWTSigningMaterialRepo) {
+	type testCase struct {
+		name                       string
+		algorithmType              string
+		expectedJWTSigningMaterial []models.JWTSigningMaterial
+		expectedErrorCode          string
+	}
+	testCases := []testCase{
+		{
+			name:          "GIVEN given a valid algorithm type for a jwt signing material EXPECT success",
+			algorithmType: "HMAC",
+			expectedJWTSigningMaterial: []models.JWTSigningMaterial{
+				jwtSigningMaterial1,
+				jwtSigningMaterial2,
+			},
+		},
+		{
+			name:              "GIVEN given a non existant algorithm type for a jwt signing material EXPECT error code no jwt signing material found",
+			algorithmType:     "zzz",
+			expectedErrorCode: coreerrors.ErrCodeNoJWTSigningMaterialFound,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			jsms, err := jwtSigningMaterialRepo.GetJWTSigningMaterialByAlgorithmType(context.TODO(), tc.algorithmType)
+			if err != nil {
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
+			} else {
+				numGot := len(jsms)
+				numExpected := len(tc.expectedJWTSigningMaterial)
+				if numGot != numExpected {
+					t.Errorf("\tnumber of jwt signing material returned not expected: got - %d expected - %d", numGot, numExpected)
+				}
+				for _, ejsm := range tc.expectedJWTSigningMaterial {
+					found := false
+					for _, jsm := range jsms {
+						if jsm.KeyID == ejsm.KeyID {
+							found = true
+							if ejsm.KeyID != jsm.KeyID {
+								t.Errorf("\tkey id is not expected value: got - %s expected - %s", jsm.KeyID, ejsm.KeyID)
+							}
+							if ejsm.HMACSecret.Value != jsm.HMACSecret.Value {
+								t.Errorf("\tsecret is not expected value: got - %s expected - %s", jsm.HMACSecret.Value, ejsm.HMACSecret.Value)
+							}
+							if ejsm.Expiration.Value != jsm.Expiration.Value {
+								t.Errorf("\texpiration is not expected value: got - %v expected - %v", jsm.Expiration.Value, ejsm.Expiration.Value)
+							}
+							if ejsm.Disabled != jsm.Disabled {
+								t.Errorf("\tdisabled is not expected value: got - %v expected - %v", jsm.Disabled, ejsm.Disabled)
+							}
+							break
+						}
+					}
+					if !found {
+						t.Errorf("\tfailed to find jwt signing material with key id %s", ejsm.KeyID)
+						continue
+					}
+
 				}
 			}
 		})

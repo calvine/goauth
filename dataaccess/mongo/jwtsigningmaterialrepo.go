@@ -53,7 +53,10 @@ func (jsm jwtSigningMaterialRepo) GetJWTSigningMaterialByKeyID(ctx context.Conte
 	err = jsm.mongoClient.Database(jsm.dbName).Collection(jsm.collectionName).FindOne(ctx, filter).Decode(&repoJSM)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			rErr := coreerrors.NewNoJWTSigningMaterialFoundError(keyID, true)
+			fields := map[string]interface{}{
+				"keyID": keyID,
+			}
+			rErr := coreerrors.NewNoJWTSigningMaterialFoundError(fields, true)
 			evtString := fmt.Sprintf("%s: %s", rErr.GetErrorMessage(), keyID)
 			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 			return models.JWTSigningMaterial{}, rErr
@@ -66,6 +69,43 @@ func (jsm jwtSigningMaterialRepo) GetJWTSigningMaterialByKeyID(ctx context.Conte
 	jwtSigningMaterial := repoJSM.ToCoreJWTSigningMaterial()
 	span.AddEvent("jwt signing material retreived")
 	return jwtSigningMaterial, nil
+}
+
+func (jsm jwtSigningMaterialRepo) GetJWTSigningMaterialByAlgorithmType(ctx context.Context, algorithmType string) ([]models.JWTSigningMaterial, errors.RichError) {
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, jsm.GetName(), "GetJWTSigningMaterialByAlgorithmType", jsm.GetType())
+	defer span.End()
+	repoResult := make([]repomodels.RepoJWTSigningMaterial, 0, 5)
+	filter := bson.M{"algorithmType": algorithmType}
+	queryResult, err := jsm.mongoClient.Database(jsm.dbName).Collection(jsm.collectionName).Find(ctx, filter)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			fields := map[string]interface{}{
+				"algorithmType": algorithmType,
+			}
+			rErr := coreerrors.NewNoJWTSigningMaterialFoundError(fields, true)
+			evtString := fmt.Sprintf("no jwt signing material found for algorithm type: %s", algorithmType)
+			apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
+			return nil, rErr
+		}
+		rErr := coreerrors.NewRepoQueryFailedError(err, true)
+		evtString := fmt.Sprintf("repo query failed: %s", rErr.GetErrors()[0].Error())
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
+		return nil, rErr
+	}
+	defer queryResult.Close(ctx)
+	err = queryResult.All(ctx, &repoResult)
+	if err != nil {
+		rErr := coreerrors.NewFailedToDecodeRepoDataError("RepoJWTSigningMaterial", err, true)
+		evtString := fmt.Sprintf("failed to decode results from repo query: %s", rErr.GetErrors()[0].Error())
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
+		return nil, rErr
+	}
+	result := make([]models.JWTSigningMaterial, len(repoResult))
+	for i := range repoResult {
+		result[i] = models.JWTSigningMaterial(repoResult[i].ToCoreJWTSigningMaterial())
+	}
+	return result, nil
+
 }
 
 func (jsm jwtSigningMaterialRepo) AddJWTSigningMaterial(ctx context.Context, jwtSigningMaterial *models.JWTSigningMaterial, createdBy string) errors.RichError {

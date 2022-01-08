@@ -10,9 +10,9 @@ import (
 const ErrCodeNoJWTSigningMaterialFound = "NoJWTSigningMaterialFound"
 
 // NewNoJWTSigningMaterialFoundError creates a new specific error
-func NewNoJWTSigningMaterialFoundError(keyID string, includeStack bool) errors.RichError {
+func NewNoJWTSigningMaterialFoundError(fields map[string]interface{}, includeStack bool) errors.RichError {
 	msg := "no jwt signing material found for given query"
-	err := errors.NewRichError(ErrCodeNoJWTSigningMaterialFound, msg).AddMetaData("keyID", keyID)
+	err := errors.NewRichError(ErrCodeNoJWTSigningMaterialFound, msg).WithMetaData(fields).WithTags([]string{"repo"})
 	if includeStack {
 		err = err.WithStack(1)
 	}

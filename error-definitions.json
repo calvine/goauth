@@ -141,20 +141,39 @@
         "code": "NoUserFound",
         "message": "no user found for given query",
         "includeMap": true,
+        "tags": [
+            "repo"
+        ],
         "metaData": []
     },
     {
         "code": "NoAppFound",
         "message": "no app found for given query",
         "includeMap": true,
+        "tags": [
+            "repo"
+        ],
         "metaData": []
     },
     {
         "code": "NoJWTSigningMaterialFound",
         "message": "no jwt signing material found for given query",
+        "includeMap": true,
+        "tags": [
+            "repo"
+        ],
+        "metaData": []
+    },
+    {
+        "code": "FailedToDecodeRepoData",
+        "message": "decoding data from repo call failed",
         "includeMap": false,
+        "tags": [
+            "repo"
+        ],
         "metaData": [
-            { "name": "keyID", "dataType": "string"}
+            { "name": "decodeTargetType", "dataType": "string"},
+            { "name": "cause", "dataType": "error"}
         ]
     },
     {

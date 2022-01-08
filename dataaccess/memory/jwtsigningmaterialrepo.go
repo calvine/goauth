@@ -37,12 +37,36 @@ func (jsm jwtSigningMaterialRepo) GetJWTSigningMaterialByKeyID(ctx context.Conte
 	defer span.End()
 	material, ok := (*jsm.material)[keyID]
 	if !ok {
-		rErr := coreerrors.NewNoJWTSigningMaterialFoundError(keyID, true)
+		fields := map[string]interface{}{
+			"keyID": keyID,
+		}
+		rErr := coreerrors.NewNoJWTSigningMaterialFoundError(fields, true)
 		evtString := fmt.Sprintf("%s: %s", rErr.GetErrorMessage(), keyID)
 		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return models.JWTSigningMaterial{}, rErr
 	}
 	return material, nil
+}
+
+func (jsm jwtSigningMaterialRepo) GetJWTSigningMaterialByAlgorithmType(ctx context.Context, algorithmType string) ([]models.JWTSigningMaterial, errors.RichError) {
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, jsm.GetName(), "GetJWTSigningMaterialByKeyID", jsm.GetType())
+	defer span.End()
+	results := make([]models.JWTSigningMaterial, 0, 5)
+	for _, jsm := range *jsm.material {
+		if jsm.AlgorithmType == algorithmType {
+			results = append(results, jsm)
+		}
+	}
+	if len(results) == 0 {
+		fields := map[string]interface{}{
+			"algorithmType": algorithmType,
+		}
+		rErr := coreerrors.NewNoJWTSigningMaterialFoundError(fields, true)
+		evtString := fmt.Sprintf("no jwt signing material found for algorithm type: %s", algorithmType)
+		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
+		return nil, rErr
+	}
+	return results, nil
 }
 
 func (jsm jwtSigningMaterialRepo) AddJWTSigningMaterial(ctx context.Context, jwtSigningMaterial *models.JWTSigningMaterial, createdBy string) errors.RichError {
