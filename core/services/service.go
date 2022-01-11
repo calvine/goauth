@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/calvine/goauth/core"
-	"github.com/calvine/goauth/core/jwt"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/models/email"
 	"github.com/calvine/richerror/errors"
@@ -109,8 +108,13 @@ type TokenService interface {
 	Service
 }
 
-type JWTKeyService interface {
-	GetHMACKeyInfoByKeyID(ctx context.Context, logger *zap.Logger, keyID string) (jwt.HMACSigningOptions, errors.RichError)
+type JWTSigningMaterialService interface {
+	// AddJWTSigningMaterial validates and adds jwt signing material to the underlying data store
+	AddJWTSigningMaterial(ctx context.Context, logger *zap.Logger, jsm *models.JWTSigningMaterial) errors.RichError
+	// GetJWTSigningMaterialByKeyID gets jwt signing material by its key id
+	GetJWTSigningMaterialByKeyID(ctx context.Context, logger *zap.Logger, keyID string) (models.JWTSigningMaterial, errors.RichError)
+	// GetValidJWTSigningMaterialByAlgorithmType get all non disabled and non expired jwt signing material with the specified algorithm type
+	GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, logger *zap.Logger, algorithmType string) ([]models.JWTSigningMaterial, errors.RichError)
 
 	Service
 }
