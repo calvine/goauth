@@ -232,6 +232,11 @@ func _testGetContactsByUserID(t *testing.T, contactRepo repo.ContactRepo) {
 			},
 		},
 		{
+			name:               "GIVEN a user id for a user with no contacts EXPECT no contacts to be returned",
+			userID:             testUser2.ID,
+			expectedContactIds: []string{},
+		},
+		{
 			name:              "GIVEN a nonexistant user id EXPECT error no user found",
 			userID:            nonExistantUserID,
 			expectedErrorCode: coreerrors.ErrCodeNoUserFound,
@@ -298,8 +303,14 @@ func _testGetContactsByUserIDAndType(t *testing.T, contactRepo repo.ContactRepo)
 		},
 		{
 			name:               "GIVEN a valid user id and contact type that has no contacts of that type EXPECT 0 contacts to be returned",
+			userID:             testUser2.ID,
+			contactType:        core.CONTACT_TYPE_EMAIL,
+			expectedContactIds: []string{},
+		},
+		{
+			name:               "GIVEN a valid user id and an invalid contact type EXPECT 0 contacts to be returned",
 			userID:             testUser1.ID,
-			contactType:        "not a valid type", // TODO: need to make a case useing a valid contact type...
+			contactType:        "not a valid type",
 			expectedContactIds: []string{},
 		},
 	}

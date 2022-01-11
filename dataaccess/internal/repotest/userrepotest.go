@@ -16,6 +16,9 @@ var (
 	testUser1 = models.User{
 		PasswordHash: "passwordhash1",
 	}
+	testUser2 = models.User{
+		PasswordHash: "another good hash",
+	}
 	nonExistantUserID string
 )
 
@@ -53,6 +56,15 @@ func _testAddUser(t *testing.T, userRepo repo.UserRepo) {
 	}
 	if testUser1.AuditData.CreatedByID != createdByID {
 		t.Error("\tfailed to set the test user 1 CreatedByID to the right value", testUser1.AuditData.CreatedByID, createdByID)
+	}
+
+	err = userRepo.AddUser(context.TODO(), &testUser2, createdByID)
+	if err != nil {
+		t.Log(err.Error())
+		t.Error("\tfailed to add user to database", err.GetErrorCode())
+	}
+	if testUser2.AuditData.CreatedByID != createdByID {
+		t.Error("\tfailed to set the test user 2 CreatedByID to the right value", testUser1.AuditData.CreatedByID, createdByID)
 	}
 }
 

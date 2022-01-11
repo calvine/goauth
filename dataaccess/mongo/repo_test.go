@@ -48,7 +48,11 @@ func TestMongoRepos(t *testing.T) {
 		var contactRepo repo.ContactRepo = testUserRepo
 
 		cleanUpDataSource := func(t *testing.T, _ repotest.RepoTestHarnessInput) {
-			err := testUserRepo.mongoClient.Database(testUserRepo.dbName).Collection(testUserRepo.collectionName).Drop(context.TODO())
+			err := testUserRepo.mongoClient.Database(testUserRepo.dbName).Collection(USER_COLLECTION).Drop(context.TODO())
+			if err != nil {
+				t.Error("\tfailed to cleanup database", err)
+			}
+			err = testUserRepo.mongoClient.Database(testUserRepo.dbName).Collection(JWT_SIGNING_MATERIAL_COLLECTION).Drop(context.TODO())
 			if err != nil {
 				t.Error("\tfailed to cleanup database", err)
 			}

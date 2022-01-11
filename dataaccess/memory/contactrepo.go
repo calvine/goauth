@@ -97,13 +97,16 @@ func (cr contactRepo) GetContactsByUserID(ctx context.Context, userID string) ([
 		}
 	}
 	if len(contacts) == 0 {
-		fields := map[string]interface{}{
-			"UserID": userID,
+		_, ok := (*cr.users)[userID]
+		if !ok {
+			fields := map[string]interface{}{
+				"UserID": userID,
+			}
+			err := coreerrors.NewNoUserFoundError(fields, true)
+			evtString := fmt.Sprintf("unable to find contact for user: %s", userID)
+			apptelemetry.SetSpanOriginalError(&span, err, evtString)
+			return nil, err
 		}
-		err := coreerrors.NewNoUserFoundError(fields, true)
-		evtString := fmt.Sprintf("unable to find contact for user: %s", userID)
-		apptelemetry.SetSpanOriginalError(&span, err, evtString)
-		return nil, err
 	}
 	span.AddEvent("contacts found")
 	return contacts, nil

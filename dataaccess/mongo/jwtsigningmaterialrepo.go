@@ -71,11 +71,34 @@ func (jsm jwtSigningMaterialRepo) GetJWTSigningMaterialByKeyID(ctx context.Conte
 	return jwtSigningMaterial, nil
 }
 
-func (jsm jwtSigningMaterialRepo) GetJWTSigningMaterialByAlgorithmType(ctx context.Context, algorithmType string) ([]models.JWTSigningMaterial, errors.RichError) {
-	span := apptelemetry.CreateRepoFunctionSpan(ctx, jsm.GetName(), "GetJWTSigningMaterialByAlgorithmType", jsm.GetType())
+func (jsm jwtSigningMaterialRepo) GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, algorithmType string) ([]models.JWTSigningMaterial, errors.RichError) {
+	span := apptelemetry.CreateRepoFunctionSpan(ctx, jsm.GetName(), "GetValidJWTSigningMaterialByAlgorithmType", jsm.GetType())
 	defer span.End()
 	repoResult := make([]repomodels.RepoJWTSigningMaterial, 0, 5)
-	filter := bson.M{"algorithmType": algorithmType}
+	filter := bson.M{
+		"$and": bson.A{
+			bson.M{"disabled": false},
+			bson.M{
+				"$or": bson.A{
+					bson.D{
+						{
+							Key:   "expiration",
+							Value: nil,
+						},
+					},
+					bson.D{
+						{
+							Key: "expiration",
+							Value: bson.M{
+								"$gt": time.Now().UTC(),
+							},
+						},
+					},
+				},
+			},
+			bson.M{"algorithmType": algorithmType},
+		},
+	}
 	queryResult, err := jsm.mongoClient.Database(jsm.dbName).Collection(jsm.collectionName).Find(ctx, filter)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -100,7 +123,17 @@ func (jsm jwtSigningMaterialRepo) GetJWTSigningMaterialByAlgorithmType(ctx conte
 		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
 		return nil, rErr
 	}
-	result := make([]models.JWTSigningMaterial, len(repoResult))
+	numResults := len(repoResult)
+	// if numResults == 0 {
+	// 	fields := map[string]interface{}{
+	// 		"algorithmType": algorithmType,
+	// 	}
+	// 	rErr := coreerrors.NewNoJWTSigningMaterialFoundError(fields, true)
+	// 	evtString := fmt.Sprintf("no valid jwt signing material found for algorithm type: %s", algorithmType)
+	// 	apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
+	// 	return nil, rErr
+	// }
+	result := make([]models.JWTSigningMaterial, numResults)
 	for i := range repoResult {
 		result[i] = models.JWTSigningMaterial(repoResult[i].ToCoreJWTSigningMaterial())
 	}

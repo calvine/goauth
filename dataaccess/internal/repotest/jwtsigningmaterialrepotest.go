@@ -22,6 +22,8 @@ var (
 	jwtSigningMaterial1 models.JWTSigningMaterial
 	jwtSigningMaterial2 models.JWTSigningMaterial
 	jwtSigningMaterial3 models.JWTSigningMaterial
+	jwtSigningMaterial4 models.JWTSigningMaterial
+	jwtSigningMaterial5 models.JWTSigningMaterial
 )
 
 func setupJWTSigningMaterialRepoTestData(_ *testing.T, testingHarness RepoTestHarnessInput) {
@@ -45,7 +47,7 @@ func setupJWTSigningMaterialRepoTestData(_ *testing.T, testingHarness RepoTestHa
 		},
 		Expiration: nullable.NullableTime{
 			HasValue: true,
-			Value:    time.Now().Add(time.Hour),
+			Value:    time.Now().UTC().Add(time.Hour),
 		},
 		Disabled: false,
 	}
@@ -54,6 +56,30 @@ func setupJWTSigningMaterialRepoTestData(_ *testing.T, testingHarness RepoTestHa
 		HMACSecret: nullable.NullableString{
 			HasValue: true,
 			Value:    "testsecret3",
+		},
+		Expiration: nullable.NullableTime{
+			HasValue: true,
+			Value:    time.Now().Add(time.Hour),
+		},
+		Disabled: true,
+	}
+	jwtSigningMaterial4 = models.JWTSigningMaterial{
+		AlgorithmType: "HMAC",
+		HMACSecret: nullable.NullableString{
+			HasValue: true,
+			Value:    "testsecret2",
+		},
+		Expiration: nullable.NullableTime{
+			HasValue: true,
+			Value:    time.Now().Add(-time.Hour),
+		},
+		Disabled: false,
+	}
+	jwtSigningMaterial5 = models.JWTSigningMaterial{
+		AlgorithmType: "HMAC",
+		HMACSecret: nullable.NullableString{
+			HasValue: true,
+			Value:    "testsecret2",
 		},
 		Expiration: nullable.NullableTime{
 			HasValue: true,
@@ -70,6 +96,9 @@ func testJWTSigningMaterialRepo(t *testing.T, testHarness RepoTestHarnessInput) 
 	})
 	t.Run("GetJWTSigningMaterialByKeyID", func(t *testing.T) {
 		_testGetJWTSigningMaterialByKeyID(t, *testHarness.JWTSigningMaterialRepo)
+	})
+	t.Run("GetValidJWTSigningMaterialByAlgorithmType", func(t *testing.T) {
+		_testGetValidJWTSigningMaterialByAlgorithmType(t, *testHarness.JWTSigningMaterialRepo)
 	})
 }
 
@@ -91,6 +120,14 @@ func _testAddJWTSigningMaterial(t *testing.T, jwtSigningMaterialRepo repo.JWTSig
 		{
 			name:                 "GIVEN disabled jwt signing material EXPECT success",
 			signingMaterialToAdd: &jwtSigningMaterial3,
+		},
+		{
+			name:                 "GIVEN disabled jwt signing material EXPECT success",
+			signingMaterialToAdd: &jwtSigningMaterial4,
+		},
+		{
+			name:                 "GIVEN disabled jwt signing material EXPECT success",
+			signingMaterialToAdd: &jwtSigningMaterial5,
 		},
 		// {
 		// 	name: "GIVEN jwt signing material with a duplicate key id EXPECT error code jwt signing material key id not unique",
@@ -163,7 +200,7 @@ func _testGetJWTSigningMaterialByKeyID(t *testing.T, jwtSigningMaterialRepo repo
 	}
 }
 
-func _testGetJWTSigningMaterialByAlgorithmType(t *testing.T, jwtSigningMaterialRepo repo.JWTSigningMaterialRepo) {
+func _testGetValidJWTSigningMaterialByAlgorithmType(t *testing.T, jwtSigningMaterialRepo repo.JWTSigningMaterialRepo) {
 	type testCase struct {
 		name                       string
 		algorithmType              string
@@ -180,14 +217,15 @@ func _testGetJWTSigningMaterialByAlgorithmType(t *testing.T, jwtSigningMaterialR
 			},
 		},
 		{
-			name:              "GIVEN given a non existant algorithm type for a jwt signing material EXPECT error code no jwt signing material found",
-			algorithmType:     "zzz",
-			expectedErrorCode: coreerrors.ErrCodeNoJWTSigningMaterialFound,
+			name:                       "GIVEN given a non existant algorithm type for a jwt signing material EXPECT no jwt signing material to be returned",
+			algorithmType:              "zzz",
+			expectedJWTSigningMaterial: []models.JWTSigningMaterial{},
+			//expectedErrorCode: coreerrors.ErrCodeNoJWTSigningMaterialFound,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			jsms, err := jwtSigningMaterialRepo.GetJWTSigningMaterialByAlgorithmType(context.TODO(), tc.algorithmType)
+			jsms, err := jwtSigningMaterialRepo.GetValidJWTSigningMaterialByAlgorithmType(context.TODO(), tc.algorithmType)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
@@ -209,7 +247,7 @@ func _testGetJWTSigningMaterialByAlgorithmType(t *testing.T, jwtSigningMaterialR
 							if ejsm.HMACSecret.Value != jsm.HMACSecret.Value {
 								t.Errorf("\tsecret is not expected value: got - %s expected - %s", jsm.HMACSecret.Value, ejsm.HMACSecret.Value)
 							}
-							if ejsm.Expiration.Value != jsm.Expiration.Value {
+							if ejsm.Expiration.Value.Round(time.Second) != jsm.Expiration.Value.Round(time.Second) {
 								t.Errorf("\texpiration is not expected value: got - %v expected - %v", jsm.Expiration.Value, ejsm.Expiration.Value)
 							}
 							if ejsm.Disabled != jsm.Disabled {
@@ -219,10 +257,9 @@ func _testGetJWTSigningMaterialByAlgorithmType(t *testing.T, jwtSigningMaterialR
 						}
 					}
 					if !found {
-						t.Errorf("\tfailed to find jwt signing material with key id %s", ejsm.KeyID)
+						t.Errorf("\tfailed to find jwt signing material: %+v", ejsm)
 						continue
 					}
-
 				}
 			}
 		})
