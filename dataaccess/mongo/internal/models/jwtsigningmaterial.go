@@ -16,15 +16,15 @@ type RepoJWTSigningMaterial struct {
 
 func (ru RepoJWTSigningMaterial) ToCoreJWTSigningMaterial() models.JWTSigningMaterial {
 	oidString := ru.ObjectID.Hex()
-	ru.CoreJWTSigningMaterial.KeyID = oidString
+	ru.CoreJWTSigningMaterial.ID = oidString
 
 	return models.JWTSigningMaterial(ru.CoreJWTSigningMaterial)
 }
 
 func (cjsm CoreJWTSigningMaterial) ToRepoJWTSigningMaterial() (RepoJWTSigningMaterial, errors.RichError) {
-	oid, err := primitive.ObjectIDFromHex(cjsm.KeyID)
+	oid, err := primitive.ObjectIDFromHex(cjsm.ID)
 	if err != nil {
-		return RepoJWTSigningMaterial{}, coreerrors.NewFailedToParseObjectIDError(cjsm.KeyID, err, true)
+		return RepoJWTSigningMaterial{}, coreerrors.NewFailedToParseObjectIDError(cjsm.ID, err, true)
 	}
 	return RepoJWTSigningMaterial{
 		ObjectID:               oid,

@@ -144,7 +144,9 @@ func run() error {
 		fmt.Printf("failed to connect to mongo server: %s\n", err.Error())
 	}
 	userRepo := gamongo.NewUserRepo(client)
+	jsmRepo := gamongo.NewJWTSigningMaterialRepo(client)
 	auditRepo := gamongo.NewAuditLogRepo(client)
+	appRepo := memory.NewMemoryAppRepo()
 	tokenRepo := memory.NewMemoryTokenRepo()
 
 	tokenService := service.NewTokenService(tokenRepo)
@@ -156,6 +158,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	appService := service.NewAppService(appRepo, auditRepo)
 	loginServiceOptions := service.LoginServiceOptions{
 		AuditLogRepo:           auditRepo,
 		UserRepo:               userRepo,
@@ -167,8 +170,10 @@ func run() error {
 	}
 	loginService := service.NewLoginService(loginServiceOptions)
 	userService := service.NewUserService(userRepo, userRepo, tokenService, emailService)
+	jsmService := service.NewJWTSigningMaterialService(jsmRepo)
+	cachedJSMService := service.NewCachedJWTSigningMaterialService(jsmService, time.Minute*15)
 	httpStaticFS := http.FS(staticFS)
-	httpServer := gahttp.NewServer(logger, loginService, userService, emailService, tokenService, &httpStaticFS, &templateFS)
+	httpServer := gahttp.NewServer(logger, loginService, userService, emailService, tokenService, appService, cachedJSMService, &httpStaticFS, &templateFS)
 	httpServer.BuildRoutes()
 	address := utilities.GetEnv(ENV_HTTP_ADDRESS_STRING, DEFAULT_HTTP_PORT_STRING)
 	fmt.Printf("running http services on: %s", address)

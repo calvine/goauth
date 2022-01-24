@@ -72,9 +72,9 @@ func (jsm jwtSigningMaterialRepo) GetValidJWTSigningMaterialByAlgorithmType(ctx 
 func (jsm jwtSigningMaterialRepo) AddJWTSigningMaterial(ctx context.Context, jwtSigningMaterial *models.JWTSigningMaterial, createdBy string) errors.RichError {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, jsm.GetName(), "AddJWTSigningMaterial", jsm.GetType())
 	defer span.End()
-	if jwtSigningMaterial.KeyID == "" {
+	if jwtSigningMaterial.ID == "" {
 		// if id is not set lets set one
-		jwtSigningMaterial.KeyID = uuid.New().String()
+		jwtSigningMaterial.ID = uuid.New().String()
 	}
 	/*
 		This logic should be in the service level, not in the repo...

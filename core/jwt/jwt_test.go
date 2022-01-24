@@ -95,7 +95,6 @@ func TestDecodeAndValidateJWT(t *testing.T) {
 					t.Errorf("\tjwt.Claims value was not expected:\ng - %v\ne - %v", jwt.Claims, tc.expectedJWTStandardClaims)
 				}
 			}
-
 		})
 	}
 }

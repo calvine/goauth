@@ -110,11 +110,11 @@ type TokenService interface {
 
 type JWTSigningMaterialService interface {
 	// AddJWTSigningMaterial validates and adds jwt signing material to the underlying data store
-	AddJWTSigningMaterial(ctx context.Context, logger *zap.Logger, jsm *models.JWTSigningMaterial) errors.RichError
+	AddJWTSigningMaterial(ctx context.Context, logger *zap.Logger, jsm *models.JWTSigningMaterial, initiator string) errors.RichError
 	// GetJWTSigningMaterialByKeyID gets jwt signing material by its key id
-	GetJWTSigningMaterialByKeyID(ctx context.Context, logger *zap.Logger, keyID string) (models.JWTSigningMaterial, errors.RichError)
+	GetJWTSigningMaterialByKeyID(ctx context.Context, logger *zap.Logger, keyID string, initiator string) (models.JWTSigningMaterial, errors.RichError)
 	// GetValidJWTSigningMaterialByAlgorithmType get all non disabled and non expired jwt signing material with the specified algorithm type
-	GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, logger *zap.Logger, algorithmType string) ([]models.JWTSigningMaterial, errors.RichError)
+	GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, logger *zap.Logger, algorithmType string, initiator string) ([]models.JWTSigningMaterial, errors.RichError)
 
 	Service
 }

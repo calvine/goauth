@@ -42,15 +42,8 @@ func (jsm jwtSigningMaterialRepo) GetJWTSigningMaterialByKeyID(ctx context.Conte
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, jsm.GetName(), "GetJWTSigningMaterialByKeyID", jsm.GetType())
 	defer span.End()
 	var repoJSM repomodels.RepoJWTSigningMaterial
-	oid, err := primitive.ObjectIDFromHex(keyID)
-	if err != nil {
-		rErr := coreerrors.NewFailedToParseObjectIDError(keyID, err, true)
-		evtString := fmt.Sprintf("%s: %s", rErr.GetErrorMessage(), keyID)
-		apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
-		return repoJSM.ToCoreJWTSigningMaterial(), rErr
-	}
-	filter := bson.M{"_id": oid}
-	err = jsm.mongoClient.Database(jsm.dbName).Collection(jsm.collectionName).FindOne(ctx, filter).Decode(&repoJSM)
+	filter := bson.M{"keyId": keyID}
+	err := jsm.mongoClient.Database(jsm.dbName).Collection(jsm.collectionName).FindOne(ctx, filter).Decode(&repoJSM)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			fields := map[string]interface{}{
@@ -158,7 +151,7 @@ func (jsm jwtSigningMaterialRepo) AddJWTSigningMaterial(ctx context.Context, jwt
 	// if !ok {
 	// 	return mongoerrors.NewMongoFailedToParseObjectID(result.InsertedID, true)
 	// }
-	jwtSigningMaterial.KeyID = oid.Hex()
+	jwtSigningMaterial.ID = oid.Hex()
 	span.AddEvent("jwt signing material added")
 	return nil
 }

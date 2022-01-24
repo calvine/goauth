@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/calvine/goauth/core/normalization"
@@ -27,8 +28,7 @@ var (
 )
 
 func TestMongoRepos(t *testing.T) {
-	// TODO: put this back...
-	value, exists := true, true //os.LookupEnv(ENV_RUN_MONGO_TESTS)
+	value, exists := os.LookupEnv(ENV_RUN_MONGO_TESTS)
 	shouldRun, _ := normalization.ReadBoolValue(value, true)
 	if exists && shouldRun {
 		// setup code for mongo user repo tests.

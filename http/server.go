@@ -46,14 +46,29 @@ type server struct {
 	userService  services.UserService
 	emailService services.EmailService
 	tokenService services.TokenService
+	appService   services.AppService
+	jsmService   services.JWTSigningMaterialService
 	staticFS     *http.FileSystem
 	templateFS   *embed.FS
 	Mux          *chi.Mux
 }
 
-func NewServer(logger *zap.Logger, loginService services.LoginService, userService services.UserService, emailService services.EmailService, tokenService services.TokenService, staticFS *http.FileSystem, templateFS *embed.FS) server {
+type HTTPServerOptions struct {
+	logger       *zap.Logger
+	loginService services.LoginService
+	userService  services.UserService
+	emailService services.EmailService
+	tokenService services.TokenService
+	appService   services.AppService
+	jsmService   services.JWTSigningMaterialService
+	staticFS     *http.FileSystem
+	templateFS   *embed.FS
+	Mux          *chi.Mux
+}
+
+func NewServer(logger *zap.Logger, loginService services.LoginService, userService services.UserService, emailService services.EmailService, tokenService services.TokenService, appService services.AppService, jsms services.JWTSigningMaterialService, staticFS *http.FileSystem, templateFS *embed.FS) server {
 	mux := chi.NewRouter()
-	return server{logger, loginService, userService, emailService, tokenService, staticFS, templateFS, mux}
+	return server{logger, loginService, userService, emailService, tokenService, appService, jsms, staticFS, templateFS, mux}
 }
 
 func (hh *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

@@ -185,6 +185,26 @@
         ]
     },
     {
+        "code": "JWTSigningMaterialExpired",
+        "message": "jwt signing material has expired",
+        "includeMap": false,
+        "metaData": [
+            { "name": "keyID", "dataType": "string"}
+        ]
+    },
+    {
+        "code": "JWTSigningMaterialKeyIDMissing",
+        "message": "key id for jwt signing material is missing",
+        "includeMap": false,
+        "metaData": []
+    },
+    {
+        "code": "JWTSigningMaterialAlgorithmTypeMissing",
+        "message": "algorithm type for jwt signing material is missing",
+        "includeMap": false,
+        "metaData": []
+    },
+    {
         "code": "InvalidAppCreation",
         "message": "this app had bad or missing required fields",
         "includeMap": true,

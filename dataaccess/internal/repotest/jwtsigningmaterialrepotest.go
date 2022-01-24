@@ -10,6 +10,7 @@ import (
 	"github.com/calvine/goauth/core/nullable"
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/internal/testutils"
+	"github.com/google/uuid"
 )
 
 const (
@@ -17,7 +18,7 @@ const (
 )
 
 var (
-	nonExistantJWTSigningMaterialID string
+	nonExistantJWTSigningMaterialKeyID string
 
 	jwtSigningMaterial1 models.JWTSigningMaterial
 	jwtSigningMaterial2 models.JWTSigningMaterial
@@ -27,8 +28,9 @@ var (
 )
 
 func setupJWTSigningMaterialRepoTestData(_ *testing.T, testingHarness RepoTestHarnessInput) {
-	nonExistantJWTSigningMaterialID = testingHarness.IDGenerator(false)
+	nonExistantJWTSigningMaterialKeyID = testingHarness.IDGenerator(false)
 	jwtSigningMaterial1 = models.JWTSigningMaterial{
+		KeyID:         uuid.Must(uuid.NewRandom()).String(),
 		AlgorithmType: "HMAC",
 		HMACSecret: nullable.NullableString{
 			HasValue: true,
@@ -40,6 +42,7 @@ func setupJWTSigningMaterialRepoTestData(_ *testing.T, testingHarness RepoTestHa
 		Disabled: false,
 	}
 	jwtSigningMaterial2 = models.JWTSigningMaterial{
+		KeyID:         uuid.Must(uuid.NewRandom()).String(),
 		AlgorithmType: "HMAC",
 		HMACSecret: nullable.NullableString{
 			HasValue: true,
@@ -52,6 +55,7 @@ func setupJWTSigningMaterialRepoTestData(_ *testing.T, testingHarness RepoTestHa
 		Disabled: false,
 	}
 	jwtSigningMaterial3 = models.JWTSigningMaterial{
+		KeyID:         uuid.Must(uuid.NewRandom()).String(),
 		AlgorithmType: "OTHER",
 		HMACSecret: nullable.NullableString{
 			HasValue: true,
@@ -64,6 +68,7 @@ func setupJWTSigningMaterialRepoTestData(_ *testing.T, testingHarness RepoTestHa
 		Disabled: true,
 	}
 	jwtSigningMaterial4 = models.JWTSigningMaterial{
+		KeyID:         uuid.Must(uuid.NewRandom()).String(),
 		AlgorithmType: "HMAC",
 		HMACSecret: nullable.NullableString{
 			HasValue: true,
@@ -76,6 +81,7 @@ func setupJWTSigningMaterialRepoTestData(_ *testing.T, testingHarness RepoTestHa
 		Disabled: false,
 	}
 	jwtSigningMaterial5 = models.JWTSigningMaterial{
+		KeyID:         uuid.Must(uuid.NewRandom()).String(),
 		AlgorithmType: "HMAC",
 		HMACSecret: nullable.NullableString{
 			HasValue: true,
@@ -145,6 +151,9 @@ func _testAddJWTSigningMaterial(t *testing.T, jwtSigningMaterialRepo repo.JWTSig
 			} else if tc.expectedErrorCode != "" {
 				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
 			} else {
+				if tc.signingMaterialToAdd.ID == "" {
+					t.Error("\tjwt signing material added does not have an id set.")
+				}
 				if tc.signingMaterialToAdd.AuditData.CreatedByID == "" {
 					t.Error("\texpected created by id to be populated")
 				}
@@ -171,7 +180,7 @@ func _testGetJWTSigningMaterialByKeyID(t *testing.T, jwtSigningMaterialRepo repo
 		},
 		{
 			name:              "GIVEN given an invalid key id for a jwt signing material EXPECT error code no jwt signing material found",
-			keyID:             nonExistantJWTSigningMaterialID,
+			keyID:             nonExistantJWTSigningMaterialKeyID,
 			expectedErrorCode: coreerrors.ErrCodeNoJWTSigningMaterialFound,
 		},
 	}
