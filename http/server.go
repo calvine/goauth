@@ -1,12 +1,15 @@
 package http
 
 import (
+	"context"
 	"embed"
 	"html/template"
 	"net/http"
 	"time"
 
 	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/jwt"
+	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/services"
 	mymiddleware "github.com/calvine/goauth/http/middleware"
 	"github.com/calvine/richerror/errors"
@@ -41,34 +44,78 @@ const (
 )
 
 type server struct {
-	logger       *zap.Logger
-	loginService services.LoginService
-	userService  services.UserService
-	emailService services.EmailService
-	tokenService services.TokenService
-	appService   services.AppService
-	jsmService   services.JWTSigningMaterialService
-	staticFS     *http.FileSystem
-	templateFS   *embed.FS
-	Mux          *chi.Mux
+	logger                     *zap.Logger
+	loginService               services.LoginService
+	userService                services.UserService
+	emailService               services.EmailService
+	tokenService               services.TokenService
+	appService                 services.AppService
+	jsmService                 services.JWTSigningMaterialService
+	staticFS                   *http.FileSystem
+	templateFS                 *embed.FS
+	Mux                        *chi.Mux
+	tokenSigningAlgorithmTypes []models.JSMAlgorithmType
+	tokenSigners               map[string]jwt.Signer
 }
 
 type HTTPServerOptions struct {
-	logger       *zap.Logger
-	loginService services.LoginService
-	userService  services.UserService
-	emailService services.EmailService
-	tokenService services.TokenService
-	appService   services.AppService
-	jsmService   services.JWTSigningMaterialService
-	staticFS     *http.FileSystem
-	templateFS   *embed.FS
-	Mux          *chi.Mux
+	Logger                     *zap.Logger
+	LoginService               services.LoginService
+	UserService                services.UserService
+	EmailService               services.EmailService
+	TokenService               services.TokenService
+	AppService                 services.AppService
+	JsmService                 services.JWTSigningMaterialService
+	StaticFS                   *http.FileSystem
+	TemplateFS                 *embed.FS
+	TokenSigningAlgorithmTypes []models.JSMAlgorithmType
+	// Mux                        *chi.Mux
 }
 
-func NewServer(logger *zap.Logger, loginService services.LoginService, userService services.UserService, emailService services.EmailService, tokenService services.TokenService, appService services.AppService, jsms services.JWTSigningMaterialService, staticFS *http.FileSystem, templateFS *embed.FS) server {
-	mux := chi.NewRouter()
-	return server{logger, loginService, userService, emailService, tokenService, appService, jsms, staticFS, templateFS, mux}
+func NewServer(ctx context.Context, options HTTPServerOptions) (server, errors.RichError) {
+	mux := chi.NewMux()
+	s := server{
+		logger:                     options.Logger,
+		loginService:               options.LoginService,
+		userService:                options.UserService,
+		emailService:               options.EmailService,
+		tokenService:               options.TokenService,
+		appService:                 options.AppService,
+		jsmService:                 options.JsmService,
+		staticFS:                   options.StaticFS,
+		templateFS:                 options.TemplateFS,
+		Mux:                        mux,
+		tokenSigningAlgorithmTypes: options.TokenSigningAlgorithmTypes,
+	}
+	jwtSigningMaterial := make([]models.JWTSigningMaterial, 0, 3)
+	for _, alg := range options.TokenSigningAlgorithmTypes {
+		results, err := s.jsmService.GetValidJWTSigningMaterialByAlgorithmType(ctx, s.logger, alg, "server startup")
+		if err != nil {
+			s.logger.Error("call for jwt signing material failed!", zap.Any("error", err))
+			return s, err
+		}
+		jwtSigningMaterial = append(jwtSigningMaterial, results...)
+	}
+	if len(jwtSigningMaterial) == 0 {
+		fields := map[string]interface{}{
+			"algorithmTypes": options.TokenSigningAlgorithmTypes,
+		}
+		err := coreerrors.NewNoJWTSigningMaterialFoundError(fields, true)
+		return s, err
+	}
+	s.tokenSigners = make(map[string]jwt.Signer)
+	for _, jsm := range jwtSigningMaterial {
+		options.Logger.Info("building signer for jwt signig material", zap.String("jsmID", jsm.ID), zap.String("jsmKeyID", jsm.KeyID))
+		signer, err := jsm.ToSigner()
+		if err != nil {
+			options.Logger.Error("failed to create jwt signer from jwt signing material", zap.Any("error", err))
+			return s, err
+		}
+		// TODO: how do i select the right kind of key for signing? for now random select a key for signing?
+		// also any key id not present will be pulled at the time it is used, and if its not in the repo we throw an error...
+		s.tokenSigners[jsm.KeyID] = signer
+	}
+	return s, nil
 }
 
 func (hh *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

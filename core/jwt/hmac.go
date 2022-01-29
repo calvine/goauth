@@ -15,7 +15,7 @@ type HMACSigningOptions struct {
 
 func NewHMACSigningOptions(s string) (HMACSigningOptions, errors.RichError) {
 	if len(s) == 0 {
-		return HMACSigningOptions{}, nil // TODO: make an error for here
+		return HMACSigningOptions{}, coreerrors.NewHMACSigingOptionsMissingSecretError(true)
 	}
 	return HMACSigningOptions{
 		Secret: s,

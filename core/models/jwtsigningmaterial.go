@@ -3,18 +3,23 @@ package models
 import (
 	"time"
 
+	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/jwt"
 	"github.com/calvine/goauth/core/nullable"
+	"github.com/calvine/richerror/errors"
 	"github.com/google/uuid"
 )
 
+type JSMAlgorithmType string
+
 const (
-	ALGTYP_HMAC = "HMAC"
+	ALGTYP_HMAC JSMAlgorithmType = "HMAC"
 )
 
 type JWTSigningMaterial struct {
 	ID            string                  `bson:"-"`
 	KeyID         string                  `bson:"keyId"`
-	AlgorithmType string                  `bson:"algorithmType"`
+	AlgorithmType JSMAlgorithmType        `bson:"algorithmType"`
 	HMACSecret    nullable.NullableString `bson:"hmacSecret"`
 	Expiration    nullable.NullableTime   `bson:"expiration"`
 	Disabled      bool                    `bson:"disabled"`
@@ -42,4 +47,18 @@ func (jsm *JWTSigningMaterial) IsExpired() bool {
 		return true
 	}
 	return false
+}
+
+func (jsm *JWTSigningMaterial) ToSigner() (jwt.Signer, errors.RichError) {
+	switch jsm.AlgorithmType {
+	case ALGTYP_HMAC:
+		hmacOptions, err := jwt.NewHMACSigningOptions(jsm.HMACSecret.Value)
+		if err != nil {
+			return nil, err
+		}
+		return hmacOptions, nil
+	default:
+		err := coreerrors.NewJWTSigningMaterialAlgorithmTypeNotSupportedError(string(jsm.AlgorithmType), true)
+		return nil, err
+	}
 }

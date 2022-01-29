@@ -9,6 +9,8 @@ import (
 	"path"
 	"time"
 
+	"github.com/calvine/goauth/core/models"
+	"github.com/calvine/goauth/core/nullable"
 	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/goauth/dataaccess/memory"
 	gamongo "github.com/calvine/goauth/dataaccess/mongo"
@@ -144,12 +146,13 @@ func run() error {
 		fmt.Printf("failed to connect to mongo server: %s\n", err.Error())
 	}
 	userRepo := gamongo.NewUserRepo(client)
-	jsmRepo := gamongo.NewJWTSigningMaterialRepo(client)
 	auditRepo := gamongo.NewAuditLogRepo(client)
+	jsmRepo := memory.NewMemoryJWTSigningMaterialRepo()
 	appRepo := memory.NewMemoryAppRepo()
 	tokenRepo := memory.NewMemoryTokenRepo()
 
 	tokenService := service.NewTokenService(tokenRepo)
+
 	// TODO: set this up from configuration
 	fsEmailServiceOptions := service.FSEmailServiceOptions{
 		MessageDir: path.Join(".", "test_emails"),
@@ -173,7 +176,32 @@ func run() error {
 	jsmService := service.NewJWTSigningMaterialService(jsmRepo)
 	cachedJSMService := service.NewCachedJWTSigningMaterialService(jsmService, time.Minute*15)
 	httpStaticFS := http.FS(staticFS)
-	httpServer := gahttp.NewServer(logger, loginService, userService, emailService, tokenService, appService, cachedJSMService, &httpStaticFS, &templateFS)
+
+	// add a jwt signing material to the repo so we can test...
+	// TODO: later we will not add this per run, perhaps another executable to generate jwt signing material?
+	testJSM := models.NewHMACJWTSigningMaterial("secret123", nullable.NullableTime{HasValue: false})
+	err = cachedJSMService.AddJWTSigningMaterial(context.TODO(), logger, &testJSM, "startup")
+	if err != nil {
+		return err
+	}
+
+	httpServerOptions := gahttp.HTTPServerOptions{
+		Logger:                     logger,
+		LoginService:               loginService,
+		UserService:                userService,
+		EmailService:               emailService,
+		TokenService:               tokenService,
+		AppService:                 appService,
+		JsmService:                 cachedJSMService,
+		StaticFS:                   &httpStaticFS,
+		TemplateFS:                 &templateFS,
+		TokenSigningAlgorithmTypes: []models.JSMAlgorithmType{models.ALGTYP_HMAC}, // TODO: implment other signers of other types
+	}
+	httpServer, err := gahttp.NewServer(context.Background(), httpServerOptions)
+	if err != nil {
+		logger.Error("failed to create the http server", zap.Any("error", err))
+		return err
+	}
 	httpServer.BuildRoutes()
 	address := utilities.GetEnv(ENV_HTTP_ADDRESS_STRING, DEFAULT_HTTP_PORT_STRING)
 	fmt.Printf("running http services on: %s", address)

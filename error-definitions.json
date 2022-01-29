@@ -205,6 +205,14 @@
         "metaData": []
     },
     {
+        "code": "JWTSigningMaterialAlgorithmTypeNotSupported",
+        "message": "algorithm type for jwt signing material is not supported",
+        "includeMap": false,
+        "metaData": [
+            { "name": "algorithmType", "dataType": "string"}
+        ]
+    },
+    {
         "code": "InvalidAppCreation",
         "message": "this app had bad or missing required fields",
         "includeMap": true,
@@ -324,6 +332,14 @@
         ],
         "metaData": [
             { "name": "tokenString", "dataType": "string" }
+        ]
+    },
+    {
+        "code": "HMACSigingOptionsMissingSecret",
+        "message": "hmac signing options secret was empty",
+        "includeMap": false,
+        "tags": [
+            "jwt_signer"
         ]
     },
     {

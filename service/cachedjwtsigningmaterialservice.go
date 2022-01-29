@@ -64,7 +64,7 @@ func (cjsms cachedJWTSigningMaterialService) GetJWTSigningMaterialByKeyID(ctx co
 	return cachedData.material, nil
 }
 
-func (cjsms cachedJWTSigningMaterialService) GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, logger *zap.Logger, algorithmType string, initiator string) ([]models.JWTSigningMaterial, errors.RichError) {
+func (cjsms cachedJWTSigningMaterialService) GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, logger *zap.Logger, algorithmType models.JSMAlgorithmType, initiator string) ([]models.JWTSigningMaterial, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, cjsms.GetName(), "GetValidJWTSigningMaterialByAlgorithmType")
 	defer span.End()
 	// no cache here yet...

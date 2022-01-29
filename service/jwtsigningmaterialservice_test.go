@@ -166,7 +166,7 @@ func _testGetValidJWTSigningMaterialByAlgorithmType(t *testing.T, jsms coreservi
 	logger := zaptest.NewLogger(t)
 	type testCase struct {
 		name                       string
-		algorithmType              string
+		algorithmType              models.JSMAlgorithmType
 		expectedJwtSigningMaterial []models.JWTSigningMaterial
 		expectedErrorCode          string
 	}

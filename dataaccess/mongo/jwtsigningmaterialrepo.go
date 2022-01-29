@@ -64,7 +64,7 @@ func (jsm jwtSigningMaterialRepo) GetJWTSigningMaterialByKeyID(ctx context.Conte
 	return jwtSigningMaterial, nil
 }
 
-func (jsm jwtSigningMaterialRepo) GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, algorithmType string) ([]models.JWTSigningMaterial, errors.RichError) {
+func (jsm jwtSigningMaterialRepo) GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, algorithmType models.JSMAlgorithmType) ([]models.JWTSigningMaterial, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, jsm.GetName(), "GetValidJWTSigningMaterialByAlgorithmType", jsm.GetType())
 	defer span.End()
 	repoResult := make([]repomodels.RepoJWTSigningMaterial, 0, 5)
@@ -117,15 +117,6 @@ func (jsm jwtSigningMaterialRepo) GetValidJWTSigningMaterialByAlgorithmType(ctx 
 		return nil, rErr
 	}
 	numResults := len(repoResult)
-	// if numResults == 0 {
-	// 	fields := map[string]interface{}{
-	// 		"algorithmType": algorithmType,
-	// 	}
-	// 	rErr := coreerrors.NewNoJWTSigningMaterialFoundError(fields, true)
-	// 	evtString := fmt.Sprintf("no valid jwt signing material found for algorithm type: %s", algorithmType)
-	// 	apptelemetry.SetSpanOriginalError(&span, rErr, evtString)
-	// 	return nil, rErr
-	// }
 	result := make([]models.JWTSigningMaterial, numResults)
 	for i := range repoResult {
 		result[i] = models.JWTSigningMaterial(repoResult[i].ToCoreJWTSigningMaterial())
@@ -147,10 +138,6 @@ func (jsm jwtSigningMaterialRepo) AddJWTSigningMaterial(ctx context.Context, jwt
 		return rErr
 	}
 	oid := result.InsertedID.(primitive.ObjectID)
-	// oid, ok := result.InsertedID.(primitive.ObjectID)
-	// if !ok {
-	// 	return mongoerrors.NewMongoFailedToParseObjectID(result.InsertedID, true)
-	// }
 	jwtSigningMaterial.ID = oid.Hex()
 	span.AddEvent("jwt signing material added")
 	return nil
