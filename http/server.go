@@ -54,7 +54,7 @@ type server struct {
 	staticFS                   *http.FileSystem
 	templateFS                 *embed.FS
 	Mux                        *chi.Mux
-	tokenSigningAlgorithmTypes []models.JSMAlgorithmType
+	tokenSigningAlgorithmTypes []jwt.JWTSingingAlgorithmFamily
 	tokenSigners               map[string]jwt.Signer
 }
 
@@ -68,7 +68,7 @@ type HTTPServerOptions struct {
 	JsmService                 services.JWTSigningMaterialService
 	StaticFS                   *http.FileSystem
 	TemplateFS                 *embed.FS
-	TokenSigningAlgorithmTypes []models.JSMAlgorithmType
+	TokenSigningAlgorithmTypes []jwt.JWTSingingAlgorithmFamily
 	// Mux                        *chi.Mux
 }
 

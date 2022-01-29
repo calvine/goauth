@@ -5,6 +5,7 @@ import (
 
 	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/jwt"
 	"github.com/calvine/goauth/core/models"
 	corerepo "github.com/calvine/goauth/core/repositories"
 	coreservices "github.com/calvine/goauth/core/services"
@@ -90,7 +91,7 @@ func (jsms jwtSigningMaterialService) GetJWTSigningMaterialByKeyID(ctx context.C
 	return jsm, nil
 }
 
-func (jsms jwtSigningMaterialService) GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, logger *zap.Logger, algorithmType models.JSMAlgorithmType, initiator string) ([]models.JWTSigningMaterial, errors.RichError) {
+func (jsms jwtSigningMaterialService) GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, logger *zap.Logger, algorithmType jwt.JWTSingingAlgorithmFamily, initiator string) ([]models.JWTSigningMaterial, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, jsms.GetName(), "GetValidJWTSigningMaterialByAlgorithmType")
 	defer span.End()
 

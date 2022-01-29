@@ -6,6 +6,7 @@ import (
 	"time"
 
 	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/jwt"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/nullable"
 	repo "github.com/calvine/goauth/core/repositories"
@@ -212,14 +213,14 @@ func _testGetJWTSigningMaterialByKeyID(t *testing.T, jwtSigningMaterialRepo repo
 func _testGetValidJWTSigningMaterialByAlgorithmType(t *testing.T, jwtSigningMaterialRepo repo.JWTSigningMaterialRepo) {
 	type testCase struct {
 		name                       string
-		algorithmType              models.JSMAlgorithmType
+		algorithmType              jwt.JWTSingingAlgorithmFamily
 		expectedJWTSigningMaterial []models.JWTSigningMaterial
 		expectedErrorCode          string
 	}
 	testCases := []testCase{
 		{
 			name:          "GIVEN given a valid algorithm type for a jwt signing material EXPECT success",
-			algorithmType: "HMAC",
+			algorithmType: jwt.HMAC,
 			expectedJWTSigningMaterial: []models.JWTSigningMaterial{
 				jwtSigningMaterial1,
 				jwtSigningMaterial2,

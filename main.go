@@ -9,6 +9,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/calvine/goauth/core/jwt"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/nullable"
 	"github.com/calvine/goauth/core/utilities"
@@ -195,7 +196,7 @@ func run() error {
 		JsmService:                 cachedJSMService,
 		StaticFS:                   &httpStaticFS,
 		TemplateFS:                 &templateFS,
-		TokenSigningAlgorithmTypes: []models.JSMAlgorithmType{models.ALGTYP_HMAC}, // TODO: implment other signers of other types
+		TokenSigningAlgorithmTypes: []jwt.JWTSingingAlgorithmFamily{jwt.HMAC}, // TODO: implment other signers of other types
 	}
 	httpServer, err := gahttp.NewServer(context.Background(), httpServerOptions)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/jwt"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/nullable"
 	coreservices "github.com/calvine/goauth/core/services"
@@ -166,14 +167,14 @@ func _testGetValidJWTSigningMaterialByAlgorithmType(t *testing.T, jsms coreservi
 	logger := zaptest.NewLogger(t)
 	type testCase struct {
 		name                       string
-		algorithmType              models.JSMAlgorithmType
+		algorithmType              jwt.JWTSingingAlgorithmFamily
 		expectedJwtSigningMaterial []models.JWTSigningMaterial
 		expectedErrorCode          string
 	}
 	testCases := []testCase{
 		{
 			name:          "GIVEN an algorithm type with two keys in the data store EXPECT the two results",
-			algorithmType: models.ALGTYP_HMAC,
+			algorithmType: jwt.HMAC,
 			expectedJwtSigningMaterial: []models.JWTSigningMaterial{
 				jwtSigningMaterial1,
 				jwtSigningMaterial2,

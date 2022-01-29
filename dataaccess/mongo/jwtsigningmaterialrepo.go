@@ -7,6 +7,7 @@ import (
 
 	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/jwt"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
 	repomodels "github.com/calvine/goauth/dataaccess/mongo/internal/models"
@@ -64,7 +65,7 @@ func (jsm jwtSigningMaterialRepo) GetJWTSigningMaterialByKeyID(ctx context.Conte
 	return jwtSigningMaterial, nil
 }
 
-func (jsm jwtSigningMaterialRepo) GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, algorithmType models.JSMAlgorithmType) ([]models.JWTSigningMaterial, errors.RichError) {
+func (jsm jwtSigningMaterialRepo) GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, algorithmType jwt.JWTSingingAlgorithmFamily) ([]models.JWTSigningMaterial, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, jsm.GetName(), "GetValidJWTSigningMaterialByAlgorithmType", jsm.GetType())
 	defer span.End()
 	repoResult := make([]repomodels.RepoJWTSigningMaterial, 0, 5)
