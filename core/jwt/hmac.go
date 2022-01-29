@@ -41,3 +41,7 @@ func (hso HMACSigningOptions) Sign(alg JWTSigningAlgorithm, encodedHeaderAndBody
 	encodedSignature := Base64UrlEncode(signatureBytes)
 	return encodedSignature, nil
 }
+
+func (hso HMACSigningOptions) GetAlgorithmFamily() JWTSingingAlgorithmFamily {
+	return HMAC
+}

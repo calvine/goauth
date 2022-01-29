@@ -33,7 +33,7 @@ type jwtValidator struct {
 	subjectRequired   bool
 	jtiRequired       bool
 	hmacOptions       HMACSigningOptions
-	// TODO: add public private key stuff for additional validation
+	// TODO: add public private key stuff for additional validation types
 }
 
 type JWTValidatorOptions struct {
@@ -52,7 +52,7 @@ type JWTValidatorOptions struct {
 	SubjectRequired   bool
 	JTIRequired       bool
 	HMACOptions       HMACSigningOptions
-	// TODO: add public private key stuff for additional validation
+	// TODO: add public private key stuff for additional validation types
 }
 
 // NewJWTValidator creates a JWT validator. I imagine these will end up getting cached if multiple are needed.

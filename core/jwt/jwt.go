@@ -40,6 +40,8 @@ type StandardClaims struct {
 type Signer interface {
 	// Sign produces a signature for a given encoded header and body with the given algorithm
 	Sign(alg JWTSigningAlgorithm, encodedHeaderAndBody string) (string, errors.RichError)
+	// GetAlgorithmFamily returns the algorithm family the signer belongs to
+	GetAlgorithmFamily() JWTSingingAlgorithmFamily
 }
 
 type JWT struct {
@@ -49,8 +51,11 @@ type JWT struct {
 }
 
 type JWTSigningAlgorithm string
+type JWTSingingAlgorithmFamily string
 
 const (
+	HMAC JWTSingingAlgorithmFamily = "HMAC"
+
 	HS256 JWTSigningAlgorithm = "HS256"
 	HS384 JWTSigningAlgorithm = "HS384"
 	HS512 JWTSigningAlgorithm = "HS512"
