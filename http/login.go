@@ -220,7 +220,7 @@ type setLoginStateOptions struct {
 func (server) setLoginState(ctx context.Context, logger *zap.Logger, rw http.ResponseWriter, options setLoginStateOptions) errors.RichError {
 	span := trace.SpanFromContext(ctx)
 	defer span.End()
-	jwToken := jwt.NewUnsignedJWT(jwt.Alg_HS256, "goauth", []string{}, options.user.ID, options.duration, time.Now())
+	jwToken := jwt.NewUnsignedJWT(jwt.HS256, "goauth", []string{}, options.user.ID, options.duration, time.Now())
 	span.AddEvent("unsigned jwt created")
 	// hmacOptions, err := jwt.NewHMACSigningOptions("test")
 	// if err != nil {

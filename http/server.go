@@ -111,8 +111,13 @@ func NewServer(ctx context.Context, options HTTPServerOptions) (server, errors.R
 			options.Logger.Error("failed to create jwt signer from jwt signing material", zap.Any("error", err))
 			return s, err
 		}
-		// TODO: how do i select the right kind of key for signing? for now random select a key for signing?
-		// also any key id not present will be pulled at the time it is used, and if its not in the repo we throw an error...
+		/* TODO: how do i select the right kind of key for signing? for now random select a key for signing?
+		also any key id not present will be pulled at the time it is used, and if its not in the repo we throw an error...
+
+		Change of plans. I was way overthinking this. later on we can have a list of alogrithms used and that will be fine...
+		key lookups for verifying a token should be done via the jwt signing material service. I am going to leave all of this commentary here for now
+		but eventually I will remove it once its all implemented completely.
+		*/
 		s.tokenSigners[jsm.KeyID] = signer
 	}
 	return s, nil

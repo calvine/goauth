@@ -10,7 +10,7 @@ func TestCalculateHMACSignature(t *testing.T) {
 	type testCase struct {
 		name                 string
 		hmacOptions          HMACSigningOptions
-		algorithm            string
+		algorithm            JWTSigningAlgorithm
 		encodedHeaderAndBody string
 		expectedSignature    string
 		expectedErrorCode    string

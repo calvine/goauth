@@ -22,8 +22,8 @@ func TestDecodeAndValidateJWT(t *testing.T) {
 			name:       "GIVEN EXPECT ",
 			encodedJWT: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnb2F1dGgiLCJzdWIiOiIxMjM0NTY3ODkwIiwiYXVkIjpbImdvYXV0aCJdLCJuYmYiOjE1MTYyMzkwMjIsImlhdCI6MTUxNjIzOTAyMiwianRpIjoiNzg5NDU2KzEyMzAzMjEzNjU0OTg0OTY4NTQxKzQ0NTU1MiJ9.s-W_aZQE046I1SdfNaW4h5Yh1JgDXPcHQYWrSw0mfF0",
 			validatorOptions: JWTValidatorOptions{
-				AllowedAlgorithms: []string{
-					Alg_HS256,
+				AllowedAlgorithms: []JWTSigningAlgorithm{
+					HS256,
 				},
 				AllowAnyAudience: true,
 				ExpectedIssuer:   "goauth",
@@ -32,7 +32,7 @@ func TestDecodeAndValidateJWT(t *testing.T) {
 				},
 			},
 			expectedJWTHeader: Header{
-				Algorithm: Alg_HS256,
+				Algorithm: HS256,
 				TokenType: Typ_JWT,
 			},
 			expectedJWTStandardClaims: StandardClaims{
@@ -48,8 +48,8 @@ func TestDecodeAndValidateJWT(t *testing.T) {
 			name:       "GIVEN EXPECT ",
 			encodedJWT: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnb2F1dGgjLCJzdWIiOiIxMjM0NTY3ODkwIiwiYXVkIjpbImdvYXV0aCJdLCJuYmYiOjE1MTYyMzkwMjIsImlhdCI6MTUxNjIzOTAyMiwianRpIjoiNzg5NDU2KzEyMzAzMjEzNjU0OTg0OTY4NTQxKzQ0NTU1MiJ9.s-W_aZQE046I1SdfNaW4h5Yh1JgDXPcHQYWrSw0mfF0",
 			validatorOptions: JWTValidatorOptions{
-				AllowedAlgorithms: []string{
-					Alg_HS256,
+				AllowedAlgorithms: []JWTSigningAlgorithm{
+					HS256,
 				},
 				AllowAnyAudience: true,
 				ExpectedIssuer:   "goauth",
@@ -63,8 +63,8 @@ func TestDecodeAndValidateJWT(t *testing.T) {
 			name:       "GIVEN an expired token EXPECT error code jwt standard claims invalid ",
 			encodedJWT: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnb2F1dGgiLCJzdWIiOiIxMjM0NTY3ODkwIiwiYXVkIjpbImdvYXV0aCJdLCJleHAiOjE1MTYyMzkwMjIsIm5iZiI6MTUxNjIzOTAyMiwiaWF0IjoxNTE2MjM5MDIyLCJqdGkiOiI3ODk0NTYrMTIzMDMyMTM2NTQ5ODQ5Njg1NDErNDQ1NTUyIn0.L76z0VDzq2744_Da9T4YbfZ5rYQvC_bSevCq5rhpS3k",
 			validatorOptions: JWTValidatorOptions{
-				AllowedAlgorithms: []string{
-					Alg_HS256,
+				AllowedAlgorithms: []JWTSigningAlgorithm{
+					HS256,
 				},
 				AllowAnyAudience: true,
 				ExpectedIssuer:   "goauth",
@@ -112,7 +112,7 @@ func TestSignAndEncode(t *testing.T) {
 			name: "GIVEN a valid jwt with the HS256 algorithm EXPECT a properly encoded jwt with an HS256 signature",
 			jwt: JWT{
 				Header: Header{
-					Algorithm: Alg_HS256,
+					Algorithm: HS256,
 					TokenType: Typ_JWT,
 				},
 				Claims: StandardClaims{
@@ -159,7 +159,7 @@ func TestEncodeSignedJWT(t *testing.T) {
 			name: "GIVEN a valid jwt that is already signed EXPECT a properly encoded jwt",
 			jwt: JWT{
 				Header: Header{
-					Algorithm: Alg_HS256,
+					Algorithm: HS256,
 					TokenType: Typ_JWT,
 				},
 				Claims: StandardClaims{
@@ -179,7 +179,7 @@ func TestEncodeSignedJWT(t *testing.T) {
 			name: "GIVEN a jwt witha missing signature EXPECT error code jwt signature missing",
 			jwt: JWT{
 				Header: Header{
-					Algorithm: Alg_HS256,
+					Algorithm: HS256,
 					TokenType: Typ_JWT,
 				},
 				Claims: StandardClaims{
@@ -262,7 +262,7 @@ func TestDecodeHeader(t *testing.T) {
 			name:          "GIVEN a valid encoded jwt header EXPECT success",
 			encodedHeader: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
 			expectedHeader: Header{
-				Algorithm: Alg_HS256,
+				Algorithm: HS256,
 				TokenType: Typ_JWT,
 			},
 		},
@@ -270,7 +270,7 @@ func TestDecodeHeader(t *testing.T) {
 			name:          "GIVEN an encoded jwt header with invalid json EXPECT error code jwt malformed",
 			encodedHeader: "eyJhbGdiOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
 			expectedHeader: Header{
-				Algorithm: Alg_HS256,
+				Algorithm: HS256,
 				TokenType: Typ_JWT,
 			},
 			expectedErrorCode: coreerrors.ErrCodeJWTMalformed,
@@ -279,7 +279,7 @@ func TestDecodeHeader(t *testing.T) {
 			name:          "GIVEN an invalid base 64 encoded string EXPECT error code jwt malformed",
 			encodedHeader: "eyJhbGdiOiJIUzI1NiIsQQQR5cCI6IkpXVCJ9",
 			expectedHeader: Header{
-				Algorithm: Alg_HS256,
+				Algorithm: HS256,
 				TokenType: Typ_JWT,
 			},
 			expectedErrorCode: coreerrors.ErrCodeJWTMalformed,
@@ -312,7 +312,7 @@ func TestHeaderEncode(t *testing.T) {
 		{
 			name: "GIVEN a valid header EXPECT a properly encoded header",
 			header: Header{
-				Algorithm: Alg_HS256,
+				Algorithm: HS256,
 				TokenType: Typ_JWT,
 			},
 			expectedEncodedHeader: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",

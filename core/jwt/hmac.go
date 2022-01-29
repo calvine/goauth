@@ -22,18 +22,18 @@ func NewHMACSigningOptions(s string) (HMACSigningOptions, errors.RichError) {
 	}, nil
 }
 
-func (hso HMACSigningOptions) Sign(alg string, encodedHeaderAndBody string) (string, errors.RichError) {
+func (hso HMACSigningOptions) Sign(alg JWTSigningAlgorithm, encodedHeaderAndBody string) (string, errors.RichError) {
 	// hmac := hmac.New(hashFunc, []byte(secret))
 	var hashFunc HashFunc
 	switch alg {
-	case Alg_HS256:
+	case HS256:
 		hashFunc = sha256.New
-	case Alg_HS384:
+	case HS384:
 		hashFunc = sha512.New384
-	case Alg_HS512:
+	case HS512:
 		hashFunc = sha512.New
 	default:
-		return "", coreerrors.NewJWTAlgorithmNotAllowedError(alg, true)
+		return "", coreerrors.NewJWTAlgorithmNotAllowedError(string(alg), true)
 	}
 	hmac := hmac.New(hashFunc, []byte(hso.Secret))
 	hmac.Write([]byte(encodedHeaderAndBody))

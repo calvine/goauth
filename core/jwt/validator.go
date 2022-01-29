@@ -11,15 +11,15 @@ import (
 
 type JWTValidator interface {
 	GetID() string
-	GetSignerFromAlg(alg string) (Signer, errors.RichError)
+	GetSignerFromAlg(alg JWTSigningAlgorithm) (Signer, errors.RichError)
 	ValidateHeader(header Header) ([]errors.RichError, bool)
 	ValidateClaims(claims StandardClaims) ([]errors.RichError, bool)
-	ValidateSignature(algorithm string, encodedHeaderAndBody string, signature string) (bool, errors.RichError)
+	ValidateSignature(algorithm JWTSigningAlgorithm, encodedHeaderAndBody string, signature string) (bool, errors.RichError)
 }
 
 type jwtValidator struct {
 	id                string
-	allowedAlgorithms map[string]bool // These are maps to avoid having to loop to find matching items\
+	allowedAlgorithms map[JWTSigningAlgorithm]bool // These are maps to avoid having to loop to find matching items\
 	keyIDRequired     bool
 	issuerRequired    bool
 	allowAnyIssuer    bool
@@ -38,7 +38,7 @@ type jwtValidator struct {
 
 type JWTValidatorOptions struct {
 	ID                string
-	AllowedAlgorithms []string
+	AllowedAlgorithms []JWTSigningAlgorithm
 	KeyIDRequired     bool
 	IssuerRequired    bool
 	AllowAnyIssuer    bool
@@ -80,12 +80,12 @@ func NewJWTValidator(validatorOptions JWTValidatorOptions) (JWTValidator, errors
 		// You have to specify allowed algorithms
 		return validator, coreerrors.NewJWTValidatorNoAlgorithmSpecifiedError(true)
 	}
-	validator.allowedAlgorithms = make(map[string]bool)
+	validator.allowedAlgorithms = make(map[JWTSigningAlgorithm]bool)
 
 	hasMACSecret := len(validator.hmacOptions.Secret) > 0
 
 	for _, a := range validatorOptions.AllowedAlgorithms {
-		if !hasMACSecret && strings.HasPrefix(a, "HS") {
+		if !hasMACSecret && strings.HasPrefix(string(a), "HS") {
 			return validator, coreerrors.NewJWTValidatorNoHMACSecretProvidedError(true)
 		}
 		// TODO: have other validation based on the algorithm
@@ -111,11 +111,12 @@ func NewJWTValidator(validatorOptions JWTValidatorOptions) (JWTValidator, errors
 	return validator, nil
 }
 
-func (v jwtValidator) GetSignerFromAlg(alg string) (Signer, errors.RichError) {
-	if strings.HasPrefix(alg, "HS") {
+func (v jwtValidator) GetSignerFromAlg(alg JWTSigningAlgorithm) (Signer, errors.RichError) {
+	if strings.HasPrefix(string(alg), "HS") {
 		return v.hmacOptions, nil
 	}
-	return nil, coreerrors.NewJWTAlgorithmNotImplementedError(alg, true)
+	// TODO: as other algorithms are added be sure to add here as well
+	return nil, coreerrors.NewJWTAlgorithmNotImplementedError(string(alg), true)
 }
 
 func (v jwtValidator) GetID() string {
@@ -127,7 +128,7 @@ func (v jwtValidator) ValidateHeader(header Header) ([]errors.RichError, bool) {
 
 	_, ok := v.allowedAlgorithms[header.Algorithm]
 	if !ok {
-		errs = append(errs, coreerrors.NewJWTAlgorithmNotAllowedError(header.Algorithm, true))
+		errs = append(errs, coreerrors.NewJWTAlgorithmNotAllowedError(string(header.Algorithm), true))
 	}
 
 	err := validateKeyID(header.KeyID, v.keyIDRequired)
@@ -176,7 +177,7 @@ func (v jwtValidator) ValidateClaims(claims StandardClaims) ([]errors.RichError,
 	return errs, len(errs) == 0
 }
 
-func (v jwtValidator) ValidateSignature(alg string, encodedHeaderAndBody string, signature string) (bool, errors.RichError) {
+func (v jwtValidator) ValidateSignature(alg JWTSigningAlgorithm, encodedHeaderAndBody string, signature string) (bool, errors.RichError) {
 	signer, err := v.GetSignerFromAlg(alg)
 	if err != nil {
 		return false, err

@@ -20,10 +20,10 @@ import (
 type HashFunc func() hash.Hash
 
 type Header struct {
-	Algorithm   string `json:"alg"`           // https://datatracker.ietf.org/doc/html/rfc7518#section-3.1
-	TokenType   string `json:"typ"`           // TODO: use this... https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.9
-	ContentType string `json:"cty,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-5.2
-	KeyID       string `json:"kid,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.4`
+	Algorithm   JWTSigningAlgorithm `json:"alg"`           // https://datatracker.ietf.org/doc/html/rfc7518#section-3.1
+	TokenType   string              `json:"typ"`           // TODO: use this... https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.9
+	ContentType string              `json:"cty,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7519#section-5.2
+	KeyID       string              `json:"kid,omitempty"` // https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.4`
 }
 
 type StandardClaims struct {
@@ -39,7 +39,7 @@ type StandardClaims struct {
 
 type Signer interface {
 	// Sign produces a signature for a given encoded header and body with the given algorithm
-	Sign(alg string, encodedHeaderAndBody string) (string, errors.RichError)
+	Sign(alg JWTSigningAlgorithm, encodedHeaderAndBody string) (string, errors.RichError)
 }
 
 type JWT struct {
@@ -48,18 +48,20 @@ type JWT struct {
 	Signature string
 }
 
+type JWTSigningAlgorithm string
+
 const (
-	Alg_HS256 = "HS256"
-	Alg_HS384 = "HS384"
-	Alg_HS512 = "HS512"
+	HS256 JWTSigningAlgorithm = "HS256"
+	HS384 JWTSigningAlgorithm = "HS384"
+	HS512 JWTSigningAlgorithm = "HS512"
 	// TODO: implement RS, ES and PS based algorithms
 
-	Alg_NONE = "none" // This should never ever ever ever be used!
+	NONE JWTSigningAlgorithm = "none" // This should never ever ever ever be used!
 
 	Typ_JWT = "JWT"
 )
 
-func NewUnsignedJWT(alg string, iss string, aud []string, sub string, duration time.Duration, notBefore time.Time) JWT {
+func NewUnsignedJWT(alg JWTSigningAlgorithm, iss string, aud []string, sub string, duration time.Duration, notBefore time.Time) JWT {
 	header := Header{
 		Algorithm: alg,
 		TokenType: Typ_JWT,
