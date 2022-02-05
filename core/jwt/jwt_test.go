@@ -19,12 +19,9 @@ func TestDecodeAndValidateJWT(t *testing.T) {
 	}
 	testCases := []testCase{
 		{
-			name:       "GIVEN EXPECT ",
+			name:       "GIVEN valid jwt validation options EXPECT success",
 			encodedJWT: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnb2F1dGgiLCJzdWIiOiIxMjM0NTY3ODkwIiwiYXVkIjpbImdvYXV0aCJdLCJuYmYiOjE1MTYyMzkwMjIsImlhdCI6MTUxNjIzOTAyMiwianRpIjoiNzg5NDU2KzEyMzAzMjEzNjU0OTg0OTY4NTQxKzQ0NTU1MiJ9.s-W_aZQE046I1SdfNaW4h5Yh1JgDXPcHQYWrSw0mfF0",
 			validatorOptions: JWTValidatorOptions{
-				AllowedAlgorithms: []JWTSigningAlgorithm{
-					HS256,
-				},
 				AllowAnyAudience: true,
 				ExpectedIssuer:   "goauth",
 				HMACOptions: HMACSigningOptions{
@@ -45,12 +42,9 @@ func TestDecodeAndValidateJWT(t *testing.T) {
 			},
 		},
 		{
-			name:       "GIVEN EXPECT ",
+			name:       "GIVEN a jwt with an invalid signature EXPECT error code jwt signature is invalid",
 			encodedJWT: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnb2F1dGgjLCJzdWIiOiIxMjM0NTY3ODkwIiwiYXVkIjpbImdvYXV0aCJdLCJuYmYiOjE1MTYyMzkwMjIsImlhdCI6MTUxNjIzOTAyMiwianRpIjoiNzg5NDU2KzEyMzAzMjEzNjU0OTg0OTY4NTQxKzQ0NTU1MiJ9.s-W_aZQE046I1SdfNaW4h5Yh1JgDXPcHQYWrSw0mfF0",
 			validatorOptions: JWTValidatorOptions{
-				AllowedAlgorithms: []JWTSigningAlgorithm{
-					HS256,
-				},
 				AllowAnyAudience: true,
 				ExpectedIssuer:   "goauth",
 				HMACOptions: HMACSigningOptions{
@@ -63,9 +57,6 @@ func TestDecodeAndValidateJWT(t *testing.T) {
 			name:       "GIVEN an expired token EXPECT error code jwt standard claims invalid ",
 			encodedJWT: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnb2F1dGgiLCJzdWIiOiIxMjM0NTY3ODkwIiwiYXVkIjpbImdvYXV0aCJdLCJleHAiOjE1MTYyMzkwMjIsIm5iZiI6MTUxNjIzOTAyMiwiaWF0IjoxNTE2MjM5MDIyLCJqdGkiOiI3ODk0NTYrMTIzMDMyMTM2NTQ5ODQ5Njg1NDErNDQ1NTUyIn0.L76z0VDzq2744_Da9T4YbfZ5rYQvC_bSevCq5rhpS3k",
 			validatorOptions: JWTValidatorOptions{
-				AllowedAlgorithms: []JWTSigningAlgorithm{
-					HS256,
-				},
 				AllowAnyAudience: true,
 				ExpectedIssuer:   "goauth",
 				HMACOptions: HMACSigningOptions{

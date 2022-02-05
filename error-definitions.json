@@ -343,6 +343,14 @@
         ]
     },
     {
+        "code": "JWTValidatorMissingSigner",
+        "message": "jwt validator is missing a signer for signature validation",
+        "includeMap": false,
+        "tags": [
+            "jwt_signer"
+        ]
+    },
+    {
         "code": "JWTMalformed",
         "message": "encoded jwt is malformed",
         "includeMap": false,
@@ -579,6 +587,16 @@
     {
         "code": "JWTValidatorKeyIDMissing",
         "message": "jwt validator required jwy key id but no jwt key id was provided",
+        "includeMap": false,
+        "tags": [
+            "security",
+            "jwt"
+        ],
+        "metaData": []
+    },
+    {
+        "code": "JWTKeyIDMissing",
+        "message": "jwt key id is missing",
         "includeMap": false,
         "tags": [
             "security",

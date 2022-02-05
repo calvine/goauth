@@ -44,18 +44,26 @@ const (
 )
 
 type server struct {
-	logger                     *zap.Logger
-	loginService               services.LoginService
-	userService                services.UserService
-	emailService               services.EmailService
-	tokenService               services.TokenService
-	appService                 services.AppService
-	jsmService                 services.JWTSigningMaterialService
-	staticFS                   *http.FileSystem
-	templateFS                 *embed.FS
-	Mux                        *chi.Mux
-	tokenSigningAlgorithmTypes []jwt.JWTSingingAlgorithmFamily
-	tokenSigners               map[string]jwt.Signer
+	logger       *zap.Logger
+	loginService services.LoginService
+	userService  services.UserService
+	emailService services.EmailService
+	tokenService services.TokenService
+	appService   services.AppService
+	jsmService   services.JWTSigningMaterialService
+	staticFS     *http.FileSystem
+	templateFS   *embed.FS
+	Mux          *chi.Mux
+	// defaultJWTValidatorOptions is the default options to use for jwt validation
+	// these should not include signing info and only structural parts like the expirations and if fields are required or not.
+	// the signing options will be injected when they are created
+	defaultJWTValidatorOptions jwt.JWTValidatorOptions
+	// allowedTokenSigningAlgorithmTypes tells us the jwt signing material to pull from the data store for token signing
+	allowedTokenSigningAlgorithmTypes []jwt.JWTSingingAlgorithmFamily
+	// tokenSigners is a cache of signers so that we can quickly sign jwts
+	tokenSigners map[string]jwt.Signer
+	// validatorCache is a cache token validators so that we can quickly access them as needed
+	validatorCache map[string]jwt.JWTValidator
 }
 
 type HTTPServerOptions struct {
@@ -75,17 +83,17 @@ type HTTPServerOptions struct {
 func NewServer(ctx context.Context, options HTTPServerOptions) (server, errors.RichError) {
 	mux := chi.NewMux()
 	s := server{
-		logger:                     options.Logger,
-		loginService:               options.LoginService,
-		userService:                options.UserService,
-		emailService:               options.EmailService,
-		tokenService:               options.TokenService,
-		appService:                 options.AppService,
-		jsmService:                 options.JsmService,
-		staticFS:                   options.StaticFS,
-		templateFS:                 options.TemplateFS,
-		Mux:                        mux,
-		tokenSigningAlgorithmTypes: options.TokenSigningAlgorithmTypes,
+		logger:                            options.Logger,
+		loginService:                      options.LoginService,
+		userService:                       options.UserService,
+		emailService:                      options.EmailService,
+		tokenService:                      options.TokenService,
+		appService:                        options.AppService,
+		jsmService:                        options.JsmService,
+		staticFS:                          options.StaticFS,
+		templateFS:                        options.TemplateFS,
+		Mux:                               mux,
+		allowedTokenSigningAlgorithmTypes: options.TokenSigningAlgorithmTypes,
 	}
 	jwtSigningMaterial := make([]models.JWTSigningMaterial, 0, 3)
 	for _, alg := range options.TokenSigningAlgorithmTypes {
@@ -104,6 +112,7 @@ func NewServer(ctx context.Context, options HTTPServerOptions) (server, errors.R
 		return s, err
 	}
 	s.tokenSigners = make(map[string]jwt.Signer)
+	s.validatorCache = make(map[string]jwt.JWTValidator)
 	for _, jsm := range jwtSigningMaterial {
 		options.Logger.Info("building signer for jwt signig material", zap.String("jsmID", jsm.ID), zap.String("jsmKeyID", jsm.KeyID))
 		signer, err := jsm.ToSigner()

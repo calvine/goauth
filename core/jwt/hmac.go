@@ -45,3 +45,7 @@ func (hso HMACSigningOptions) Sign(alg JWTSigningAlgorithm, encodedHeaderAndBody
 func (hso HMACSigningOptions) GetAlgorithmFamily() JWTSingingAlgorithmFamily {
 	return HMAC
 }
+
+func (hso HMACSigningOptions) IsAlgorithmSupported(alg JWTSigningAlgorithm) bool {
+	return alg == HS256 || alg == HS384 || alg == HS512
+}

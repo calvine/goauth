@@ -42,6 +42,8 @@ type Signer interface {
 	Sign(alg JWTSigningAlgorithm, encodedHeaderAndBody string) (string, errors.RichError)
 	// GetAlgorithmFamily returns the algorithm family the signer belongs to
 	GetAlgorithmFamily() JWTSingingAlgorithmFamily
+	// IsAlgorithmSupported returns a boolean value indicating if the algorithm provided is supported
+	IsAlgorithmSupported(alg JWTSigningAlgorithm) bool
 }
 
 type JWT struct {
@@ -50,7 +52,10 @@ type JWT struct {
 	Signature string
 }
 
+// JWTSigningAlgorithm are specific individual jwt signing algorithms
 type JWTSigningAlgorithm string
+
+// JWTSingingAlgorithmFamily defines a family of algorithms that contains multiple signing algorithms
 type JWTSingingAlgorithmFamily string
 
 const (
@@ -59,11 +64,16 @@ const (
 	HS256 JWTSigningAlgorithm = "HS256"
 	HS384 JWTSigningAlgorithm = "HS384"
 	HS512 JWTSigningAlgorithm = "HS512"
+
 	// TODO: implement RS, ES and PS based algorithms
 
 	NONE JWTSigningAlgorithm = "none" // This should never ever ever ever be used!
 
 	Typ_JWT = "JWT"
+)
+
+var (
+	HMACAlgorithms = []JWTSigningAlgorithm{HS256, HS384, HS512}
 )
 
 func NewUnsignedJWT(alg JWTSigningAlgorithm, iss string, aud []string, sub string, duration time.Duration, notBefore time.Time) JWT {

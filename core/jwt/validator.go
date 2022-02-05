@@ -1,8 +1,6 @@
 package jwt
 
 import (
-	"strings"
-
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/richerror/errors"
@@ -11,7 +9,6 @@ import (
 
 type JWTValidator interface {
 	GetID() string
-	GetSignerFromAlg(alg JWTSigningAlgorithm) (Signer, errors.RichError)
 	ValidateHeader(header Header) ([]errors.RichError, bool)
 	ValidateClaims(claims StandardClaims) ([]errors.RichError, bool)
 	ValidateSignature(algorithm JWTSigningAlgorithm, encodedHeaderAndBody string, signature string) (bool, errors.RichError)
@@ -19,7 +16,6 @@ type JWTValidator interface {
 
 type jwtValidator struct {
 	id                string
-	allowedAlgorithms map[JWTSigningAlgorithm]bool // These are maps to avoid having to loop to find matching items\
 	keyIDRequired     bool
 	issuerRequired    bool
 	allowAnyIssuer    bool
@@ -32,26 +28,24 @@ type jwtValidator struct {
 	notBeforeRequired bool
 	subjectRequired   bool
 	jtiRequired       bool
-	hmacOptions       HMACSigningOptions
-	// TODO: add public private key stuff for additional validation types
+	signer            Signer
 }
 
 type JWTValidatorOptions struct {
-	ID                string
-	AllowedAlgorithms []JWTSigningAlgorithm
-	KeyIDRequired     bool
-	IssuerRequired    bool
-	AllowAnyIssuer    bool
-	ExpectedIssuer    string
-	AudienceRequired  bool
-	AllowAnyAudience  bool
-	AllowedAudience   []string
-	ExpireRequired    bool
-	IssuedAtRequired  bool
-	NotBeforeRequired bool
-	SubjectRequired   bool
-	JTIRequired       bool
-	HMACOptions       HMACSigningOptions
+	ID                string             `json:"id"`
+	KeyIDRequired     bool               `json:"keyIDRequired"`
+	IssuerRequired    bool               `json:"issuerRequired"`
+	AllowAnyIssuer    bool               `json:"allowAnyIssuer"`
+	ExpectedIssuer    string             `json:"expectedIssuer"`
+	AudienceRequired  bool               `json:"audienceRequired"`
+	AllowAnyAudience  bool               `json:"allowAnyAudience"`
+	AllowedAudience   []string           `json:"allowedAudience"`
+	ExpireRequired    bool               `json:"expireRequired"`
+	IssuedAtRequired  bool               `json:"issuedAtRequired"`
+	NotBeforeRequired bool               `json:"notBeforeRequired"`
+	SubjectRequired   bool               `json:"subjectRequired"`
+	JTIRequired       bool               `json:"jtiRequired"`
+	HMACOptions       HMACSigningOptions `json:"hmacOptions"`
 	// TODO: add public private key stuff for additional validation types
 }
 
@@ -74,23 +68,37 @@ func NewJWTValidator(validatorOptions JWTValidatorOptions) (JWTValidator, errors
 		notBeforeRequired: validatorOptions.NotBeforeRequired,
 		subjectRequired:   validatorOptions.SubjectRequired,
 		jtiRequired:       validatorOptions.JTIRequired,
-		hmacOptions:       validatorOptions.HMACOptions,
 	}
-	if len(validatorOptions.AllowedAlgorithms) == 0 {
-		// You have to specify allowed algorithms
-		return validator, coreerrors.NewJWTValidatorNoAlgorithmSpecifiedError(true)
-	}
-	validator.allowedAlgorithms = make(map[JWTSigningAlgorithm]bool)
+	// if len(validatorOptions.AllowedAlgorithms) == 0 {
+	// 	// You have to specify allowed algorithms
+	// 	return validator, coreerrors.NewJWTValidatorNoAlgorithmSpecifiedError(true)
+	// }
+	// validator.allowedAlgorithms = make(map[JWTSigningAlgorithm]bool)
 
-	hasMACSecret := len(validator.hmacOptions.Secret) > 0
+	hasMACSecret := len(validatorOptions.HMACOptions.Secret) > 0
 
-	for _, a := range validatorOptions.AllowedAlgorithms {
-		if !hasMACSecret && strings.HasPrefix(string(a), "HS") {
-			return validator, coreerrors.NewJWTValidatorNoHMACSecretProvidedError(true)
-		}
-		// TODO: have other validation based on the algorithm
-		validator.allowedAlgorithms[a] = true
+	hasSigner := false
+
+	if hasMACSecret {
+		validator.signer = validatorOptions.HMACOptions
+		hasSigner = true
 	}
+
+	// TODO: add additional signer set up here when other signing algorithms are supported
+	// additionally if more than one signer is present we should return an error...
+
+	if !hasSigner {
+		return validator, coreerrors.NewJWTValidatorMissingSignerError(true)
+	}
+
+	// for _, a := range validatorOptions.AllowedAlgorithms {
+	// 	if !hasMACSecret && strings.HasPrefix(string(a), "HS") {
+	// 		return validator, coreerrors.NewJWTValidatorNoHMACSecretProvidedError(true)
+	// 	}
+	// 	// TODO: have other validation based on the algorithm
+	// 	validator.allowedAlgorithms[a] = true
+	// 	validator.signer = validatorOptions.HMACOptions
+	// }
 
 	if !validator.allowAnyAudience {
 		if validator.audienceRequired && len(validatorOptions.AllowedAudience) == 0 {
@@ -111,14 +119,6 @@ func NewJWTValidator(validatorOptions JWTValidatorOptions) (JWTValidator, errors
 	return validator, nil
 }
 
-func (v jwtValidator) GetSignerFromAlg(alg JWTSigningAlgorithm) (Signer, errors.RichError) {
-	if strings.HasPrefix(string(alg), "HS") {
-		return v.hmacOptions, nil
-	}
-	// TODO: as other algorithms are added be sure to add here as well
-	return nil, coreerrors.NewJWTAlgorithmNotImplementedError(string(alg), true)
-}
-
 func (v jwtValidator) GetID() string {
 	return v.id
 }
@@ -126,8 +126,8 @@ func (v jwtValidator) GetID() string {
 func (v jwtValidator) ValidateHeader(header Header) ([]errors.RichError, bool) {
 	errs := make([]errors.RichError, 0, 1)
 
-	_, ok := v.allowedAlgorithms[header.Algorithm]
-	if !ok {
+	algSupported := v.signer.IsAlgorithmSupported(header.Algorithm)
+	if !algSupported {
 		errs = append(errs, coreerrors.NewJWTAlgorithmNotAllowedError(string(header.Algorithm), true))
 	}
 
@@ -178,11 +178,10 @@ func (v jwtValidator) ValidateClaims(claims StandardClaims) ([]errors.RichError,
 }
 
 func (v jwtValidator) ValidateSignature(alg JWTSigningAlgorithm, encodedHeaderAndBody string, signature string) (bool, errors.RichError) {
-	signer, err := v.GetSignerFromAlg(alg)
-	if err != nil {
-		return false, err
+	if v.signer == nil {
+		return false, coreerrors.NewJWTValidatorMissingSignerError(true)
 	}
-	calculatedSignature, err := signer.Sign(alg, encodedHeaderAndBody)
+	calculatedSignature, err := v.signer.Sign(alg, encodedHeaderAndBody)
 	if err != nil {
 		return false, err
 	}

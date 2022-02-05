@@ -250,7 +250,9 @@ func (server) setLoginState(ctx context.Context, logger *zap.Logger, rw http.Res
 	return nil
 }
 
-func (server) getAuthStatus(ctx context.Context, logger *zap.Logger, r *http.Request) (core.AuthStatus, errors.RichError) {
+func (s server) getAuthStatus(ctx context.Context, logger *zap.Logger, r *http.Request) (core.AuthStatus, errors.RichError) {
+	logger.Debug("starting getAuthStatus")
+	defer logger.Debug("ending getAuthStatus")
 	span := trace.SpanFromContext(ctx)
 	defer span.End()
 	authCookie, err := r.Cookie(constants.LoginCookieName)
@@ -273,14 +275,38 @@ func (server) getAuthStatus(ctx context.Context, logger *zap.Logger, r *http.Req
 		errMsg := "failed to decode header from auth cookie jwt"
 		logger.Error(errMsg, zap.Reflect("err", rErr))
 		apptelemetry.SetSpanOriginalError(&span, rErr, errMsg)
+		return core.Invalid, rErr
 	}
 	// get / make jwt validator...
 	// if valid the we are authenticated
 	// handle expired?
 	if len(header.KeyID) == 0 {
-
+		err := coreerrors.NewJWTKeyIDMissingError(true)
+		errMsg := "jwt key id is required"
+		logger.Error(errMsg, zap.Reflect("err", err))
+		apptelemetry.SetSpanOriginalError(&span, err, errMsg)
+		return core.Invalid, err
 	} else {
-
+		validator, ok := s.validatorCache[header.KeyID]
+		if !ok {
+			// make the validator and cache it
+			jsm, err := s.jsmService.GetJWTSigningMaterialByKeyID(ctx, logger, header.KeyID, "")
+			if err != nil {
+				errMsg := "jwt signing material for key id not found"
+				logger.Error(errMsg, zap.Reflect("err", err))
+				apptelemetry.SetSpanError(&span, err, "")
+				return core.Invalid, err
+			}
+			signer, err := jsm.ToSigner()
+			if err != nil {
+				errMsg := "failed to create signer from jwt signing material"
+				logger.Error(errMsg, zap.Reflect("err", err))
+				apptelemetry.SetSpanOriginalError(&span, err, errMsg)
+				return core.Invalid, err
+			}
+			validator, err = jwt.NewJWTValidator(jwt.JWTValidatorOptions{})
+		}
+		valid, err := validator.ValidateSignature()
 	}
 	return core.Unauthenticated, nil
 }
