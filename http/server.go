@@ -41,7 +41,14 @@ const (
 	redirectPageTemplatePath          = "http/templates/redirect.html.tmpl"
 	registerPageName                  = "register"
 	registerPageTemplatePath          = "http/templates/register.html.tmpl"
+
+	cachedJWTValidatorDuration time.Duration = time.Minute * 5 // TODO: make configurable?
 )
+
+type cachedJWTValidator struct {
+	validator  jwt.JWTValidator
+	expiration time.Time
+}
 
 type server struct {
 	logger       *zap.Logger
@@ -63,7 +70,7 @@ type server struct {
 	// tokenSigners is a cache of signers so that we can quickly sign jwts
 	tokenSigners map[string]jwt.Signer
 	// validatorCache is a cache token validators so that we can quickly access them as needed
-	validatorCache map[string]jwt.JWTValidator
+	validatorCache map[string]cachedJWTValidator
 }
 
 type HTTPServerOptions struct {
@@ -112,7 +119,7 @@ func NewServer(ctx context.Context, options HTTPServerOptions) (server, errors.R
 		return s, err
 	}
 	s.tokenSigners = make(map[string]jwt.Signer)
-	s.validatorCache = make(map[string]jwt.JWTValidator)
+	s.validatorCache = make(map[string]cachedJWTValidator)
 	for _, jsm := range jwtSigningMaterial {
 		options.Logger.Info("building signer for jwt signig material", zap.String("jsmID", jsm.ID), zap.String("jsmKeyID", jsm.KeyID))
 		signer, err := jsm.ToSigner()

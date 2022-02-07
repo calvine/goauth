@@ -31,7 +31,14 @@ type jwtValidator struct {
 	signer            Signer
 }
 
+// JWTValidatorOptions is a container for options related to validating JWTs.
+// I am reflecting on the presents of things like HMACOptions in this struct.
+// A signer needs to be in the options for validating signatures, but if I use jwt.Signer then JSON serialization may not work.
+// TODO: research this and how JSON serialization of interfaces works...
 type JWTValidatorOptions struct {
+	// ID is a field to keep a unique identifier for the validator.
+	// My thoughts on this are this will typically be the key id and be used in a cache keyed off of that...
+	// But you can make this anything you want.
 	ID                string             `json:"id"`
 	KeyIDRequired     bool               `json:"keyIDRequired"`
 	IssuerRequired    bool               `json:"issuerRequired"`
@@ -47,6 +54,11 @@ type JWTValidatorOptions struct {
 	JTIRequired       bool               `json:"jtiRequired"`
 	HMACOptions       HMACSigningOptions `json:"hmacOptions"`
 	// TODO: add public private key stuff for additional validation types
+}
+
+func (jvo *JWTValidatorOptions) RemoveSignerOptions() {
+	jvo.HMACOptions = HMACSigningOptions{}
+	// TODO: as other signer options as added make sure to add the code to clear them here.
 }
 
 // NewJWTValidator creates a JWT validator. I imagine these will end up getting cached if multiple are needed.
