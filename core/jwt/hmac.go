@@ -10,7 +10,8 @@ import (
 )
 
 type HMACSigningOptions struct {
-	Secret string
+	Secret string                    `json:"secret"`
+	Type   JWTSigningAlgorithmFamily `json:"type"`
 }
 
 func NewHMACSigningOptions(s string) (HMACSigningOptions, errors.RichError) {
@@ -19,6 +20,7 @@ func NewHMACSigningOptions(s string) (HMACSigningOptions, errors.RichError) {
 	}
 	return HMACSigningOptions{
 		Secret: s,
+		Type:   HMAC,
 	}, nil
 }
 
@@ -42,7 +44,7 @@ func (hso HMACSigningOptions) Sign(alg JWTSigningAlgorithm, encodedHeaderAndBody
 	return encodedSignature, nil
 }
 
-func (hso HMACSigningOptions) GetAlgorithmFamily() JWTSingingAlgorithmFamily {
+func (hso HMACSigningOptions) GetAlgorithmFamily() JWTSigningAlgorithmFamily {
 	return HMAC
 }
 

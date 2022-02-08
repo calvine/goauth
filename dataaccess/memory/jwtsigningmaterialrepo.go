@@ -49,7 +49,7 @@ func (jsm jwtSigningMaterialRepo) GetJWTSigningMaterialByKeyID(ctx context.Conte
 	return material, nil
 }
 
-func (jsm jwtSigningMaterialRepo) GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, algorithmType jwt.JWTSingingAlgorithmFamily) ([]models.JWTSigningMaterial, errors.RichError) {
+func (jsm jwtSigningMaterialRepo) GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, algorithmType jwt.JWTSigningAlgorithmFamily) ([]models.JWTSigningMaterial, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, jsm.GetName(), "GetJWTSigningMaterialByKeyID", jsm.GetType())
 	defer span.End()
 	results := make([]models.JWTSigningMaterial, 0, 5)

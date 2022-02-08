@@ -213,7 +213,7 @@ func _testGetJWTSigningMaterialByKeyID(t *testing.T, jwtSigningMaterialRepo repo
 func _testGetValidJWTSigningMaterialByAlgorithmType(t *testing.T, jwtSigningMaterialRepo repo.JWTSigningMaterialRepo) {
 	type testCase struct {
 		name                       string
-		algorithmType              jwt.JWTSingingAlgorithmFamily
+		algorithmType              jwt.JWTSigningAlgorithmFamily
 		expectedJWTSigningMaterial []models.JWTSigningMaterial
 		expectedErrorCode          string
 	}

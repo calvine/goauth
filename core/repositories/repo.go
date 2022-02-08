@@ -121,7 +121,7 @@ type JWTSigningMaterialRepo interface {
 
 	// TODO: should this not return expired and disabled material or handle filtering in service? I think it should be handled here, but I am going to stew on it...
 	// TODO: change to GetValidJWTSigningMaterialByAlgorithmType which will exclude disabled and expired material...
-	GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, algorithmType jwt.JWTSingingAlgorithmFamily) ([]models.JWTSigningMaterial, errors.RichError)
+	GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, algorithmType jwt.JWTSigningAlgorithmFamily) ([]models.JWTSigningMaterial, errors.RichError)
 	AddJWTSigningMaterial(ctx context.Context, jwtSigningMaterial *models.JWTSigningMaterial, createdBy string) errors.RichError
 
 	Repo

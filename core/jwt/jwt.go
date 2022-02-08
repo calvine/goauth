@@ -41,10 +41,39 @@ type Signer interface {
 	// Sign produces a signature for a given encoded header and body with the given algorithm
 	Sign(alg JWTSigningAlgorithm, encodedHeaderAndBody string) (string, errors.RichError)
 	// GetAlgorithmFamily returns the algorithm family the signer belongs to
-	GetAlgorithmFamily() JWTSingingAlgorithmFamily
+	GetAlgorithmFamily() JWTSigningAlgorithmFamily
 	// IsAlgorithmSupported returns a boolean value indicating if the algorithm provided is supported
 	IsAlgorithmSupported(alg JWTSigningAlgorithm) bool
 }
+
+// func (s Signer) MarshalJSON() ([]byte, error) {
+// 	switch t := s.(type) {
+// 	case HMACSigningOptions:
+// 		return json.Marshal(t)
+// 	default:
+// 		return nil, coreerrors.NewJWTAlgorithmNotImplementedError(string(s.GetAlgorithmFamily()), true)
+// 	}
+// }
+
+// func (s *Signer) UnmarshalJSON(data []byte, v interface{}) error {
+// 	var tempMap map[string]*json.RawMessage
+// 	err := json.Unmarshal(data, &tempMap)
+// 	if err != nil {
+// 		// TODO: make a rich error for failing to unmarshal...
+// 		return err
+// 	}
+// 	t, ok := tempMap["type"]
+// 	if !ok {
+// 		// FIXME: feels weird not to use code gen, but this is a very specific error that I dont think will be used elsewhere. still go back and make this a generated error.
+// 		return errors.NewRichError("SignerUnmarshalMissingTypeField", "json data did not have a type, must not be a signer").WithStack(1)
+// 	}
+// 	switch t {
+// 	case HMAC:
+
+// 	default:
+// 		return coreerrors.NewJWTAlgorithmNotImplementedError(t, true)
+// 	}
+// }
 
 type JWT struct {
 	Header    Header
@@ -55,11 +84,11 @@ type JWT struct {
 // JWTSigningAlgorithm are specific individual jwt signing algorithms
 type JWTSigningAlgorithm string
 
-// JWTSingingAlgorithmFamily defines a family of algorithms that contains multiple signing algorithms
-type JWTSingingAlgorithmFamily string
+// JWTSigningAlgorithmFamily defines a family of algorithms that contains multiple signing algorithms
+type JWTSigningAlgorithmFamily string
 
 const (
-	HMAC JWTSingingAlgorithmFamily = "HMAC"
+	HMAC JWTSigningAlgorithmFamily = "HMAC"
 
 	HS256 JWTSigningAlgorithm = "HS256"
 	HS384 JWTSigningAlgorithm = "HS384"
@@ -184,6 +213,7 @@ func SplitEncodedJWT(encodedJWT string) ([]string, errors.RichError) {
 		err := coreerrors.NewJWTMalformedError(errMsg, encodedJWT, true)
 		return nil, err
 	}
+	// FIXME: I dont think this can be reached...
 	if len(parts[2]) == 0 {
 		// no signature provided
 		err := coreerrors.NewJWTSignatureMissingError(encodedJWT, true)

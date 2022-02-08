@@ -8,9 +8,11 @@ import (
 	"time"
 
 	coreerrors "github.com/calvine/goauth/core/errors"
+	corefactory "github.com/calvine/goauth/core/factory"
 	"github.com/calvine/goauth/core/jwt"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/services"
+	"github.com/calvine/goauth/factory"
 	mymiddleware "github.com/calvine/goauth/http/middleware"
 	"github.com/calvine/richerror/errors"
 	"github.com/go-chi/chi/v5"
@@ -45,32 +47,27 @@ const (
 	cachedJWTValidatorDuration time.Duration = time.Minute * 5 // TODO: make configurable?
 )
 
-type cachedJWTValidator struct {
-	validator  jwt.JWTValidator
-	expiration time.Time
-}
-
 type server struct {
-	logger       *zap.Logger
-	loginService services.LoginService
-	userService  services.UserService
-	emailService services.EmailService
-	tokenService services.TokenService
-	appService   services.AppService
-	jsmService   services.JWTSigningMaterialService
-	staticFS     *http.FileSystem
-	templateFS   *embed.FS
-	Mux          *chi.Mux
+	logger              *zap.Logger
+	loginService        services.LoginService
+	userService         services.UserService
+	emailService        services.EmailService
+	tokenService        services.TokenService
+	appService          services.AppService
+	jsmService          services.JWTSigningMaterialService
+	staticFS            *http.FileSystem
+	templateFS          *embed.FS
+	Mux                 *chi.Mux
+	jwtValidatorFactory corefactory.JWTValidatorFactory
 	// defaultJWTValidatorOptions is the default options to use for jwt validation
 	// these should not include signing info and only structural parts like the expirations and if fields are required or not.
 	// the signing options will be injected when they are created
-	defaultJWTValidatorOptions jwt.JWTValidatorOptions
 	// allowedTokenSigningAlgorithmTypes tells us the jwt signing material to pull from the data store for token signing
-	allowedTokenSigningAlgorithmTypes []jwt.JWTSingingAlgorithmFamily
+	allowedTokenSigningAlgorithmTypes []jwt.JWTSigningAlgorithmFamily
 	// tokenSigners is a cache of signers so that we can quickly sign jwts
-	tokenSigners map[string]jwt.Signer
+	tokenSigners []jwt.Signer
 	// validatorCache is a cache token validators so that we can quickly access them as needed
-	validatorCache map[string]cachedJWTValidator
+	validatorCache jwtValidatorCache
 }
 
 type HTTPServerOptions struct {
@@ -83,12 +80,16 @@ type HTTPServerOptions struct {
 	JsmService                 services.JWTSigningMaterialService
 	StaticFS                   *http.FileSystem
 	TemplateFS                 *embed.FS
-	TokenSigningAlgorithmTypes []jwt.JWTSingingAlgorithmFamily
+	TokenSigningAlgorithmTypes []jwt.JWTSigningAlgorithmFamily
+	DefaultJWTValidatorOptions jwt.JWTValidatorOptions
 	// Mux                        *chi.Mux
 }
 
+// TODO: implement a validate method for HTTPServerOptions
+
 func NewServer(ctx context.Context, options HTTPServerOptions) (server, errors.RichError) {
 	mux := chi.NewMux()
+	jvf := factory.NewJWTValidatorFactory(options.DefaultJWTValidatorOptions)
 	s := server{
 		logger:                            options.Logger,
 		loginService:                      options.LoginService,
@@ -101,6 +102,7 @@ func NewServer(ctx context.Context, options HTTPServerOptions) (server, errors.R
 		templateFS:                        options.TemplateFS,
 		Mux:                               mux,
 		allowedTokenSigningAlgorithmTypes: options.TokenSigningAlgorithmTypes,
+		jwtValidatorFactory:               jvf,
 	}
 	jwtSigningMaterial := make([]models.JWTSigningMaterial, 0, 3)
 	for _, alg := range options.TokenSigningAlgorithmTypes {
@@ -118,8 +120,8 @@ func NewServer(ctx context.Context, options HTTPServerOptions) (server, errors.R
 		err := coreerrors.NewNoJWTSigningMaterialFoundError(fields, true)
 		return s, err
 	}
-	s.tokenSigners = make(map[string]jwt.Signer)
-	s.validatorCache = make(map[string]cachedJWTValidator)
+	s.tokenSigners = make([]jwt.Signer, 0, 3)
+	s.validatorCache = make(jwtValidatorCache)
 	for _, jsm := range jwtSigningMaterial {
 		options.Logger.Info("building signer for jwt signig material", zap.String("jsmID", jsm.ID), zap.String("jsmKeyID", jsm.KeyID))
 		signer, err := jsm.ToSigner()
@@ -134,7 +136,7 @@ func NewServer(ctx context.Context, options HTTPServerOptions) (server, errors.R
 		key lookups for verifying a token should be done via the jwt signing material service. I am going to leave all of this commentary here for now
 		but eventually I will remove it once its all implemented completely.
 		*/
-		s.tokenSigners[jsm.KeyID] = signer
+		s.tokenSigners = append(s.tokenSigners, signer)
 	}
 	return s, nil
 }

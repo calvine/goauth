@@ -91,7 +91,7 @@ func (jsms jwtSigningMaterialService) GetJWTSigningMaterialByKeyID(ctx context.C
 	return jsm, nil
 }
 
-func (jsms jwtSigningMaterialService) GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, logger *zap.Logger, algorithmType jwt.JWTSingingAlgorithmFamily, initiator string) ([]models.JWTSigningMaterial, errors.RichError) {
+func (jsms jwtSigningMaterialService) GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, logger *zap.Logger, algorithmType jwt.JWTSigningAlgorithmFamily, initiator string) ([]models.JWTSigningMaterial, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, jsms.GetName(), "GetValidJWTSigningMaterialByAlgorithmType")
 	defer span.End()
 

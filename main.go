@@ -196,7 +196,7 @@ func run() error {
 		JsmService:                 cachedJSMService,
 		StaticFS:                   &httpStaticFS,
 		TemplateFS:                 &templateFS,
-		TokenSigningAlgorithmTypes: []jwt.JWTSingingAlgorithmFamily{jwt.HMAC}, // TODO: implment other signers of other types
+		TokenSigningAlgorithmTypes: []jwt.JWTSigningAlgorithmFamily{jwt.HMAC}, // TODO: implment other signers of other types
 	}
 	httpServer, err := gahttp.NewServer(context.Background(), httpServerOptions)
 	if err != nil {

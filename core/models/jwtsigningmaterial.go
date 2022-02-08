@@ -13,7 +13,7 @@ import (
 type JWTSigningMaterial struct {
 	ID            string                        `bson:"-"`
 	KeyID         string                        `bson:"keyId"`
-	AlgorithmType jwt.JWTSingingAlgorithmFamily `bson:"algorithmType"`
+	AlgorithmType jwt.JWTSigningAlgorithmFamily `bson:"algorithmType"`
 	HMACSecret    nullable.NullableString       `bson:"hmacSecret"`
 	Expiration    nullable.NullableTime         `bson:"expiration"`
 	Disabled      bool                          `bson:"disabled"`

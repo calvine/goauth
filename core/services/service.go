@@ -115,7 +115,7 @@ type JWTSigningMaterialService interface {
 	// GetJWTSigningMaterialByKeyID gets jwt signing material by its key id
 	GetJWTSigningMaterialByKeyID(ctx context.Context, logger *zap.Logger, keyID string, initiator string) (models.JWTSigningMaterial, errors.RichError)
 	// GetValidJWTSigningMaterialByAlgorithmType get all non disabled and non expired jwt signing material with the specified algorithm type
-	GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, logger *zap.Logger, algorithmType jwt.JWTSingingAlgorithmFamily, initiator string) ([]models.JWTSigningMaterial, errors.RichError)
+	GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, logger *zap.Logger, algorithmType jwt.JWTSigningAlgorithmFamily, initiator string) ([]models.JWTSigningMaterial, errors.RichError)
 
 	Service
 }
