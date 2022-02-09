@@ -1,6 +1,8 @@
 package jwt
 
 import (
+	"strings"
+
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/richerror/errors"
@@ -11,7 +13,9 @@ type JWTValidator interface {
 	GetID() string
 	ValidateHeader(header Header) ([]errors.RichError, bool)
 	ValidateClaims(claims StandardClaims) ([]errors.RichError, bool)
-	ValidateSignature(algorithm JWTSigningAlgorithm, encodedHeaderAndBody string, signature string) (bool, errors.RichError)
+	// ValidateSignature validates the signature of a JWT.
+	// FIXME: I feel like algorithm can be removed as a parameter potentially. The algorithm is in the header...
+	ValidateSignature(algorithm JWTSigningAlgorithm, encodedJWT string) (bool, errors.RichError)
 }
 
 type jwtValidator struct {
@@ -189,15 +193,19 @@ func (v jwtValidator) ValidateClaims(claims StandardClaims) ([]errors.RichError,
 	return errs, len(errs) == 0
 }
 
-func (v jwtValidator) ValidateSignature(alg JWTSigningAlgorithm, encodedHeaderAndBody string, signature string) (bool, errors.RichError) {
-	if v.signer == nil {
-		return false, coreerrors.NewJWTValidatorMissingSignerError(true)
-	}
-	calculatedSignature, err := v.signer.Sign(alg, encodedHeaderAndBody)
+func (v jwtValidator) ValidateSignature(alg JWTSigningAlgorithm, encodedJWT string) (bool, errors.RichError) {
+	parts, err := SplitEncodedJWT(encodedJWT)
 	if err != nil {
 		return false, err
 	}
-	return signature == calculatedSignature, nil
+	if v.signer == nil {
+		return false, coreerrors.NewJWTValidatorMissingSignerError(true)
+	}
+	calculatedSignature, err := v.signer.Sign(alg, strings.Join(parts[:2], "."))
+	if err != nil {
+		return false, err
+	}
+	return parts[2] == calculatedSignature, nil
 }
 
 func validateKeyID(keyID string, keyIDRequired bool) errors.RichError {

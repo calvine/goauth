@@ -37,9 +37,13 @@ type StandardClaims struct {
 	Scopes         utilities.CSString `json:"scopes,omitempty"`
 }
 
+// Signer is an interface for somthing that can sign a JWT.
+// TODO: we need somthing to verify signature. for HMAC stuff thats the same as signing, but for pub/pri key pair stuff it will be different...
 type Signer interface {
 	// Sign produces a signature for a given encoded header and body with the given algorithm
 	Sign(alg JWTSigningAlgorithm, encodedHeaderAndBody string) (string, errors.RichError)
+	// Verify TODO: implement this?
+	// Verify(token JWT) (string, errors.RichError)
 	// GetAlgorithmFamily returns the algorithm family the signer belongs to
 	GetAlgorithmFamily() JWTSigningAlgorithmFamily
 	// IsAlgorithmSupported returns a boolean value indicating if the algorithm provided is supported
@@ -127,41 +131,30 @@ func NewUnsignedJWT(alg JWTSigningAlgorithm, iss string, aud []string, sub strin
 	}
 }
 
-func DecodeAndValidateJWT(jwt string, validator JWTValidator) (JWT, errors.RichError) {
-	parts, err := SplitEncodedJWT(jwt)
+func DecodeAndValidateJWT(encodedJWT string, validator JWTValidator) (JWT, errors.RichError) {
+	token, err := Decode(encodedJWT)
 	if err != nil {
 		return JWT{}, err
 	}
-	header, err := DecodeHeader(parts[0])
-	if err != nil {
-		return JWT{}, err
-	}
+
 	// validate signature
-	valid, err := validator.ValidateSignature(header.Algorithm, strings.Join(parts[:2], "."), parts[2])
+	valid, err := validator.ValidateSignature(token.Header.Algorithm, encodedJWT)
 	if err != nil {
 		return JWT{}, err
 	}
 	if !valid {
-		return JWT{}, coreerrors.NewJWTSignatureInvalidError(jwt, nil, true)
-	}
-	claims, err := DecodeStandardClaims(parts[1])
-	if err != nil {
-		return JWT{}, err
+		return JWT{}, coreerrors.NewJWTSignatureInvalidError(encodedJWT, nil, true)
 	}
 	// validate claims
-	claimErrors, valid := validator.ValidateClaims(claims)
+	claimErrors, valid := validator.ValidateClaims(token.Claims)
 	if !valid {
-		rErr := coreerrors.NewJWTStandardClaimsInvalidError(jwt, true)
+		rErr := coreerrors.NewJWTStandardClaimsInvalidError(encodedJWT, true)
 		for _, e := range claimErrors {
 			rErr.AddError(e)
 		}
 		return JWT{}, rErr
 	}
-	return JWT{
-		Header:    header,
-		Claims:    claims,
-		Signature: parts[2],
-	}, nil
+	return token, nil
 
 }
 
@@ -230,6 +223,24 @@ func DecodeJWTPartRaw(part string) ([]byte, errors.RichError) {
 		return nil, err
 	}
 	return raw, nil
+}
+
+func Decode(encodedJWT string) (JWT, errors.RichError) {
+	var token JWT
+	parts, err := SplitEncodedJWT(encodedJWT)
+	if err != nil {
+		return JWT{}, err
+	}
+	token.Header, err = DecodeHeader(parts[0])
+	if err != nil {
+		return JWT{}, err
+	}
+	token.Claims, err = DecodeStandardClaims(parts[1])
+	if err != nil {
+		return JWT{}, err
+	}
+	token.Signature = parts[2]
+	return token, nil
 }
 
 func DecodeHeader(encodedHeader string) (Header, errors.RichError) {

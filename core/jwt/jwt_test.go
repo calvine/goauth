@@ -43,7 +43,7 @@ func TestDecodeAndValidateJWT(t *testing.T) {
 		},
 		{
 			name:       "GIVEN a jwt with an invalid signature EXPECT error code jwt signature is invalid",
-			encodedJWT: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnb2F1dGgjLCJzdWIiOiIxMjM0NTY3ODkwIiwiYXVkIjpbImdvYXV0aCJdLCJuYmYiOjE1MTYyMzkwMjIsImlhdCI6MTUxNjIzOTAyMiwianRpIjoiNzg5NDU2KzEyMzAzMjEzNjU0OTg0OTY4NTQxKzQ0NTU1MiJ9.s-W_aZQE046I1SdfNaW4h5Yh1JgDXPcHQYWrSw0mfF0",
+			encodedJWT: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnb2F1dGgiLCJzdWIiOiIxMjM0NTY3ODkwIiwiYXVkIjpbImdvYXV0aCJdLCJuYmYiOjE1MTYyMzkwMjIsImlhdCI6MTUxNjIzOTAyMiwianRpIjoiNzg5NDU2KzEyMzAzMjEzNjU0OTg0OTY4NTQxKzQ0NTU1MiJ9.s-W_aZQE046I1SdfNaW4h5Yh1JgDXPcHQYWrSw0mfF1",
 			validatorOptions: JWTValidatorOptions{
 				AllowAnyAudience: true,
 				ExpectedIssuer:   "goauth",
@@ -235,6 +235,57 @@ func TestSplitEncodedJWT(t *testing.T) {
 				partsLength := len(parts)
 				if partsLength != 3 {
 					t.Errorf("\texpected 3 items in parts array but got %d parts", partsLength)
+				}
+			}
+		})
+	}
+}
+
+func TestDecode(t *testing.T) {
+	type testCase struct {
+		name              string
+		encodedJWT        string
+		expectedErrorCode string
+		expectedToken     JWT
+	}
+	testCases := []testCase{
+		{
+			name:       "GIVEN a valid JWT EXPECT success",
+			encodedJWT: "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.VXfjNddn9mDxRYhiaCi8rYYtcuNe3KCfK3LvggWSaHwjZsag9ugMOuDPOeeBD3oNhK-cOkTvRLy_ERbgnEyxYA",
+			expectedToken: JWT{
+				Header: Header{
+					Algorithm: HS512,
+					TokenType: Typ_JWT,
+				},
+				Claims: StandardClaims{
+					Subject:  "1234567890",
+					IssuedAt: Time(time.Unix(1516239022, 0)),
+				},
+				Signature: "VXfjNddn9mDxRYhiaCi8rYYtcuNe3KCfK3LvggWSaHwjZsag9ugMOuDPOeeBD3oNhK-cOkTvRLy_ERbgnEyxYA",
+			},
+		},
+		{
+			name:              "GIVEN a malformed JWT EXPECT error code jwt malformed",
+			encodedJWT:        "123.456.789.123",
+			expectedErrorCode: coreerrors.ErrCodeJWTMalformed,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			token, err := Decode(tc.encodedJWT)
+			if err != nil {
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
+			} else {
+				if token.Header != tc.expectedToken.Header {
+					t.Errorf("\theader was not expected value: expected - %+v got - %+v", tc.expectedToken.Header, token.Header)
+				}
+				if token.Claims != tc.expectedToken.Claims {
+					t.Errorf("\tclaims were not expected value: expected - %+v got - %+v", tc.expectedToken.Claims, token.Claims)
+				}
+				if token.Signature != tc.expectedToken.Signature {
+					t.Errorf("\tsignature was not expected value: expected - %+v got - %+v", tc.expectedToken.Signature, token.Signature)
 				}
 			}
 		})

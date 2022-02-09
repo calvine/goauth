@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -213,6 +212,7 @@ func (s *server) handleMagicLoginGet() http.HandlerFunc {
 			redirectToErrorPage(rw, r, errorMsg, http.StatusInternalServerError)
 			return
 		}
+
 		err = s.setLoginState(ctx, logger, rw, setLoginStateOptions{user, nil, time.Minute * 15})
 		if err != nil {
 			errorMsg := "failed to set login state"
@@ -229,6 +229,10 @@ type setLoginStateOptions struct {
 	signer   jwt.Signer
 	duration time.Duration
 }
+
+// func (server) createJWT(sub string, validDuration time.Duration, signer jwt.Signer) (jwt.JWT, errors.RichError) {
+
+// }
 
 func (server) setLoginState(ctx context.Context, logger *zap.Logger, rw http.ResponseWriter, options setLoginStateOptions) errors.RichError {
 	span := trace.SpanFromContext(ctx)
@@ -263,7 +267,7 @@ func (server) setLoginState(ctx context.Context, logger *zap.Logger, rw http.Res
 	return nil
 }
 
-func (s server) getAuthStatus(ctx context.Context, logger *zap.Logger, r *http.Request) (core.AuthStatus, errors.RichError) {
+func (s server) getAuthStatus(ctx context.Context, logger *zap.Logger, r *http.Request) (jwt.JWT, core.AuthStatus, errors.RichError) {
 	logger.Debug("starting getAuthStatus")
 	defer logger.Debug("ending getAuthStatus")
 	span := trace.SpanFromContext(ctx)
@@ -274,83 +278,73 @@ func (s server) getAuthStatus(ctx context.Context, logger *zap.Logger, r *http.R
 		// according to the r.Cookie method the only possible error is ErrNoCookie,
 		// so any error here will be treated as if the cookie was just not there.
 		logger.Debug("request did not contain auth cookie")
-		return core.Unauthenticated, nil
+		return jwt.JWT{}, core.Unauthenticated, nil
 	}
-	jwtParts, rErr := jwt.SplitEncodedJWT(authCookie.Value)
-	if rErr != nil {
-		errMsg := "failed to split encoded jwt from auth cookie!"
-		logger.Error(errMsg, zap.Reflect("err", rErr), zap.String("cookie_value", authCookie.Value))
-		apptelemetry.SetSpanOriginalError(&span, rErr, errMsg)
-		return core.Invalid, rErr
-	}
-	header, rErr := jwt.DecodeHeader(jwtParts[0])
-	if rErr != nil {
-		errMsg := "failed to decode header from auth cookie jwt"
+	encodedToken := authCookie.Value
+	token, rErr := jwt.Decode(encodedToken)
+	if err != nil {
+		errMsg := "failed to decode jwt from auth cookie jwt"
 		logger.Error(errMsg, zap.Reflect("err", rErr))
 		apptelemetry.SetSpanOriginalError(&span, rErr, errMsg)
-		return core.Invalid, rErr
+		return jwt.JWT{}, core.Invalid, rErr
 	}
 	// get / make jwt validator...
 	// if valid the we are authenticated
 	// handle expired?
-	if len(header.KeyID) == 0 {
+	if len(token.Header.KeyID) == 0 {
 		err := coreerrors.NewJWTKeyIDMissingError(true)
 		errMsg := "jwt key id is required"
 		logger.Error(errMsg, zap.Reflect("err", err))
 		apptelemetry.SetSpanOriginalError(&span, err, errMsg)
-		return core.Invalid, err
+		return jwt.JWT{}, core.Invalid, err
 	} else {
 		var validator jwt.JWTValidator
 		var ok bool
-		validator, ok = s.validatorCache.GetCachedValidator(header.KeyID)
+		validator, ok = s.validatorCache.GetCachedValidator(token.Header.KeyID)
 		if !ok {
 			// make the validator and cache it
-			jsm, err := s.jsmService.GetJWTSigningMaterialByKeyID(ctx, logger, header.KeyID, "")
+			jsm, err := s.jsmService.GetJWTSigningMaterialByKeyID(ctx, logger, token.Header.KeyID, "")
 			if err != nil {
 				errMsg := "jwt signing material for key id not found"
 				logger.Error(errMsg, zap.Reflect("err", err))
 				apptelemetry.SetSpanError(&span, err, "")
-				return core.Invalid, err
+				return jwt.JWT{}, core.Invalid, err
 			}
 			signer, err := jsm.ToSigner()
 			if err != nil {
 				errMsg := "failed to create signer from jwt signing material"
 				logger.Error(errMsg, zap.Reflect("err", err))
 				apptelemetry.SetSpanOriginalError(&span, err, errMsg)
-				return core.Invalid, err
+				return jwt.JWT{}, core.Invalid, err
 			}
 			// validator, err = jwt.NewJWTValidator(jwt.JWTValidatorOptions{})
-			validator, err = s.jwtValidatorFactory.NewJWTValidatorWithSigner(header.KeyID, signer)
+			validator, err = s.jwtValidatorFactory.NewJWTValidatorWithSigner(token.Header.KeyID, signer)
 			if err != nil {
-				return core.Invalid, err
+				return jwt.JWT{}, core.Invalid, err
 			}
-			s.validatorCache.CacheValidator(header.KeyID, validator, cachedJWTValidatorDuration)
+			s.validatorCache.CacheValidator(token.Header.KeyID, validator, cachedJWTValidatorDuration)
 		}
-		valid, err := validator.ValidateSignature(header.Algorithm, strings.Join(jwtParts[:1], "."), jwtParts[2])
+		valid, err := validator.ValidateSignature(token.Header.Algorithm, encodedToken)
 		if err != nil {
-			return core.Invalid, err
+			return jwt.JWT{}, core.Invalid, err
 		}
 		if !valid {
-			return core.Invalid, nil
+			return jwt.JWT{}, core.Invalid, nil
 		}
-		claims, err := jwt.DecodeStandardClaims(jwtParts[1])
-		if err != nil {
-			return core.Invalid, err
-		}
-		errors, valid := validator.ValidateClaims(claims)
+		errors, valid := validator.ValidateClaims(token.Claims)
 		if !valid {
 			// TODO: finish this...
 			logger.Warn("jwt token is not valid")
 			for _, e := range errors {
 				switch e.GetErrorCode() {
 				case coreerrors.ErrCodeExpiredToken: // expiration is a special case and the auth status should reflect it.
-					return core.Expired, nil
+					return jwt.JWT{}, core.Expired, nil
 				}
 				logger.Error("validation of token failed with error(s)", zap.Reflect("err", e))
 			}
-			return core.Invalid, coreerrors.NewJWTStandardClaimsInvalidError(authCookie.Value, true)
+			return jwt.JWT{}, core.Invalid, coreerrors.NewJWTStandardClaimsInvalidError(encodedToken, true)
 		}
-		return core.Authenticated, nil
+		return token, core.Authenticated, nil
 	}
 }
 

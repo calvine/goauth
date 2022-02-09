@@ -848,13 +848,12 @@ func TestValidateClaims(t *testing.T) {
 
 func TestValidateSignature(t *testing.T) {
 	type testCase struct {
-		name                 string
-		jwtValidatorOptions  JWTValidatorOptions
-		alg                  JWTSigningAlgorithm
-		encodedHeaderAndBody string
-		signature            string
-		expectValid          bool
-		expectedErrorCode    string
+		name                string
+		jwtValidatorOptions JWTValidatorOptions
+		alg                 JWTSigningAlgorithm
+		encodedJWT          string
+		expectValid         bool
+		expectedErrorCode   string
 	}
 	testCases := []testCase{
 		{
@@ -864,10 +863,9 @@ func TestValidateSignature(t *testing.T) {
 					Secret: "test",
 				},
 			},
-			alg:                  HS256,
-			encodedHeaderAndBody: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",
-			signature:            "5mhBHqs5_DTLdINd9p5m7ZJ6XD0Xc55kIaCRY5r6HRA",
-			expectValid:          true,
+			alg:         HS256,
+			encodedJWT:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.5mhBHqs5_DTLdINd9p5m7ZJ6XD0Xc55kIaCRY5r6HRA",
+			expectValid: true,
 		},
 		{
 			name: "GIVEN a valid HS384 jwt signature for the given encodedHeadAndBody EXPECT the signature to be valid",
@@ -876,10 +874,9 @@ func TestValidateSignature(t *testing.T) {
 					Secret: "test",
 				},
 			},
-			alg:                  HS384,
-			encodedHeaderAndBody: "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",
-			signature:            "KOZqnJ-wEzC-JvqqIHGKBIGgbYHH2Fej71TpBctnIguBkf3EdSYiwuRMSz35uY8E",
-			expectValid:          true,
+			alg:         HS384,
+			encodedJWT:  "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.KOZqnJ-wEzC-JvqqIHGKBIGgbYHH2Fej71TpBctnIguBkf3EdSYiwuRMSz35uY8E",
+			expectValid: true,
 		},
 		{
 			name: "GIVEN a valid HS512 jwt signature for the given encodedHeadAndBody EXPECT the signature to be valid",
@@ -888,10 +885,9 @@ func TestValidateSignature(t *testing.T) {
 					Secret: "test",
 				},
 			},
-			alg:                  HS512,
-			encodedHeaderAndBody: "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",
-			signature:            "VXfjNdZn9mDxRYhiaCi8rYYtcuNe3KCfK3LvggWSaHwjZsag9ugMOuDPOeeBD3oNhK-cOkTvRLy_ERbgnEyxYA",
-			expectValid:          true,
+			alg:         HS512,
+			encodedJWT:  "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.VXfjNdZn9mDxRYhiaCi8rYYtcuNe3KCfK3LvggWSaHwjZsag9ugMOuDPOeeBD3oNhK-cOkTvRLy_ERbgnEyxYA",
+			expectValid: true,
 		},
 		{
 			name: "GIVEN an invalid HS256 jwt signature for the given encodedHeadAndBody EXPECT the signature to be valid",
@@ -900,10 +896,9 @@ func TestValidateSignature(t *testing.T) {
 					Secret: "test",
 				},
 			},
-			alg:                  HS256,
-			encodedHeaderAndBody: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",
-			signature:            "5mhhHqs5_DTLdINd9p5m7ZJ6XD0Xc55kIaCRY5r6HRA",
-			expectValid:          false,
+			alg:         HS256,
+			encodedJWT:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.5mhhHqs5_DTLdINd9p5m7ZJ6XD0Xc55kIaCRY5r6HRA",
+			expectValid: false,
 		},
 		{
 			name: "GIVEN an invalid HS384 jwt signature for the given encodedHeadAndBody EXPECT the signature to be valid",
@@ -912,10 +907,9 @@ func TestValidateSignature(t *testing.T) {
 					Secret: "test",
 				},
 			},
-			alg:                  HS384,
-			encodedHeaderAndBody: "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",
-			signature:            "KOZqqJ-wEzC-JvqqIHGKBIGgbYHH2Fej71TpBctnIguBkf3EdSYiwuRMSz35uY8E",
-			expectValid:          false,
+			alg:         HS384,
+			encodedJWT:  "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.KOZqqJ-wEzC-JvqqIHGKBIGgbYHH2Fej71TpBctnIguBkf3EdSYiwuRMSz35uY8E",
+			expectValid: false,
 		},
 		{
 			name: "GIVEN an invalid HS512 jwt signature for the given encodedHeadAndBody EXPECT the signature to be valid",
@@ -924,10 +918,9 @@ func TestValidateSignature(t *testing.T) {
 					Secret: "test",
 				},
 			},
-			alg:                  HS512,
-			encodedHeaderAndBody: "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",
-			signature:            "VXfjNddn9mDxRYhiaCi8rYYtcuNe3KCfK3LvggWSaHwjZsag9ugMOuDPOeeBD3oNhK-cOkTvRLy_ERbgnEyxYA",
-			expectValid:          false,
+			alg:         HS512,
+			encodedJWT:  "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.VXfjNddn9mDxRYhiaCi8rYYtcuNe3KCfK3LvggWSaHwjZsag9ugMOuDPOeeBD3oNhK-cOkTvRLy_ERbgnEyxYA",
+			expectValid: false,
 		},
 		{
 			name: "GIVEN a non supported jwt signature algorithm for the given encodedHeadAndBody EXPECT error code jwt algorithm not implemented",
@@ -936,11 +929,10 @@ func TestValidateSignature(t *testing.T) {
 					Secret: "hey",
 				},
 			},
-			alg:                  NONE,
-			encodedHeaderAndBody: "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",
-			signature:            "VXfjNddn9mDxRYhiaCi8rYYtcuNe3KCfK3LvggWSaHwjZsag9ugMOuDPOeeBD3oNhK-cOkTvRLy_ERbgnEyxYA",
-			expectValid:          false,
-			expectedErrorCode:    coreerrors.ErrCodeJWTAlgorithmNotAllowed,
+			alg:               NONE,
+			encodedJWT:        "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.VXfjNddn9mDxRYhiaCi8rYYtcuNe3KCfK3LvggWSaHwjZsag9ugMOuDPOeeBD3oNhK-cOkTvRLy_ERbgnEyxYA",
+			expectValid:       false,
+			expectedErrorCode: coreerrors.ErrCodeJWTAlgorithmNotAllowed,
 		},
 	}
 	for _, tc := range testCases {
@@ -949,7 +941,7 @@ func TestValidateSignature(t *testing.T) {
 			if err != nil {
 				t.Errorf("\texpected an error to occurr while building JWT validator: %s", err.GetErrorCode())
 			}
-			valid, err := validator.ValidateSignature(tc.alg, tc.encodedHeaderAndBody, tc.signature)
+			valid, err := validator.ValidateSignature(tc.alg, tc.encodedJWT)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
