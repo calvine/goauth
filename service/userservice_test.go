@@ -100,6 +100,10 @@ func TestUserService(t *testing.T) {
 	t.Run("ConfirmContact", func(t *testing.T) {
 		_testConfirmContact(t, userService, userServiceText_ContactRepo, userServiceText_TokenRepo)
 	})
+
+	t.Run("GetContactByID", func(t *testing.T) {
+		_testGetContactByID(t, userService)
+	})
 }
 
 func setupTestUserServiceData(t *testing.T, userRepo repo.UserRepo, contactRepo repo.ContactRepo) {
@@ -347,7 +351,7 @@ func _testRegisterUserAndPrimaryContact(t *testing.T, userService services.UserS
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := userService.RegisterUserAndPrimaryContact(context.TODO(), logger, tc.contactType, tc.contactPrincipal, userServiceTest_CreatedBy)
+			err := userService.RegisterUserAndPrimaryContact(context.TODO(), logger, tc.contactType, tc.contactPrincipal, "service_name", userServiceTest_CreatedBy)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
@@ -942,6 +946,47 @@ func _testConfirmContact(t *testing.T, userService services.UserService, contact
 				}
 				if !newlyConfirmedContact.IsConfirmed() {
 					t.Error("\tnewly confirmed contact is not confirmed in the underlying data store.")
+				}
+			}
+		})
+	}
+}
+
+func _testGetContactByID(t *testing.T, userService services.UserService) {
+	type testCase struct {
+		name                     string
+		contactID                string
+		expectedContactType      string
+		expectedContactPrincipal string
+		expectedErrorCode        string
+	}
+	testCases := []testCase{
+		{
+			name:                     "GIVEN an existing contact id EXPECT success",
+			contactID:                userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.ID,
+			expectedContactPrincipal: userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.Principal,
+			expectedContactType:      userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.Type,
+		},
+		{
+			name:              "GIVEN a non existant contact id EXPECT error code no contact found",
+			contactID:         "not a real id",
+			expectedErrorCode: coreerrors.ErrCodeNoContactFound,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			logger := zaptest.NewLogger(t)
+			contact, err := userService.GetContactByID(context.TODO(), logger, tc.contactID, userServiceTest_CreatedBy)
+			if err != nil {
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
+			} else {
+				if contact.Principal != tc.expectedContactPrincipal {
+					t.Errorf("\tPrincipal value was not expected: got - %s expected - %s", contact.Principal, tc.expectedContactPrincipal)
+				}
+				if contact.Type != tc.expectedContactType {
+					t.Errorf("\tType value was not expected: got - %s expected - %s", contact.Type, tc.expectedContactType)
 				}
 			}
 		})

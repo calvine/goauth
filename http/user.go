@@ -50,5 +50,7 @@ func (s *server) handleConfirmContactGet() http.HandlerFunc {
 		}
 		// TODO: success code here
 		// The idea here is to redirect to a set password page, so we woud need to make a password reset token and all that jazz?
+		// contact, err := s.userService.GetContactByID(ctx, logger,)
+		// passwordResetToken := models.NewToken()
 	}
 }

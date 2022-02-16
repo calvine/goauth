@@ -75,7 +75,7 @@ func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, l
 	return user, contact, nil
 }
 
-func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType, contactPrincipal string, initiator string) errors.RichError {
+func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType, contactPrincipal, serviceName, initiator string) errors.RichError {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "RegisterUserAndPrimaryContact")
 	defer span.End()
 
@@ -135,7 +135,15 @@ func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger 
 		return err
 	}
 	// send confirmation email
-	// TODO: convert this email into a template...
+
+	// TODO: implement template service with cached parsed tempaltes and function for each template...
+	// eventually a repo to pull text from DB or another place, but for now static in code is fine...
+
+	// templateParams := templates.ConfirmContactEmailTemplateParams{
+	// 	ServiceName: serviceName,
+	// 	ConfirmLink: confirmationToken.Value,
+	// }
+	// body, err := template.pa
 	emailMessage := email.EmailMessage{
 		From:    constants.NoReplyEmailAddress,
 		To:      []string{contactPrincipal},
@@ -459,6 +467,21 @@ func (us userService) ConfirmContact(ctx context.Context, logger *zap.Logger, co
 	}
 	span.AddEvent("contact confirmed")
 	return nil
+}
+
+func (us userService) GetContactByID(ctx context.Context, logger *zap.Logger, contactID string, initiator string) (models.Contact, errors.RichError) {
+	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "ConfirmContact")
+	defer span.End()
+	span.AddEvent("making repo call for contact")
+	contact, err := us.contactRepo.GetContactByID(ctx, contactID)
+	if err != nil {
+		evtString := "error retreiving contact by id"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanError(&span, err, evtString)
+		return models.Contact{}, err
+	}
+	span.AddEvent("contact retreived")
+	return contact, nil
 }
 
 func (us userService) checkForExistingConfirmedContacts(ctx context.Context, logger *zap.Logger, span *trace.Span, contactType, contactPrincipal, userID string) errors.RichError {

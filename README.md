@@ -16,6 +16,7 @@ An OAuth OIDC server written in Go.
 * have JWT signing and validation be configuration driven / support (RSA/ ECDSA)
 * Support api endpoints for login and register with a setting in the app config to allow use
 * Iframe support for embeddig login into other pages
+* On a periodic interval refresh signers for JWT factory.
 
 ## Roadmap
 

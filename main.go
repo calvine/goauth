@@ -42,6 +42,8 @@ const (
 
 	DEFAULT_MONGO_CONNECTION_STRING = "mongodb://root:password@localhost:27017/?authSource=admin&ssl=false&replicaSet=goauth_test&connect=direct"
 	DEFAULT_HTTP_PORT_STRING        = "0.0.0.0:8080"
+
+	ServiceName = "goauth"
 )
 
 var (
@@ -138,7 +140,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	logger = logger.With(zap.String("app_name", "goauth"))
+	logger = logger.With(zap.String("app_name", ServiceName))
 	defer logger.Sync()
 	connectionString := utilities.GetEnv(ENV_MONGO_CONNECTION_STRING, DEFAULT_MONGO_CONNECTION_STRING)
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(connectionString))
@@ -188,6 +190,8 @@ func run() error {
 
 	httpServerOptions := gahttp.HTTPServerOptions{
 		Logger:                     logger,
+		ServiceName:                ServiceName,
+		PublicURL:                  "http://localhost:8080", //FIXME: make this configurable...
 		LoginService:               loginService,
 		UserService:                userService,
 		EmailService:               emailService,
@@ -197,6 +201,9 @@ func run() error {
 		StaticFS:                   &httpStaticFS,
 		TemplateFS:                 &templateFS,
 		TokenSigningAlgorithmTypes: []jwt.JWTSigningAlgorithmFamily{jwt.HMAC}, // TODO: implment other signers of other types
+		DefaultJWTValidatorOptions: jwt.JWTValidatorOptions{
+			KeyIDRequired: true,
+		},
 	}
 	httpServer, err := gahttp.NewServer(context.Background(), httpServerOptions)
 	if err != nil {

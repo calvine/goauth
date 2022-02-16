@@ -107,7 +107,7 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 			goto RenderTemplateWithError // I know ewww its a GOTO. I may come back and change how this is being done, possibly extract the render tempalte with error into a function...
 		}
 		// get principal from request
-		err = s.userService.RegisterUserAndPrimaryContact(ctx, logger, contactType, principal, "user registration page")
+		err = s.userService.RegisterUserAndPrimaryContact(ctx, logger, contactType, principal, s.serviceName, "user registration page")
 		if err != nil {
 			switch err.GetErrorCode() {
 			case coreerrors.ErrCodeInvalidContactPrincipal:

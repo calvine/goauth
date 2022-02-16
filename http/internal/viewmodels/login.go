@@ -6,4 +6,5 @@ type LoginTemplateData struct {
 	Email       string
 	ErrorMsg    string
 	Password    string
+	RememberMe  bool
 }

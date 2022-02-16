@@ -20,15 +20,17 @@ import (
 	"go.uber.org/zap"
 )
 
+type EmailServiceType string
+
 const (
-	MockEmailService  = "mock"
-	NoOpEmailService  = "noop"
-	StackEmailService = "stack"
-	FSEmailService    = "fs"
-	SMTPEmailService  = "smtp"
+	MockEmailService  EmailServiceType = "mock"
+	NoOpEmailService  EmailServiceType = "noop"
+	StackEmailService EmailServiceType = "stack"
+	FSEmailService    EmailServiceType = "fs"
+	SMTPEmailService  EmailServiceType = "smtp"
 )
 
-func NewEmailService(serviceType string, options interface{}) (coreServices.EmailService, errors.RichError) {
+func NewEmailService(serviceType EmailServiceType, options interface{}) (coreServices.EmailService, errors.RichError) {
 	switch serviceType {
 	case MockEmailService:
 		return mockEmailService{}, nil
@@ -49,7 +51,7 @@ func NewEmailService(serviceType string, options interface{}) (coreServices.Emai
 		}
 		return newSMTPEmailService(castOptions)
 	default:
-		return nil, coreerrors.NewComponentNotImplementedError("email service", serviceType, true)
+		return nil, coreerrors.NewComponentNotImplementedError("email service", string(serviceType), true)
 	}
 }
 

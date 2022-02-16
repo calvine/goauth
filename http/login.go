@@ -11,6 +11,8 @@ import (
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/jwt"
 	"github.com/calvine/goauth/core/models"
+	"github.com/calvine/goauth/core/normalization"
+	"github.com/calvine/goauth/core/nullable"
 	"github.com/calvine/goauth/core/utilities/ctxpropagation"
 	"github.com/calvine/goauth/http/internal/constants"
 	"github.com/calvine/goauth/http/internal/viewmodels"
@@ -18,6 +20,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
+
+//
+const defaultJWTDuration time.Duration = time.Hour * 24 * 7 // 1 week as default // FIXME: make this configurable...
 
 // FIXME: add proper error handling like in register file
 func (s *server) handleLoginGet() http.HandlerFunc {
@@ -87,8 +92,11 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 		}
 		csrfToken := r.FormValue("csrf_token")
 		email := r.FormValue("email")
+		rememberMeString := r.FormValue("remember_me")
 		password := r.FormValue("password")
 		callback := r.URL.Query().Get("cb")
+
+		rememberMe, _ := normalization.ReadBoolValue(rememberMeString, true)
 
 		_, err := s.retreiveCSRFToken(ctx, logger, csrfToken)
 		if err != nil {
@@ -99,7 +107,7 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 			redirectToErrorPage(rw, r, errorMsg, http.StatusInternalServerError)
 			return
 		}
-		_, err = s.loginService.LoginWithPrimaryContact(ctx, s.logger, email, core.CONTACT_TYPE_EMAIL, password, "login post handler")
+		user, err := s.loginService.LoginWithPrimaryContact(ctx, s.logger, email, core.CONTACT_TYPE_EMAIL, password, "login post handler")
 		if err != nil {
 			var errorMsg string
 			switch err.GetErrorCode() {
@@ -131,9 +139,10 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 				return
 			}
 			templateRenderError := loginPageTemplate.Execute(rw, viewmodels.LoginTemplateData{
-				CSRFToken: newCSRFToken.Value,
-				Email:     email,
-				ErrorMsg:  errorMsg,
+				CSRFToken:  newCSRFToken.Value,
+				Email:      email,
+				ErrorMsg:   errorMsg,
+				RememberMe: rememberMe,
 				// Do Not Set Password!!!
 			})
 			if templateRenderError != nil {
@@ -144,15 +153,18 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 			}
 			return
 		}
-		// TODO: finish the login code...
-		authCookie := http.Cookie{
-			Name: constants.LoginCookieName,
-			// TODO: make a lightweight jwt for this
-			Value:    "make a lightweight JWT for this I do not want to store a session id...",
-			Secure:   true,
-			HttpOnly: true,
+		setLoginStateOptions := setLoginStateOptions{
+			user:       user,
+			rememberMe: rememberMe,
 		}
-		http.SetCookie(rw, &authCookie)
+		_, _, err = s.setLoginState(ctx, logger, rw, setLoginStateOptions)
+		if err != nil {
+			errorMsg := "failed to set login state"
+			logger.Error(errorMsg, zap.Reflect("err", err))
+			apptelemetry.SetSpanError(&span, err, errorMsg)
+			redirectToErrorPage(rw, r, errorMsg, http.StatusInternalServerError)
+			return
+		}
 		if callback != "" {
 			http.Redirect(rw, r, callback, http.StatusFound)
 		} else {
@@ -212,8 +224,8 @@ func (s *server) handleMagicLoginGet() http.HandlerFunc {
 			redirectToErrorPage(rw, r, errorMsg, http.StatusInternalServerError)
 			return
 		}
-
-		err = s.setLoginState(ctx, logger, rw, setLoginStateOptions{user, nil, time.Minute * 15})
+		loginAuthDuration := nullable.NullableDuration{HasValue: false, Value: 0}
+		_, _, err = s.setLoginState(ctx, logger, rw, setLoginStateOptions{user, loginAuthDuration, false})
 		if err != nil {
 			errorMsg := "failed to set login state"
 			logger.Error(errorMsg, zap.Reflect("err", err))
@@ -221,41 +233,47 @@ func (s *server) handleMagicLoginGet() http.HandlerFunc {
 			redirectToErrorPage(rw, r, errorMsg, http.StatusInternalServerError)
 			return
 		}
+		// TODO: redirect?
 	}
 }
 
 type setLoginStateOptions struct {
-	user     models.User
-	signer   jwt.Signer
-	duration time.Duration
+	user       models.User
+	duration   nullable.NullableDuration
+	rememberMe bool
 }
 
 // func (server) createJWT(sub string, validDuration time.Duration, signer jwt.Signer) (jwt.JWT, errors.RichError) {
 
 // }
 
-func (server) setLoginState(ctx context.Context, logger *zap.Logger, rw http.ResponseWriter, options setLoginStateOptions) errors.RichError {
+// Set login state sets a cookie on the current response that contains the encoded jwt as its valie. it also returns the JWT struct and the encoded JWT
+func (s server) setLoginState(ctx context.Context, logger *zap.Logger, rw http.ResponseWriter, options setLoginStateOptions) (jwt.JWT, string, errors.RichError) {
 	span := trace.SpanFromContext(ctx)
 	defer span.End()
-	jwToken := jwt.NewUnsignedJWT(jwt.HS256, "goauth", []string{}, options.user.ID, options.duration, time.Now())
-	span.AddEvent("unsigned jwt created")
-	// hmacOptions, err := jwt.NewHMACSigningOptions("test")
-	// if err != nil {
-	// 	errorMsg := "building signing options failed"
-	// 	logger.Error(errorMsg, zap.Reflect("error", err))
-	// 	apptelemetry.SetSpanOriginalError(&span, err, errorMsg)
-	// 	return err
-	// }
-	encodedJWT, err := jwToken.SignAndEncode(options.signer)
+	// expireDuration should always have a value!
+	cookieExpires := time.Time{}                                 // default there is no expiration for site login cookie.
+	expireDuration := nullable.NullableDuration{HasValue: false} // default there is no expiration for site login cookie.
+	if !options.rememberMe {                                     // is options.rememberMe is true then we go with default no expiration
+		if options.duration.HasValue {
+			expireDuration = options.duration
+			cookieExpires = time.Now().Add(options.duration.Value)
+		} else {
+			expireDuration = nullable.NullableDuration{HasValue: true, Value: defaultJWTDuration} // setting a default incase none was provided...
+			cookieExpires = time.Now().Add(defaultJWTDuration)
+		}
+	}
+	jwToken, encodedJWT, err := s.jwtFactory.NewSignedJWT(options.user.ID, []string{s.serviceName}, expireDuration)
 	if err != nil {
 		errorMsg := "signing and encoding jwt failed"
 		logger.Error(errorMsg, zap.Reflect("error", err))
 		apptelemetry.SetSpanOriginalError(&span, err, errorMsg)
-		return err
+		return jwt.JWT{}, "", err
 	}
 	span.AddEvent("JWT signed and encoded")
 	// encodedHWT, err := jwt.SignAndEncode()
 	cookie := http.Cookie{
+		Expires:  cookieExpires,
 		Name:     constants.LoginCookieName,
 		Value:    encodedJWT,
 		HttpOnly: true,
@@ -264,10 +282,10 @@ func (server) setLoginState(ctx context.Context, logger *zap.Logger, rw http.Res
 	}
 	http.SetCookie(rw, &cookie)
 	span.AddEvent("sign in cookie set")
-	return nil
+	return jwToken, encodedJWT, nil
 }
 
-func (s server) getAuthStatus(ctx context.Context, logger *zap.Logger, r *http.Request) (jwt.JWT, core.AuthStatus, errors.RichError) {
+func (s server) getAuthStatus(ctx context.Context, logger *zap.Logger, r *http.Request, rw http.ResponseWriter) (jwt.JWT, core.AuthStatus, errors.RichError) {
 	logger.Debug("starting getAuthStatus")
 	defer logger.Debug("ending getAuthStatus")
 	span := trace.SpanFromContext(ctx)
@@ -300,7 +318,9 @@ func (s server) getAuthStatus(ctx context.Context, logger *zap.Logger, r *http.R
 	} else {
 		var validator jwt.JWTValidator
 		var ok bool
-		validator, ok = s.validatorCache.GetCachedValidator(token.Header.KeyID)
+		// here we are making a validator cache key for validating the auth token for the service its self, not for external tokens...
+		cachedValidatorKey := "s_" + token.Header.KeyID
+		validator, ok = s.validatorCache.GetCachedValidator(cachedValidatorKey)
 		if !ok {
 			// make the validator and cache it
 			jsm, err := s.jsmService.GetJWTSigningMaterialByKeyID(ctx, logger, token.Header.KeyID, "")
@@ -322,7 +342,7 @@ func (s server) getAuthStatus(ctx context.Context, logger *zap.Logger, r *http.R
 			if err != nil {
 				return jwt.JWT{}, core.Invalid, err
 			}
-			s.validatorCache.CacheValidator(token.Header.KeyID, validator, cachedJWTValidatorDuration)
+			s.validatorCache.CacheValidator(cachedValidatorKey, validator, cachedJWTValidatorDuration)
 		}
 		valid, err := validator.ValidateSignature(token.Header.Algorithm, encodedToken)
 		if err != nil {
@@ -333,7 +353,6 @@ func (s server) getAuthStatus(ctx context.Context, logger *zap.Logger, r *http.R
 		}
 		errors, valid := validator.ValidateClaims(token.Claims)
 		if !valid {
-			// TODO: finish this...
 			logger.Warn("jwt token is not valid")
 			for _, e := range errors {
 				switch e.GetErrorCode() {
@@ -347,43 +366,3 @@ func (s server) getAuthStatus(ctx context.Context, logger *zap.Logger, r *http.R
 		return token, core.Authenticated, nil
 	}
 }
-
-// func (s *server) handleAuthGet() http.HandlerFunc {
-// 	var (
-// 		once          sync.Once
-// 		loginTemplate *template.Template
-// 		templateErr   error
-// 		templatePath  string = "http/templates/login.tmpl"
-// 	)
-// 	type requestData struct {
-// 		clientID      string
-// 		codeChallenge string // PKCE
-// 		redirectURI   string
-// 		responseType  string
-// 		scope         string
-// 		state         string
-// 	}
-// 	return func(rw http.ResponseWriter, r *http.Request) {
-// 		once.Do(func() {
-// 			templateFileData, err := s.templateFS.ReadFile(templatePath)
-// 			templateErr = err
-// 			if templateErr == nil {
-// 				loginTemplate, templateErr = template.New("loginPage").Parse(string(templateFileData))
-// 			}
-// 		})
-// 		cookie, err := r.Cookie(loginCookieName)
-// 		if err == http.ErrNoCookie {
-// 			// handle not logged in
-// 		}
-
-// 		http.SetCookie(rw, &http.Cookie{
-// 			Name:     loginCookieName,
-// 			Value:    "session token here",
-// 			Expires:  time.Now().Add(time.Hour * 24 * 7),
-// 			SameSite: http.SameSiteLaxMode,
-// 			Secure:   true,
-// 			HttpOnly: true,
-// 		})
-
-// 	}
-// }

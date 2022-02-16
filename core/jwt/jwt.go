@@ -7,6 +7,7 @@ import (
 	"time"
 
 	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/nullable"
 	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/richerror/errors"
 	"github.com/google/uuid"
@@ -109,10 +110,15 @@ var (
 	HMACAlgorithms = []JWTSigningAlgorithm{HS256, HS384, HS512}
 )
 
-func NewUnsignedJWT(alg JWTSigningAlgorithm, iss string, aud []string, sub string, duration time.Duration, notBefore time.Time) JWT {
+func NewUnsignedJWT(alg JWTSigningAlgorithm, iss string, aud []string, sub string, duration nullable.NullableDuration, notBefore time.Time) JWT {
 	header := Header{
 		Algorithm: alg,
 		TokenType: Typ_JWT,
+	}
+
+	exp := Time{}
+	if duration.HasValue {
+		exp = FromDuration(duration.Value)
 	}
 
 	claims := StandardClaims{
@@ -120,7 +126,7 @@ func NewUnsignedJWT(alg JWTSigningAlgorithm, iss string, aud []string, sub strin
 		Audience:       utilities.NewCSString(aud), // if no audience is provided this will be an empty string and opitted from the token for json marshaling
 		IssuedAt:       NewTime(),
 		Subject:        sub,
-		ExpirationTime: FromDuration(duration),
+		ExpirationTime: exp,
 		NotBefore:      Time(notBefore),
 		JWTID:          uuid.NewString(),
 	}

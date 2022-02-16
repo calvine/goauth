@@ -9,6 +9,8 @@ import (
 	"github.com/google/uuid"
 )
 
+var EmptyJWTValidationOptions = JWTValidatorOptions{}
+
 type JWTValidator interface {
 	GetID() string
 	ValidateHeader(header Header) ([]errors.RichError, bool)

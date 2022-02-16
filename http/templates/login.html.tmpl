@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,11 +8,19 @@
     <title>Login</title>
     <link rel="stylesheet" href="/static/css/login.css" />
 </head>
+
 <body>
     <header>Login</header>
     <form method="POST">
-        <label>Email: <input type="email" name="email" required placeholder="email address" value="{{ .email }}" /></label>
-        <label>Password: <input type="password" name="password" required placeholder="password" /></label>
+        <section>
+            <label>Email: <input type="email" name="email" required placeholder="email address"
+                    value="{{ .Email }}" /></label>
+            <label>Password: <input type="password" name="password" required placeholder="password" /></label>
+        </section>
+        <section>
+            <label><span>Remember Me:</span> <input type="checkbox" name="remember_me" {{ if .RememberMe
+                    }}checked="checked" {{ end }} /></label>
+        </section>
         <section class="error_container">
             {{ if .ErrorMsg }}
             <span>{{ .ErrorMsg }}</span>
@@ -21,4 +30,5 @@
         <input type="submit" value="Login" />
     </form>
 </body>
+
 </html>
