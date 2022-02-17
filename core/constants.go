@@ -9,8 +9,17 @@ const (
 	Authenticated
 )
 
+type TemplateType string
+
+const (
+	Text TemplateType = "text"
+	Html TemplateType = "html"
+)
+
+type ContactType string
+
 //TODO: come back to things like this and pull out into aliased type or enum
 const (
-	CONTACT_TYPE_EMAIL  = "email"
-	CONTACT_TYPE_MOBILE = "mobile"
+	Email  ContactType = "email"
+	Mobile ContactType = "mobile"
 )

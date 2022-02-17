@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
@@ -93,7 +94,7 @@ func (ur userRepo) GetUserByID(ctx context.Context, id string) (models.User, err
 	return user, nil
 }
 
-func (ur userRepo) GetUserAndContactByConfirmedContact(ctx context.Context, contactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
+func (ur userRepo) GetUserAndContactByConfirmedContact(ctx context.Context, contactType core.ContactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetUserAndContactByConfirmedContact", ur.GetType())
 	defer span.End()
 	var receiver struct {
@@ -143,7 +144,7 @@ func (ur userRepo) GetUserAndContactByConfirmedContact(ctx context.Context, cont
 	return user, contact, nil
 }
 
-func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType, contactPrincipal string) (models.User, errors.RichError) {
+func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactType core.ContactType, contactPrincipal string) (models.User, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetUserByPrimaryContact", ur.GetType())
 	defer span.End()
 	var repoUser repomodels.RepoUser

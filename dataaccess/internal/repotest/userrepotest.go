@@ -103,7 +103,7 @@ func _testGetUserByID(t *testing.T, userRepo repo.UserRepo) {
 }
 
 func _testGetUserByPrimaryContact(t *testing.T, userRepo repo.UserRepo) {
-	contactType, principal := core.CONTACT_TYPE_EMAIL, initialTestConfirmedPrimaryContact.Principal
+	contactType, principal := core.Email, initialTestConfirmedPrimaryContact.Principal
 	retreivedUser, err := userRepo.GetUserByPrimaryContact(context.TODO(), contactType, principal)
 	if err != nil {
 		t.Log(err.Error())
@@ -118,7 +118,7 @@ func _testGetUserAndContactByConfrimedContact(t *testing.T, userRepo repo.UserRe
 	type testCase struct {
 		name              string
 		contactPrincipal  string
-		contactType       string
+		contactType       core.ContactType
 		expectedContactID string
 		expectedUserID    string
 		expectedErrorCode string
@@ -140,7 +140,7 @@ func _testGetUserAndContactByConfrimedContact(t *testing.T, userRepo repo.UserRe
 		{
 			name:              "GIVEN a non existant contact principal and a valid contact type EXPECT error code no user found",
 			contactPrincipal:  "NOT_A_REAL_EMAIL_456yhgtyTUHG@email.org",
-			contactType:       core.CONTACT_TYPE_EMAIL,
+			contactType:       core.Email,
 			expectedErrorCode: coreerrors.ErrCodeNoUserFound,
 		},
 	}

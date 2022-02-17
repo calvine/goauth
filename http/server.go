@@ -257,18 +257,19 @@ func (hh *server) BuildRoutes() {
 			// this is the route for magic login
 			r.Get("/", otelhttp.NewHandler(hh.handleMagicLoginGet(), "GET /auth/magiclogin").ServeHTTP)
 		})
-		r.Route("/resetpassword", func(r chi.Router) {
-			// this is the route for the password reset page
-			r.Get("/{passwordResetToken}", otelhttp.NewHandler(hh.handlePasswordResetGet(), "GET /resetpassword/{passwordResetToken}").ServeHTTP)
-			// this is the post endpoint for the password reset page
-			r.Post("/submitpasswordreset", otelhttp.NewHandler(hh.handlePasswordResetPost(), "POST /resetpassword/submitpasswordreset").ServeHTTP)
-		})
 	})
 	hh.Mux.Route("/user", func(r chi.Router) {
 		r.Get("/register", otelhttp.NewHandler(hh.handleRegisterGet(), "GET /user/register").ServeHTTP)
 		r.Post("/register", otelhttp.NewHandler(hh.handleRegisterPost(), "POST /user/register").ServeHTTP)
 
 		r.Get("/confirmcontact/{confirmationToken}", otelhttp.NewHandler(hh.handleConfirmContactGet(), "GET /user/confirmcontact/{confirmationToken}").ServeHTTP)
+
+		r.Route("/resetpassword", func(r chi.Router) {
+			// this is the route for the password reset page
+			r.Get("/{passwordResetToken}", otelhttp.NewHandler(hh.handlePasswordResetGet(), "GET /user/resetpassword/{passwordResetToken}").ServeHTTP)
+			// this is the post endpoint for the password reset page
+			r.Post("/submitpasswordreset", otelhttp.NewHandler(hh.handlePasswordResetPost(), "POST /user/resetpassword/submitpasswordreset").ServeHTTP)
+		})
 	})
 	hh.Mux.Route("/app", func(r chi.Router) {
 		r.Get("/manage", otelhttp.NewHandler(nil, "GET /app/manage").ServeHTTP)

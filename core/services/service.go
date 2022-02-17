@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	htmltemplate "html/template"
+	texttemplate "text/template"
 
 	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/jwt"
@@ -19,9 +21,9 @@ type Service interface {
 type LoginService interface {
 	// LoginWithContact attempts to confirm a users credentials and if they match it returns true and resets the users ConsecutiveFailedLoginAttempts, otherwise it returns false and increments the users ConsecutiveFailedLoginAttempts
 	// The principal should only work when it has been confirmed
-	LoginWithPrimaryContact(ctx context.Context, logger *zap.Logger, principal, principalType, password string, initiator string) (models.User, errors.RichError)
+	LoginWithPrimaryContact(ctx context.Context, logger *zap.Logger, contactType core.ContactType, principal string, password string, initiator string) (models.User, errors.RichError)
 	// StartPasswordResetByContact sets a password reset token for the user with the corresponding principal and type that are confirmed.
-	StartPasswordResetByPrimaryContact(ctx context.Context, logger *zap.Logger, principal, principalType string, initiator string) (string, errors.RichError)
+	StartPasswordResetByPrimaryContact(ctx context.Context, logger *zap.Logger, contactType core.ContactType, principal string, initiator string) (string, errors.RichError)
 	// ResetPassword resets a users password given a password reset token and new password hash and salt.
 	ResetPassword(ctx context.Context, logger *zap.Logger, passwordResetToken string, newPassword string, initiator string) errors.RichError
 
@@ -33,13 +35,13 @@ type UserService interface {
 	// GetUser gets a user by user id
 	GetUser(ctx context.Context, logger *zap.Logger, userID string, initiator string) (models.User, errors.RichError)
 	// GetUserAndContactByConfirmedContact gets a user and specified contact record via a confirmed contact
-	GetUserAndContactByConfirmedContact(ctx context.Context, logger *zap.Logger, contactType string, contactPrincipal string, initiator string) (models.User, models.Contact, errors.RichError)
+	GetUserAndContactByConfirmedContact(ctx context.Context, logger *zap.Logger, contactType core.ContactType, contactPrincipal string, initiator string) (models.User, models.Contact, errors.RichError)
 	// RegisterUserAndPrimaryContact registers a new user. it has several responsibilities.
 	//	1. ensure no other user has the contact provided as a confirmed contact.
 	//	2. send notification to user with link to confirm contact and set password
-	RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType, contactPrincipal, serviceName, initiator string) errors.RichError
+	RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType core.ContactType, contactPrincipal, serviceName, initiator string) errors.RichError
 	// GetUserPrimaryContact gets a users primary contact
-	GetUserPrimaryContact(ctx context.Context, logger *zap.Logger, userID string, contactType string, initiator string) (models.Contact, errors.RichError)
+	GetUserPrimaryContact(ctx context.Context, logger *zap.Logger, userID string, contactType core.ContactType, initiator string) (models.Contact, errors.RichError)
 	// GetContactByID gets a contact by its id
 	GetContactByID(ctx context.Context, logger *zap.Logger, contactID string, initiator string) (models.Contact, errors.RichError)
 	// GetUsersContacts gets all of a users contacts
@@ -47,9 +49,9 @@ type UserService interface {
 	// GetUsersConfirmedContacts gets all of a users confirmed contacts
 	GetUsersConfirmedContacts(ctx context.Context, logger *zap.Logger, userID string, initiator string) ([]models.Contact, errors.RichError)
 	// GetUsersContactsOfType gets all of a users contacts of the given type
-	GetUsersContactsOfType(ctx context.Context, logger *zap.Logger, userID string, contactType string, initiator string) ([]models.Contact, errors.RichError)
+	GetUsersContactsOfType(ctx context.Context, logger *zap.Logger, userID string, contactType core.ContactType, initiator string) ([]models.Contact, errors.RichError)
 	// GetUsersConfirmedContactsOfType gets all of a users confirmed contacts of the given type
-	GetUsersConfirmedContactsOfType(ctx context.Context, logger *zap.Logger, userID string, contactType string, initiator string) ([]models.Contact, errors.RichError)
+	GetUsersConfirmedContactsOfType(ctx context.Context, logger *zap.Logger, userID string, contactType core.ContactType, initiator string) ([]models.Contact, errors.RichError)
 	// AddContact adds a contact to a user. The userID parameter MUST be the same as the UserID on the contact provided
 	AddContact(ctx context.Context, logger *zap.Logger, userID string, contact *models.Contact, initiator string) errors.RichError
 	// SetContactAsPrimary takes the users current primary contact and the one to make the new primary contact
@@ -118,6 +120,13 @@ type JWTSigningMaterialService interface {
 	GetJWTSigningMaterialByKeyID(ctx context.Context, logger *zap.Logger, keyID string, initiator string) (models.JWTSigningMaterial, errors.RichError)
 	// GetValidJWTSigningMaterialByAlgorithmType get all non disabled and non expired jwt signing material with the specified algorithm type
 	GetValidJWTSigningMaterialByAlgorithmType(ctx context.Context, logger *zap.Logger, algorithmType jwt.JWTSigningAlgorithmFamily, initiator string) ([]models.JWTSigningMaterial, errors.RichError)
+
+	Service
+}
+
+type TemplateService interface {
+	GetTextTemplate(name string) (*texttemplate.Template, bool)
+	GetHTMLTemplate(name string) (*htmltemplate.Template, bool)
 
 	Service
 }

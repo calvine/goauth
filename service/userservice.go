@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
@@ -53,7 +54,7 @@ func (us userService) GetUser(ctx context.Context, logger *zap.Logger, userID st
 	return user, err
 }
 
-func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, logger *zap.Logger, contactType string, contactPrincipal string, initiator string) (models.User, models.Contact, errors.RichError) {
+func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, logger *zap.Logger, contactType core.ContactType, contactPrincipal string, initiator string) (models.User, models.Contact, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "GetUserAndContactByConfirmedContact")
 	defer span.End()
 	user, contact, err := us.userRepo.GetUserAndContactByConfirmedContact(ctx, contactType, contactPrincipal)
@@ -66,7 +67,7 @@ func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, l
 		evtString := fmt.Sprintf("contact found is not confirmed: ID = %s", contact.ID)
 		fields := make(map[string]interface{})
 		fields["userId"] = contact.UserID
-		err := coreerrors.NewContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, fields, true)
+		err := coreerrors.NewContactNotConfirmedError(contact.ID, contact.Principal, string(contact.Type), fields, true)
 		logger.Error(evtString, zap.Reflect("error", err))
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return models.User{}, models.Contact{}, err
@@ -75,7 +76,7 @@ func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, l
 	return user, contact, nil
 }
 
-func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType, contactPrincipal, serviceName, initiator string) errors.RichError {
+func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType core.ContactType, contactPrincipal, serviceName, initiator string) errors.RichError {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "RegisterUserAndPrimaryContact")
 	defer span.End()
 
@@ -162,7 +163,7 @@ func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger 
 	return nil
 }
 
-func (us userService) GetUserPrimaryContact(ctx context.Context, logger *zap.Logger, userID string, contactType string, initiator string) (models.Contact, errors.RichError) {
+func (us userService) GetUserPrimaryContact(ctx context.Context, logger *zap.Logger, userID string, contactType core.ContactType, initiator string) (models.Contact, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "GetUserPrimaryContact")
 	defer span.End()
 	contact, err := us.contactRepo.GetPrimaryContactByUserID(ctx, userID, contactType)
@@ -211,7 +212,7 @@ func (us userService) GetUsersConfirmedContacts(ctx context.Context, logger *zap
 	return confirmedContacts, nil
 }
 
-func (us userService) GetUsersContactsOfType(ctx context.Context, logger *zap.Logger, userID string, contactType string, initiator string) ([]models.Contact, errors.RichError) {
+func (us userService) GetUsersContactsOfType(ctx context.Context, logger *zap.Logger, userID string, contactType core.ContactType, initiator string) ([]models.Contact, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "GetUsersContactsOfType")
 	defer span.End()
 	contacts, err := us.contactRepo.GetContactsByUserIDAndType(ctx, userID, contactType)
@@ -225,7 +226,7 @@ func (us userService) GetUsersContactsOfType(ctx context.Context, logger *zap.Lo
 	return contacts, nil
 }
 
-func (us userService) GetUsersConfirmedContactsOfType(ctx context.Context, logger *zap.Logger, userID string, contactType string, initiator string) ([]models.Contact, errors.RichError) {
+func (us userService) GetUsersConfirmedContactsOfType(ctx context.Context, logger *zap.Logger, userID string, contactType core.ContactType, initiator string) ([]models.Contact, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "GetUsersConfirmedContactsOfType")
 	defer span.End()
 	contacts, err := us.contactRepo.GetContactsByUserIDAndType(ctx, userID, contactType)
@@ -292,14 +293,14 @@ func (us userService) AddContact(ctx context.Context, logger *zap.Logger, userID
 			// there was no error so a contact was returned.
 			// If you want to make a new primary contact you need to go through the
 			// SetContactAsPrimary method
-			err := coreerrors.NewContactToAddMarkedAsPrimaryError(userID, contact.Principal, contact.Type, true)
+			err := coreerrors.NewContactToAddMarkedAsPrimaryError(userID, contact.Principal, string(contact.Type), true)
 			evtString := "user id and contact user id do not match"
 			logger.Error(evtString, zap.Reflect("error", err))
 			apptelemetry.SetSpanOriginalError(&span, err, evtString)
 			return err
 		}
 		// the account has no contact marked as primary with the contact type
-		logger.Warn("contact is marked as primary and there are no existing primary contacts of this type", zap.String("userID", userID), zap.String("contactPrincipal", contact.Principal), zap.String("contactType", contact.Type), zap.Bool("contactIsPrimary", contact.IsPrimary))
+		logger.Warn("contact is marked as primary and there are no existing primary contacts of this type", zap.String("userID", userID), zap.String("contactPrincipal", contact.Principal), zap.String("contactType", string(contact.Type)), zap.Bool("contactIsPrimary", contact.IsPrimary))
 	}
 
 	// run add contact on data store repo
@@ -366,7 +367,7 @@ func (us userService) SetContactAsPrimary(ctx context.Context, logger *zap.Logge
 		fields := make(map[string]interface{})
 		fields["userId"] = userID
 		fields["isPrimary"] = newPrimaryContact.IsPrimary
-		err := coreerrors.NewContactNotConfirmedError(newPrimaryContact.ID, newPrimaryContact.Principal, newPrimaryContact.Type, fields, true)
+		err := coreerrors.NewContactNotConfirmedError(newPrimaryContact.ID, newPrimaryContact.Principal, string(newPrimaryContact.Type), fields, true)
 		evtString := "user id provided does not match user id of contact to set as primary"
 		logger.Error(evtString, zap.String("userId", userID), zap.String("newPrimaryContactUserId", newPrimaryContact.UserID))
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
@@ -386,7 +387,7 @@ func (us userService) SetContactAsPrimary(ctx context.Context, logger *zap.Logge
 	}
 	if hasCurrentPrimaryContact {
 		if currentPrimaryContact.ID == newPrimaryContact.ID {
-			err := coreerrors.NewContactAlreadyMarkedPrimaryError(currentPrimaryContact.Principal, currentPrimaryContact.Type, true)
+			err := coreerrors.NewContactAlreadyMarkedPrimaryError(currentPrimaryContact.Principal, string(currentPrimaryContact.Type), true)
 			evtString := "contact to mark is primary is already primary contact"
 			logger.Error(evtString, zap.String("userId", userID), zap.String("newPrimaryContactUserId", newPrimaryContact.UserID), zap.String("currentPrimaryContactUserId", currentPrimaryContact.UserID), zap.Reflect("error", err))
 			apptelemetry.SetSpanOriginalError(&span, err, evtString)
@@ -451,7 +452,7 @@ func (us userService) ConfirmContact(ctx context.Context, logger *zap.Logger, co
 		return err
 	}
 	if contactToConfirm.IsConfirmed() {
-		err := coreerrors.NewContactAlreadyConfirmedError(contactToConfirm.UserID, contactToConfirm.ID, contactToConfirm.Principal, contactToConfirm.Type, nil, true)
+		err := coreerrors.NewContactAlreadyConfirmedError(contactToConfirm.UserID, contactToConfirm.ID, contactToConfirm.Principal, string(contactToConfirm.Type), nil, true)
 		evtString := "token is expired"
 		logger.Error(evtString, zap.String("tokenType", confirmationToken.TokenType.String()), zap.String("tokenValue", confirmationToken.Value), zap.Reflect("error", err))
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
@@ -484,7 +485,7 @@ func (us userService) GetContactByID(ctx context.Context, logger *zap.Logger, co
 	return contact, nil
 }
 
-func (us userService) checkForExistingConfirmedContacts(ctx context.Context, logger *zap.Logger, span *trace.Span, contactType, contactPrincipal, userID string) errors.RichError {
+func (us userService) checkForExistingConfirmedContacts(ctx context.Context, logger *zap.Logger, span *trace.Span, contactType core.ContactType, contactPrincipal, userID string) errors.RichError {
 	numExistingConfirmedContacts, err := us.contactRepo.GetExistingConfirmedContactsCountByPrincipalAndType(ctx, contactType, contactPrincipal)
 	if err != nil {
 		logger.Error("contactRepo.GetExistingConfirmedContactsCountByPrincipalAndType call failed", zap.Reflect("error", err))
@@ -495,7 +496,7 @@ func (us userService) checkForExistingConfirmedContacts(ctx context.Context, log
 		if numExistingConfirmedContacts > 1 {
 			// This is really bad and we need to know about it asap!
 			errMsg := "critical issue here more than one contact is confirmed with this info"
-			err = coreerrors.NewMultipleConfirmedInstancesOfContactError(contactPrincipal, contactType, numExistingConfirmedContacts, true)
+			err = coreerrors.NewMultipleConfirmedInstancesOfContactError(contactPrincipal, string(contactType), numExistingConfirmedContacts, true)
 			logger.Error(errMsg, zap.Reflect("error", err))
 			apptelemetry.SetSpanOriginalError(span, err, errMsg)
 		} else {
@@ -503,9 +504,9 @@ func (us userService) checkForExistingConfirmedContacts(ctx context.Context, log
 			errorFields := make(map[string]interface{})
 			errorFields["numExistingConfirmedContacts"] = numExistingConfirmedContacts
 			if userID == "" {
-				err = coreerrors.NewRegistrationContactAlreadyConfirmedError(contactPrincipal, contactType, errorFields, true)
+				err = coreerrors.NewRegistrationContactAlreadyConfirmedError(contactPrincipal, string(contactType), errorFields, true)
 			} else {
-				err = coreerrors.NewContactToAddAlreadyConfirmedError(userID, contactPrincipal, contactType, errorFields, true)
+				err = coreerrors.NewContactToAddAlreadyConfirmedError(userID, contactPrincipal, string(contactType), errorFields, true)
 			}
 			logger.Error(errMsg, zap.Reflect("error", err))
 			apptelemetry.SetSpanOriginalError(span, err, errMsg)

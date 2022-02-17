@@ -28,20 +28,20 @@ var (
 )
 
 func setupContactTestData(t *testing.T, testHarness RepoTestHarnessInput) {
-	newEmailContact1 = models.NewContact(testUser1.ID, "", "testuser1@domain.org", core.CONTACT_TYPE_EMAIL, true)
+	newEmailContact1 = models.NewContact(testUser1.ID, "", "testuser1@domain.org", core.Email, true)
 	newEmailContact1.ConfirmedDate.Set(time.Now().UTC())
 
-	newEmailContact2 = models.NewContact(testUser1.ID, "", "frank@app.space", core.CONTACT_TYPE_EMAIL, false)
+	newEmailContact2 = models.NewContact(testUser1.ID, "", "frank@app.space", core.Email, false)
 
-	newEmailContact3 = models.NewContact(testUser1.ID, "", "jeremy@app.space", core.CONTACT_TYPE_EMAIL, false)
+	newEmailContact3 = models.NewContact(testUser1.ID, "", "jeremy@app.space", core.Email, false)
 	newEmailContact3.ConfirmedDate.Set(time.Now().UTC())
 
-	newMobileContact1 = models.NewContact(testUser1.ID, "", "555-555-5555", core.CONTACT_TYPE_MOBILE, false)
+	newMobileContact1 = models.NewContact(testUser1.ID, "", "555-555-5555", core.Mobile, false)
 	newEmailContact1.ConfirmedDate.Set(time.Now().UTC())
 
-	newMobileContact2 = models.NewContact(testUser1.ID, "", "444-444-4444", core.CONTACT_TYPE_MOBILE, false)
+	newMobileContact2 = models.NewContact(testUser1.ID, "", "444-444-4444", core.Mobile, false)
 
-	noMatchingUserContact = models.NewContact(testHarness.IDGenerator(false), "", "email@email.email", core.CONTACT_TYPE_MOBILE, false)
+	noMatchingUserContact = models.NewContact(testHarness.IDGenerator(false), "", "email@email.email", core.Mobile, false)
 
 	nonExistantContactID = testHarness.IDGenerator(false)
 }
@@ -172,7 +172,7 @@ func _testGetPrimaryContactByUserID(t *testing.T, contactRepo repo.ContactRepo) 
 	type testCase struct {
 		name              string
 		userID            string
-		contactType       string
+		contactType       core.ContactType
 		expectedContactID string
 		expectedErrorCode string
 	}
@@ -180,13 +180,13 @@ func _testGetPrimaryContactByUserID(t *testing.T, contactRepo repo.ContactRepo) 
 		{
 			name:              "GIVEN an existing user id with a primary contact EXPECT the primary contact to be returned",
 			userID:            testUser1.ID,
-			contactType:       core.CONTACT_TYPE_EMAIL,
+			contactType:       core.Email,
 			expectedContactID: newEmailContact1.ID,
 		},
 		{
 			name:              "GIVEN an nonexistant user id EXPECT error no user found",
 			userID:            nonExistantUserID,
-			contactType:       core.CONTACT_TYPE_EMAIL,
+			contactType:       core.Email,
 			expectedErrorCode: coreerrors.ErrCodeNoContactFound,
 		},
 	}
@@ -277,7 +277,7 @@ func _testGetContactsByUserIDAndType(t *testing.T, contactRepo repo.ContactRepo)
 	type testCase struct {
 		name               string
 		userID             string
-		contactType        string
+		contactType        core.ContactType
 		expectedContactIds []string
 		expectedErrorCode  string
 	}
@@ -285,7 +285,7 @@ func _testGetContactsByUserIDAndType(t *testing.T, contactRepo repo.ContactRepo)
 		{
 			name:        "GIVEN a valid user id and contact type EXPECT contacts of that type returned",
 			userID:      testUser1.ID,
-			contactType: core.CONTACT_TYPE_EMAIL,
+			contactType: core.Email,
 			expectedContactIds: []string{
 				newEmailContact1.ID,
 				newEmailContact2.ID,
@@ -295,7 +295,7 @@ func _testGetContactsByUserIDAndType(t *testing.T, contactRepo repo.ContactRepo)
 		{
 			name:        "GIVEN a valid user id and contact type #2 EXPECT contacts of that type returned",
 			userID:      testUser1.ID,
-			contactType: core.CONTACT_TYPE_MOBILE,
+			contactType: core.Mobile,
 			expectedContactIds: []string{
 				newMobileContact1.ID,
 				newMobileContact2.ID,
@@ -304,7 +304,7 @@ func _testGetContactsByUserIDAndType(t *testing.T, contactRepo repo.ContactRepo)
 		{
 			name:               "GIVEN a valid user id and contact type that has no contacts of that type EXPECT 0 contacts to be returned",
 			userID:             testUser2.ID,
-			contactType:        core.CONTACT_TYPE_EMAIL,
+			contactType:        core.Email,
 			expectedContactIds: []string{},
 		},
 		{
@@ -404,7 +404,7 @@ func _testGetExistingConfirmedContactsCountByPrincipalAndType(t *testing.T, cont
 	type testCase struct {
 		name                     string
 		contactPrincipal         string
-		contactType              string
+		contactType              core.ContactType
 		expectedNumberOfContacts int64
 		expectedErrorCode        string
 	}

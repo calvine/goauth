@@ -119,7 +119,7 @@ func setupTestUserServiceData(t *testing.T, userRepo repo.UserRepo, contactRepo 
 	}
 
 	// add confirmed user confirmed primary contact
-	userServiceTest_ConfirmedUser_ConfirmedPrimaryContact = models.NewContact(userServiceTest_ConfirmedUser.ID, "", userServiceTest_ConfirmedUser_ConfirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, true)
+	userServiceTest_ConfirmedUser_ConfirmedPrimaryContact = models.NewContact(userServiceTest_ConfirmedUser.ID, "", userServiceTest_ConfirmedUser_ConfirmedPrimaryEmail, core.Email, true)
 	// confirm the contact
 	userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.ConfirmedDate.Set(time.Now().Add(time.Minute * -1))
 	err = contactRepo.AddContact(context.TODO(), &userServiceTest_ConfirmedUser_ConfirmedPrimaryContact, userServiceTest_CreatedBy)
@@ -130,7 +130,7 @@ func setupTestUserServiceData(t *testing.T, userRepo repo.UserRepo, contactRepo 
 	}
 
 	// add confirmed user confirmed seconday contact
-	userServiceTest_ConfirmedUser_ConfirmedSecondaryContact = models.NewContact(userServiceTest_ConfirmedUser.ID, "", userServiceTest_ConfirmedUser_ConfirmedSecondaryEmail, core.CONTACT_TYPE_EMAIL, false)
+	userServiceTest_ConfirmedUser_ConfirmedSecondaryContact = models.NewContact(userServiceTest_ConfirmedUser.ID, "", userServiceTest_ConfirmedUser_ConfirmedSecondaryEmail, core.Email, false)
 	// confirm the contact
 	userServiceTest_ConfirmedUser_ConfirmedSecondaryContact.ConfirmedDate.Set(time.Now().Add(time.Minute * -1))
 	err = contactRepo.AddContact(context.TODO(), &userServiceTest_ConfirmedUser_ConfirmedSecondaryContact, userServiceTest_CreatedBy)
@@ -141,7 +141,7 @@ func setupTestUserServiceData(t *testing.T, userRepo repo.UserRepo, contactRepo 
 	}
 
 	// add confirmed user unconfirmed seconday contact
-	userServiceTest_ConfirmedUser_UnconfirmedSecondaryContact = models.NewContact(userServiceTest_ConfirmedUser.ID, "", userServiceTest_ConfirmedUser_UnconfirmedSecondaryEmail, core.CONTACT_TYPE_EMAIL, false)
+	userServiceTest_ConfirmedUser_UnconfirmedSecondaryContact = models.NewContact(userServiceTest_ConfirmedUser.ID, "", userServiceTest_ConfirmedUser_UnconfirmedSecondaryEmail, core.Email, false)
 	err = contactRepo.AddContact(context.TODO(), &userServiceTest_ConfirmedUser_UnconfirmedSecondaryContact, userServiceTest_CreatedBy)
 	if err != nil {
 		t.Log(err.Error())
@@ -150,7 +150,7 @@ func setupTestUserServiceData(t *testing.T, userRepo repo.UserRepo, contactRepo 
 	}
 
 	// add confirmed user confirmed primary mobile contact
-	userServiceTest_ConfirmedUser_ConfirmedPrimaryMobileContact = models.NewContact(userServiceTest_ConfirmedUser.ID, "", userServiceTest_ConfirmedUser_ConfirmedPrimaryMobile, core.CONTACT_TYPE_MOBILE, true)
+	userServiceTest_ConfirmedUser_ConfirmedPrimaryMobileContact = models.NewContact(userServiceTest_ConfirmedUser.ID, "", userServiceTest_ConfirmedUser_ConfirmedPrimaryMobile, core.Mobile, true)
 	// confirm the contact
 	userServiceTest_ConfirmedUser_ConfirmedPrimaryMobileContact.ConfirmedDate.Set(time.Now().Add(time.Minute * -1))
 	err = contactRepo.AddContact(context.TODO(), &userServiceTest_ConfirmedUser_ConfirmedPrimaryMobileContact, userServiceTest_CreatedBy)
@@ -161,7 +161,7 @@ func setupTestUserServiceData(t *testing.T, userRepo repo.UserRepo, contactRepo 
 	}
 
 	// add confirmed user unconfirmed secondary mobile contact
-	userServiceTest_ConfirmedUser_UnconfirmedSecondaryMobileContact = models.NewContact(userServiceTest_ConfirmedUser.ID, "", userServiceTest_ConfirmedUser_UnconfirmedSecondaryMobile, core.CONTACT_TYPE_MOBILE, false)
+	userServiceTest_ConfirmedUser_UnconfirmedSecondaryMobileContact = models.NewContact(userServiceTest_ConfirmedUser.ID, "", userServiceTest_ConfirmedUser_UnconfirmedSecondaryMobile, core.Mobile, false)
 	err = contactRepo.AddContact(context.TODO(), &userServiceTest_ConfirmedUser_UnconfirmedSecondaryMobileContact, userServiceTest_CreatedBy)
 	if err != nil {
 		t.Log(err.Error())
@@ -181,7 +181,7 @@ func setupTestUserServiceData(t *testing.T, userRepo repo.UserRepo, contactRepo 
 	}
 
 	// add unconfrimed user unconfirmed primary contact
-	userServiceTest_UnconfirmedUser_UnconfirmedPrimaryContact = models.NewContact(userServiceTest_UnconfirmedUser.ID, "", userServiceTest_UnconfirmedUser_UnconfirmedPrimaryEmail, core.CONTACT_TYPE_EMAIL, true)
+	userServiceTest_UnconfirmedUser_UnconfirmedPrimaryContact = models.NewContact(userServiceTest_UnconfirmedUser.ID, "", userServiceTest_UnconfirmedUser_UnconfirmedPrimaryEmail, core.Email, true)
 	err = contactRepo.AddContact(context.TODO(), &userServiceTest_UnconfirmedUser_UnconfirmedPrimaryContact, userServiceTest_CreatedBy)
 	if err != nil {
 		t.Log(err.Error())
@@ -258,7 +258,7 @@ func _testGetUserAndContactByConfirmedContact(t *testing.T, userService services
 	type testCase struct {
 		name              string
 		contactPrincipal  string
-		contactType       string
+		contactType       core.ContactType
 		expectedUserID    string
 		expectedContactID string
 		expectedErrorCode string
@@ -267,27 +267,27 @@ func _testGetUserAndContactByConfirmedContact(t *testing.T, userService services
 		{
 			name:              "Given confirmed primary contact Return User",
 			contactPrincipal:  userServiceTest_ConfirmedUser_ConfirmedPrimaryEmail,
-			contactType:       core.CONTACT_TYPE_EMAIL,
+			contactType:       core.Email,
 			expectedUserID:    userServiceTest_ConfirmedUser.ID,
 			expectedContactID: userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.ID,
 		},
 		{
 			name:              "Given confirmed secondary contact Return User",
 			contactPrincipal:  userServiceTest_ConfirmedUser_ConfirmedSecondaryEmail,
-			contactType:       core.CONTACT_TYPE_EMAIL,
+			contactType:       core.Email,
 			expectedUserID:    userServiceTest_ConfirmedUser.ID,
 			expectedContactID: userServiceTest_ConfirmedUser_ConfirmedSecondaryContact.ID,
 		},
 		{
 			name:              "Given unconfirmed contact Return error code no user found",
 			contactPrincipal:  userServiceTest_ConfirmedUser_UnconfirmedSecondaryEmail,
-			contactType:       core.CONTACT_TYPE_EMAIL,
+			contactType:       core.Email,
 			expectedErrorCode: coreerrors.ErrCodeNoUserFound,
 		},
 		{
 			name:              "Given non existant contact Return No User Found Error",
 			contactPrincipal:  "ojhgfiujwsfiogh@oiwujhgfiwsrb.dofuhsfoiuds",
-			contactType:       core.CONTACT_TYPE_EMAIL,
+			contactType:       core.Email,
 			expectedErrorCode: coreerrors.ErrCodeNoUserFound,
 		},
 	}
@@ -315,30 +315,30 @@ func _testRegisterUserAndPrimaryContact(t *testing.T, userService services.UserS
 	type testCase struct {
 		name              string
 		contactPrincipal  string
-		contactType       string
+		contactType       core.ContactType
 		expectedErrorCode string
 	}
 	testCases := []testCase{
 		{
 			name:             "GIVEN unregistered contact EXPECT Successful registration new user and contact",
 			contactPrincipal: userServiceTest_UserToRegisterEmail,
-			contactType:      core.CONTACT_TYPE_EMAIL,
+			contactType:      core.Email,
 		},
 		{
 			name:             "GIVEN previously registered unconfirmed contact EXPECT successful registration new user and contact",
 			contactPrincipal: userServiceTest_ConfirmedUser_UnconfirmedSecondaryEmail,
-			contactType:      core.CONTACT_TYPE_EMAIL,
+			contactType:      core.Email,
 		},
 		{
 			name:              "GIVEN the provided contact is already confirmed in the data store EXPECT error contact already confirmed",
 			contactPrincipal:  userServiceTest_ConfirmedUser_ConfirmedSecondaryEmail,
-			contactType:       core.CONTACT_TYPE_EMAIL,
+			contactType:       core.Email,
 			expectedErrorCode: coreerrors.ErrCodeRegistrationContactAlreadyConfirmed,
 		},
 		{
 			name:              "GIVEN an invalid contact principal of the given type contact EXPECT error code invalid contact principal",
 			contactPrincipal:  "not a valid email",
-			contactType:       core.CONTACT_TYPE_EMAIL,
+			contactType:       core.Email,
 			expectedErrorCode: coreerrors.ErrCodeInvalidContactPrincipal,
 		},
 		{
@@ -386,7 +386,7 @@ func _testGetUserPrimaryContact(t *testing.T, userService services.UserService) 
 	type testCase struct {
 		name              string
 		userID            string
-		contactType       string
+		contactType       core.ContactType
 		expectedContactID string
 		expectedErrorCode string
 	}
@@ -394,7 +394,7 @@ func _testGetUserPrimaryContact(t *testing.T, userService services.UserService) 
 		{
 			name:              "GIVEN a valid user id EXPECT that users primary contact",
 			userID:            userServiceTest_ConfirmedUser.ID,
-			contactType:       core.CONTACT_TYPE_EMAIL,
+			contactType:       core.Email,
 			expectedContactID: userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.ID,
 		},
 	}
@@ -531,7 +531,7 @@ func _testGetUsersContactsOfType(t *testing.T, userService services.UserService)
 	type testCase struct {
 		name               string
 		userID             string
-		contactType        string
+		contactType        core.ContactType
 		expectedContactIDs []string
 		expectedErrorCode  string
 	}
@@ -539,7 +539,7 @@ func _testGetUsersContactsOfType(t *testing.T, userService services.UserService)
 		{
 			name:        "GIVEN a valid user id and contact type EXPECT all confirmed contacts associated with that user",
 			userID:      userServiceTest_ConfirmedUser.ID,
-			contactType: core.CONTACT_TYPE_EMAIL,
+			contactType: core.Email,
 			expectedContactIDs: []string{
 				userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.ID,
 				userServiceTest_ConfirmedUser_ConfirmedSecondaryContact.ID,
@@ -549,7 +549,7 @@ func _testGetUsersContactsOfType(t *testing.T, userService services.UserService)
 		{
 			name:        "GIVEN a valid user id and contact type EXPECT all confirmed contacts associated with that user #2",
 			userID:      userServiceTest_ConfirmedUser.ID,
-			contactType: core.CONTACT_TYPE_MOBILE,
+			contactType: core.Mobile,
 			expectedContactIDs: []string{
 				userServiceTest_ConfirmedUser_ConfirmedPrimaryMobileContact.ID,
 				userServiceTest_ConfirmedUser_UnconfirmedSecondaryMobileContact.ID,
@@ -601,7 +601,7 @@ func _testGetUsersConfirmedContactsOfType(t *testing.T, userService services.Use
 	type testCase struct {
 		name               string
 		userID             string
-		contactType        string
+		contactType        core.ContactType
 		expectedContactIDs []string
 		expectedErrorCode  string
 	}
@@ -609,7 +609,7 @@ func _testGetUsersConfirmedContactsOfType(t *testing.T, userService services.Use
 		{
 			name:        "GIVEN a valid user id and contact type EXPECT all confirmed contacts associated with that user",
 			userID:      userServiceTest_ConfirmedUser.ID,
-			contactType: core.CONTACT_TYPE_EMAIL,
+			contactType: core.Email,
 			expectedContactIDs: []string{
 				userServiceTest_ConfirmedUser_ConfirmedPrimaryContact.ID,
 				userServiceTest_ConfirmedUser_ConfirmedSecondaryContact.ID,
@@ -618,7 +618,7 @@ func _testGetUsersConfirmedContactsOfType(t *testing.T, userService services.Use
 		{
 			name:        "GIVEN a valid user id and contact type EXPECT all confirmed contacts associated with that user #2",
 			userID:      userServiceTest_ConfirmedUser.ID,
-			contactType: core.CONTACT_TYPE_MOBILE,
+			contactType: core.Mobile,
 			expectedContactIDs: []string{
 				userServiceTest_ConfirmedUser_ConfirmedPrimaryMobileContact.ID,
 			},
@@ -671,7 +671,7 @@ func _testAddContact(t *testing.T, userService services.UserService) {
 		userID            string
 		contactUserID     string
 		contactPrincipal  string
-		contactType       string
+		contactType       core.ContactType
 		contactIsPrimary  bool
 		expectedErrorCode string
 	}
@@ -681,7 +681,7 @@ func _testAddContact(t *testing.T, userService services.UserService) {
 			userID:           userServiceTest_ConfirmedUser.ID,
 			contactUserID:    userServiceTest_ConfirmedUser.ID,
 			contactPrincipal: "contact_to_add_7y6egdf7cya@email.com",
-			contactType:      core.CONTACT_TYPE_EMAIL,
+			contactType:      core.Email,
 			contactIsPrimary: false,
 		},
 		{
@@ -697,7 +697,7 @@ func _testAddContact(t *testing.T, userService services.UserService) {
 			userID:            userServiceTest_ConfirmedUser.ID,
 			contactUserID:     userServiceTest_ConfirmedUser.ID,
 			contactPrincipal:  "contact_to_add_208yu7fiwr@email.com",
-			contactType:       core.CONTACT_TYPE_EMAIL,
+			contactType:       core.Email,
 			contactIsPrimary:  true,
 			expectedErrorCode: coreerrors.ErrCodeContactToAddMarkedAsPrimary,
 		},
@@ -715,7 +715,7 @@ func _testAddContact(t *testing.T, userService services.UserService) {
 			userID:            userServiceTest_UnconfirmedUser.ID,
 			contactUserID:     userServiceTest_ConfirmedUser.ID,
 			contactPrincipal:  "contact_to_add_56yhgvfdew@email.com",
-			contactType:       core.CONTACT_TYPE_EMAIL,
+			contactType:       core.Email,
 			contactIsPrimary:  false,
 			expectedErrorCode: coreerrors.ErrCodeUserIDsDoNotMatch,
 		},
@@ -724,7 +724,7 @@ func _testAddContact(t *testing.T, userService services.UserService) {
 			userID:            userServiceTest_UnconfirmedUser.ID,
 			contactUserID:     userServiceTest_UnconfirmedUser.ID,
 			contactPrincipal:  "not a valid email",
-			contactType:       core.CONTACT_TYPE_EMAIL,
+			contactType:       core.Email,
 			contactIsPrimary:  false,
 			expectedErrorCode: coreerrors.ErrCodeInvalidContactPrincipal,
 		},
@@ -783,7 +783,7 @@ func _testSetContactAsPrimary(t *testing.T, userService services.UserService, co
 	type testCase struct {
 		name                            string
 		userID                          string
-		contactType                     string
+		contactType                     core.ContactType
 		newPrimaryContactID             string
 		expectedCurrentPrimaryContactID string
 		expectedErrorCode               string
@@ -956,7 +956,7 @@ func _testGetContactByID(t *testing.T, userService services.UserService) {
 	type testCase struct {
 		name                     string
 		contactID                string
-		expectedContactType      string
+		expectedContactType      core.ContactType
 		expectedContactPrincipal string
 		expectedErrorCode        string
 	}

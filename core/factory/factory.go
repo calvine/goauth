@@ -20,11 +20,11 @@ type JWTValidatorFactory interface {
 }
 
 type ServiceLinkFactory interface {
-	CreateLink(linkPath string) (string, errors.RichError)
+	CreateLink(linkPath string, queryParams map[string]string) (string, errors.RichError)
 	CreatePasswordResetLink(passwordResetToken string) (string, errors.RichError)
 	CreateConfirmContactLink(confirmContactToken string) (string, errors.RichError)
-	// Login
-	// Magic Login
-	// User Register
-	// Eventuallt app management urls
+	CreateLoginLink() (string, errors.RichError)
+	CreateMagicLoginLink(magicLoginToken string) (string, errors.RichError)
+	CreateUserRegisterLink() (string, errors.RichError)
+	// Eventually app management urls
 }

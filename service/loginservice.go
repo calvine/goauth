@@ -68,10 +68,10 @@ func (loginService) GetName() string {
 
 // TODO: Add audit logging
 
-func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.Logger, principal, principalType, password string, initiator string) (models.User, errors.RichError) {
+func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.Logger, contactType core.ContactType, principal string, password string, initiator string) (models.User, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, ls.GetName(), "LoginWithPrimaryContact")
 	defer span.End()
-	user, contact, err := ls.userRepo.GetUserAndContactByConfirmedContact(ctx, principalType, principal)
+	user, contact, err := ls.userRepo.GetUserAndContactByConfirmedContact(ctx, contactType, principal)
 	if err != nil {
 		logger.Error("userRepo.GetUserAndContactByConfirmedContact call failed", zap.Reflect("error", err))
 		apptelemetry.SetSpanError(&span, err, "")
@@ -88,7 +88,7 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.
 		return models.User{}, err
 	}
 	if !contact.IsPrimary {
-		err := coreerrors.NewLoginContactNotPrimaryError(contact.ID, contact.Principal, contact.Type, true)
+		err := coreerrors.NewLoginContactNotPrimaryError(contact.ID, contact.Principal, string(contact.Type), true)
 		logger.Error(err.GetErrorMessage(), zap.Reflect("error", err))
 		evtString := fmt.Sprintf("contact user is not primary: %s of type %s", contact.Principal, contact.Type)
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
@@ -96,7 +96,7 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.
 	}
 	// TODO: remove this I guess because if the contact is not confirmed then GetUserAndContactByConfirmedContact will not return anything
 	if !contact.IsConfirmed() { // || contact.ConfirmedDate.Value.After(now)
-		err := coreerrors.NewLoginPrimaryContactNotConfirmedError(contact.ID, contact.Principal, contact.Type, true)
+		err := coreerrors.NewLoginPrimaryContactNotConfirmedError(contact.ID, contact.Principal, string(contact.Type), true)
 		logger.Error(err.GetErrorMessage(), zap.Reflect("error", err))
 		evtString := fmt.Sprintf("contact is not confirmed: %s of type %s", contact.Principal, contact.Type)
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
@@ -144,7 +144,7 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.
 }
 
 // TODO: remove string from return and make work like rgistration call. test with stackemailservice
-func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, logger *zap.Logger, principal, principalType string, initiator string) (string, errors.RichError) {
+func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, logger *zap.Logger, principalType core.ContactType, principal string, initiator string) (string, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, ls.GetName(), "StartPasswordResetByPrimaryContact")
 	defer span.End()
 	user, contact, err := ls.userRepo.GetUserAndContactByConfirmedContact(ctx, principalType, principal)
@@ -156,7 +156,7 @@ func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, l
 	span.AddEvent("user and contact retreived from repo")
 	if !contact.IsPrimary {
 		evtString := fmt.Sprintf("contact user is not primary: %s of type %s", contact.Principal, contact.Type)
-		err := coreerrors.NewPasswordResetContactNotPrimaryError(contact.ID, contact.Principal, contact.Type, true)
+		err := coreerrors.NewPasswordResetContactNotPrimaryError(contact.ID, contact.Principal, string(contact.Type), true)
 		logger.Error(evtString, zap.Reflect("error", err))
 		apptelemetry.SetSpanOriginalError(&span, err, evtString)
 		return "", err
@@ -179,7 +179,7 @@ func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, l
 	}
 	span.AddEvent("new password reset token stored in repo")
 	switch contact.Type {
-	case core.CONTACT_TYPE_EMAIL:
+	case core.Email:
 		// TODO: create template for this...
 		body := fmt.Sprintf("A Password reset has been initiated. Your password reset token is: %s", token.Value)
 		emailMessage := email.EmailMessage{

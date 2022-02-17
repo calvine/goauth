@@ -107,7 +107,7 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 			redirectToErrorPage(rw, r, errorMsg, http.StatusInternalServerError)
 			return
 		}
-		user, err := s.loginService.LoginWithPrimaryContact(ctx, s.logger, email, core.CONTACT_TYPE_EMAIL, password, "login post handler")
+		user, err := s.loginService.LoginWithPrimaryContact(ctx, s.logger, core.Email, email, password, "login post handler")
 		if err != nil {
 			var errorMsg string
 			switch err.GetErrorCode() {

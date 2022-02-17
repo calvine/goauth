@@ -52,20 +52,20 @@ func TestContactIsConfirmed(t *testing.T) {
 func TestNormalizeContactPrincipal(t *testing.T) {
 	type testCase struct {
 		name                               string
-		contactType                        string
+		contactType                        core.ContactType
 		contactPrincipal                   string
 		expectedNormalizedContactPrincipal string
 	}
 	testCases := []testCase{
 		{
 			name:                               "GIVEN a email contact EXPECT the contact principal to be converted to lower case",
-			contactType:                        core.CONTACT_TYPE_EMAIL,
+			contactType:                        core.Email,
 			contactPrincipal:                   "My_Email_123@email.org",
 			expectedNormalizedContactPrincipal: "my_email_123@email.org",
 		},
 		{
 			name:                               "GIVEN a mobile contact EXPECT the contact principal to have any dashes removed",
-			contactType:                        core.CONTACT_TYPE_MOBILE,
+			contactType:                        core.Mobile,
 			contactPrincipal:                   "+1-478-867-5309",
 			expectedNormalizedContactPrincipal: "+14788675309",
 		},

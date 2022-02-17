@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/apptelemetry"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
@@ -55,7 +56,7 @@ func (cr contactRepo) GetContactByID(ctx context.Context, id string) (models.Con
 	return contact, nil
 }
 
-func (cr contactRepo) GetPrimaryContactByUserID(ctx context.Context, userID string, contactType string) (models.Contact, errors.RichError) {
+func (cr contactRepo) GetPrimaryContactByUserID(ctx context.Context, userID string, contactType core.ContactType) (models.Contact, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, cr.GetName(), "GetPrimaryContactByUserID", cr.GetType())
 	defer span.End()
 	var contact models.Contact
@@ -112,7 +113,7 @@ func (cr contactRepo) GetContactsByUserID(ctx context.Context, userID string) ([
 	return contacts, nil
 }
 
-func (cr contactRepo) GetContactsByUserIDAndType(ctx context.Context, userID string, contactType string) ([]models.Contact, errors.RichError) {
+func (cr contactRepo) GetContactsByUserIDAndType(ctx context.Context, userID string, contactType core.ContactType) ([]models.Contact, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, cr.GetName(), "GetContactsByUserID", cr.GetType())
 	defer span.End()
 	contacts := make([]models.Contact, 0)
@@ -173,7 +174,7 @@ func (cr contactRepo) UpdateContact(ctx context.Context, contact *models.Contact
 	return nil
 }
 
-func (cr contactRepo) GetExistingConfirmedContactsCountByPrincipalAndType(ctx context.Context, contactType, contactPrincipal string) (int64, errors.RichError) {
+func (cr contactRepo) GetExistingConfirmedContactsCountByPrincipalAndType(ctx context.Context, contactType core.ContactType, contactPrincipal string) (int64, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, cr.GetName(), "GetExistingConfirmedContactsCountByPrincipalAndType", cr.GetType())
 	defer span.End()
 	numConfirmedContacts := int64(0)

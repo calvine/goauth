@@ -20,14 +20,14 @@ type Contact struct {
 	Name          nullable.NullableString `bson:"name"`
 	RawPrincipal  string                  `bson:"rawPrincipal"`
 	Principal     string                  `bson:"principal"`
-	Type          string                  `bson:"type"`
+	Type          core.ContactType        `bson:"type"`
 	IsPrimary     bool                    `bson:"isPrimary"`
 	ConfirmedDate nullable.NullableTime   `bson:"confirmedDate"`
 	AuditData     auditable               `bson:",inline"`
 }
 
 // TODO: write unit tests
-func NewContact(userID, name, principal, contactType string, isPrimary bool) Contact {
+func NewContact(userID, name, principal string, contactType core.ContactType, isPrimary bool) Contact {
 	nameIsPopulated := name != ""
 	normalizedPrincipal := NormalizeContactPrincipal(contactType, principal)
 	// TODO: validate contact type is valid and contact principal is populate or valid
@@ -47,20 +47,20 @@ func (c *Contact) IsConfirmed() bool {
 		c.ConfirmedDate.Value.Before(now)
 }
 
-func IsValidContactType(contactType string) errors.RichError {
+func IsValidContactType(contactType core.ContactType) errors.RichError {
 	switch contactType {
-	case core.CONTACT_TYPE_EMAIL:
+	case core.Email:
 		return nil
-	case core.CONTACT_TYPE_MOBILE:
+	case core.Mobile:
 		return nil
 	}
-	return coreerrors.NewInvalidContactTypeError(contactType, true)
+	return coreerrors.NewInvalidContactTypeError(string(contactType), true)
 }
 
-func NormalizeContactPrincipal(contactType, contactPrincipal string) string {
+func NormalizeContactPrincipal(contactType core.ContactType, contactPrincipal string) string {
 	var normalizedPrincipal string
 	switch contactType {
-	case core.CONTACT_TYPE_MOBILE:
+	case core.Mobile:
 		// remove dashes
 		normalizedPrincipal = strings.ReplaceAll(contactPrincipal, "-", "")
 	default:
@@ -70,17 +70,17 @@ func NormalizeContactPrincipal(contactType, contactPrincipal string) string {
 	return normalizedPrincipal
 }
 
-func IsValidNormalizedContactPrincipal(contactType, normalizedContactPrincipal string) errors.RichError {
+func IsValidNormalizedContactPrincipal(contactType core.ContactType, normalizedContactPrincipal string) errors.RichError {
 	if normalizedContactPrincipal == "" {
 		// an empty string is never valid...
-		return coreerrors.NewInvalidContactPrincipalError(normalizedContactPrincipal, contactType, true)
+		return coreerrors.NewInvalidContactPrincipalError(normalizedContactPrincipal, string(contactType), true)
 	}
 	// TODO: implement this for mobile...
 	switch contactType {
-	case core.CONTACT_TYPE_EMAIL:
+	case core.Email:
 		_, err := mail.ParseAddress(normalizedContactPrincipal)
 		if err != nil {
-			return coreerrors.NewInvalidContactPrincipalError(normalizedContactPrincipal, contactType, true)
+			return coreerrors.NewInvalidContactPrincipalError(normalizedContactPrincipal, string(contactType), true)
 		}
 		return nil
 	default:

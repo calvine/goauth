@@ -94,7 +94,7 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 		var errorMsg string
 		var templateRenderError errors.RichError
 		// TODO: make this a param from the form
-		contactType := core.CONTACT_TYPE_EMAIL
+		contactType := core.Email
 		principal := r.FormValue("principal")
 		csrfTokenValue := r.FormValue("csrf_token")
 		_, err := s.tokenService.GetToken(ctx, logger, csrfTokenValue, models.TokenTypeCSRF)
@@ -127,7 +127,7 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 			logger.Error("failed to register user with contact provided",
 				zap.String("reason", errorMsg),
 				zap.String("contactPrincipal", principal),
-				zap.String("contactType", contactType),
+				zap.String("contactType", string(contactType)),
 				zap.Reflect("error", err),
 			)
 			apptelemetry.SetSpanError(&span, err, errorMsg)
