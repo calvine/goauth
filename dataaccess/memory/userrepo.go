@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/apptelemetry"
+	"github.com/calvine/goauth/core/constants/contact"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/nullable"
@@ -79,7 +79,7 @@ func (ur userRepo) UpdateUser(ctx context.Context, user *models.User, modifiedBy
 	return nil
 }
 
-func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactPrincipalType core.ContactType, contactPrincipal string) (models.User, errors.RichError) {
+func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactPrincipalType contact.Type, contactPrincipal string) (models.User, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetUserByPrimaryContact", ur.GetType())
 	defer span.End()
 	var user models.User
@@ -122,7 +122,7 @@ func (ur userRepo) GetUserByPrimaryContact(ctx context.Context, contactPrincipal
 	return user, nil
 }
 
-func (ur userRepo) GetUserAndContactByConfirmedContact(ctx context.Context, contactType core.ContactType, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
+func (ur userRepo) GetUserAndContactByConfirmedContact(ctx context.Context, contactType contact.Type, contactPrincipal string) (models.User, models.Contact, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetUserAndContactByConfirmedContact", ur.GetType())
 	defer span.End()
 	var user models.User

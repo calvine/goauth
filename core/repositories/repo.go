@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/calvine/goauth/core"
+	"github.com/calvine/goauth/core/constants/contact"
 	"github.com/calvine/goauth/core/jwt"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/richerror/errors"
@@ -41,9 +42,9 @@ type UserRepo interface {
 	// UpdateUser updates a user record
 	UpdateUser(ctx context.Context, user *models.User, modifiedByID string) errors.RichError
 	// GetUserByPrimaryContact gets the user by their primary contact
-	GetUserByPrimaryContact(ctx context.Context, contactPrincipalType core.ContactType, contactPrincipal string) (models.User, errors.RichError)
+	GetUserByPrimaryContact(ctx context.Context, contactPrincipalType contact.Type, contactPrincipal string) (models.User, errors.RichError)
 	// GetUserAndContactByConfirmedContact gets the user and the primary contact by a confirmed contact principal and contactType
-	GetUserAndContactByConfirmedContact(ctx context.Context, contactType core.ContactType, contactPrincipal string) (models.User, models.Contact, errors.RichError)
+	GetUserAndContactByConfirmedContact(ctx context.Context, contactType contact.Type, contactPrincipal string) (models.User, models.Contact, errors.RichError)
 
 	Repo
 }
@@ -54,17 +55,17 @@ type ContactRepo interface {
 	// GetContactByContactID gets a contact by its id
 	GetContactByID(ctx context.Context, id string) (models.Contact, errors.RichError)
 	// GetPrimaryContactByUserID gets a users primary contact by user id
-	GetPrimaryContactByUserID(ctx context.Context, userID string, contactType core.ContactType) (models.Contact, errors.RichError)
+	GetPrimaryContactByUserID(ctx context.Context, userID string, contactType contact.Type) (models.Contact, errors.RichError)
 	// GetContactsByUserID get all of a users contacts by user id
 	GetContactsByUserID(ctx context.Context, userID string) ([]models.Contact, errors.RichError)
 	// GetContactsByUserIDAndType get all contacts belonging to the user based on the userID of the given type
-	GetContactsByUserIDAndType(ctx context.Context, userID string, contactType core.ContactType) ([]models.Contact, errors.RichError)
+	GetContactsByUserIDAndType(ctx context.Context, userID string, contactType contact.Type) ([]models.Contact, errors.RichError)
 	// AddContact adds a user contact
 	AddContact(ctx context.Context, contact *models.Contact, createdByID string) errors.RichError
 	// UpdateContact updates a users contact
 	UpdateContact(ctx context.Context, contact *models.Contact, modifiedByID string) errors.RichError
 	// GetExistingConfirmedContactsCountByPrincipalAndType gets the count of all contact with the given principal and type which are confrimed.
-	GetExistingConfirmedContactsCountByPrincipalAndType(ctx context.Context, contactType core.ContactType, contactPrincipal string) (int64, errors.RichError)
+	GetExistingConfirmedContactsCountByPrincipalAndType(ctx context.Context, contactType contact.Type, contactPrincipal string) (int64, errors.RichError)
 	// SwapPrimaryContacts takes two contact models and sets the isPimary flag to false for previousPrimaryContact and sets the isPrimary flag to true for newPrimaryContact
 	// An important note for this function is that the contacts provided to it MUST be of the same type. this logic is contained in the service that calls this function, but is nontheless critical.
 	SwapPrimaryContacts(ctx context.Context, previousPrimaryContact, newPrimaryContact *models.Contact, modifiedBy string) errors.RichError

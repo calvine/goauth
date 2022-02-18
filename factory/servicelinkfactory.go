@@ -40,6 +40,11 @@ func (slf serviceLinkFactory) CreateLink(linkPath string, queryParams map[string
 	return u.String(), nil
 }
 
+func (slf serviceLinkFactory) CreateStaticAssetLink(linkPath string) (string, errors.RichError) {
+	lPath := path.Join("/static", linkPath)
+	return slf.CreateLink(lPath, nil)
+}
+
 func (slf serviceLinkFactory) CreatePasswordResetLink(passwordResetToken string) (string, errors.RichError) {
 	linkPath := "/user/resetpassword/" + passwordResetToken
 	return slf.CreateLink(linkPath, nil)

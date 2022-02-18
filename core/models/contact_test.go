@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/calvine/goauth/core"
+	"github.com/calvine/goauth/core/constants/contact"
 	"github.com/calvine/goauth/core/nullable"
 )
 
@@ -52,20 +52,20 @@ func TestContactIsConfirmed(t *testing.T) {
 func TestNormalizeContactPrincipal(t *testing.T) {
 	type testCase struct {
 		name                               string
-		contactType                        core.ContactType
+		contactType                        contact.Type
 		contactPrincipal                   string
 		expectedNormalizedContactPrincipal string
 	}
 	testCases := []testCase{
 		{
 			name:                               "GIVEN a email contact EXPECT the contact principal to be converted to lower case",
-			contactType:                        core.Email,
+			contactType:                        contact.Email,
 			contactPrincipal:                   "My_Email_123@email.org",
 			expectedNormalizedContactPrincipal: "my_email_123@email.org",
 		},
 		{
 			name:                               "GIVEN a mobile contact EXPECT the contact principal to have any dashes removed",
-			contactType:                        core.Mobile,
+			contactType:                        contact.Mobile,
 			contactPrincipal:                   "+1-478-867-5309",
 			expectedNormalizedContactPrincipal: "+14788675309",
 		},

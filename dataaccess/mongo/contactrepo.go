@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/apptelemetry"
+	"github.com/calvine/goauth/core/constants/contact"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/nullable"
@@ -77,7 +77,7 @@ func (ur userRepo) GetContactByID(ctx context.Context, id string) (models.Contac
 	return receiver.Contact[0].ToCoreContact(), nil
 }
 
-func (ur userRepo) GetPrimaryContactByUserID(ctx context.Context, userID string, contactType core.ContactType) (models.Contact, errors.RichError) {
+func (ur userRepo) GetPrimaryContactByUserID(ctx context.Context, userID string, contactType contact.Type) (models.Contact, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetPrimaryContactByUserID", ur.GetType())
 	defer span.End()
 	var receiver struct {
@@ -176,7 +176,7 @@ func (ur userRepo) GetContactsByUserID(ctx context.Context, userID string) ([]mo
 	return contacts, nil
 }
 
-func (ur userRepo) GetContactsByUserIDAndType(ctx context.Context, userID string, contactType core.ContactType) ([]models.Contact, errors.RichError) {
+func (ur userRepo) GetContactsByUserIDAndType(ctx context.Context, userID string, contactType contact.Type) ([]models.Contact, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetContactsByUserID", ur.GetType())
 	defer span.End()
 	var receiver struct {
@@ -339,7 +339,7 @@ func (ur userRepo) UpdateContact(ctx context.Context, contact *models.Contact, m
 	return nil
 }
 
-func (ur userRepo) GetExistingConfirmedContactsCountByPrincipalAndType(ctx context.Context, contactType core.ContactType, contactPrincipal string) (int64, errors.RichError) {
+func (ur userRepo) GetExistingConfirmedContactsCountByPrincipalAndType(ctx context.Context, contactType contact.Type, contactPrincipal string) (int64, errors.RichError) {
 	span := apptelemetry.CreateRepoFunctionSpan(ctx, ur.GetName(), "GetExistingConfirmedContactsCountByPrincipalAndType", ur.GetType())
 	defer span.End()
 	filter := bson.M{

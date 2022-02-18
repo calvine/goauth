@@ -1,8 +1,8 @@
 package viewmodels
 
-import "github.com/calvine/goauth/core"
+import "github.com/calvine/goauth/core/constants/contact"
 
 type AccountRegisteredTemplateData struct {
-	ContactType      core.ContactType
+	ContactType      contact.Type
 	ContactPrincipal string
 }

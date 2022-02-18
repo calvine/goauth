@@ -21,6 +21,7 @@ type JWTValidatorFactory interface {
 
 type ServiceLinkFactory interface {
 	CreateLink(linkPath string, queryParams map[string]string) (string, errors.RichError)
+	CreateStaticAssetLink(linkPath string) (string, errors.RichError)
 	CreatePasswordResetLink(passwordResetToken string) (string, errors.RichError)
 	CreateConfirmContactLink(confirmContactToken string) (string, errors.RichError)
 	CreateLoginLink() (string, errors.RichError)

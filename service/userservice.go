@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/apptelemetry"
+	contactconsts "github.com/calvine/goauth/core/constants/contact"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/models/email"
@@ -54,7 +54,7 @@ func (us userService) GetUser(ctx context.Context, logger *zap.Logger, userID st
 	return user, err
 }
 
-func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, logger *zap.Logger, contactType core.ContactType, contactPrincipal string, initiator string) (models.User, models.Contact, errors.RichError) {
+func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, logger *zap.Logger, contactType contactconsts.Type, contactPrincipal string, initiator string) (models.User, models.Contact, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "GetUserAndContactByConfirmedContact")
 	defer span.End()
 	user, contact, err := us.userRepo.GetUserAndContactByConfirmedContact(ctx, contactType, contactPrincipal)
@@ -76,7 +76,7 @@ func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, l
 	return user, contact, nil
 }
 
-func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType core.ContactType, contactPrincipal, serviceName, initiator string) errors.RichError {
+func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType contactconsts.Type, contactPrincipal, serviceName, initiator string) errors.RichError {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "RegisterUserAndPrimaryContact")
 	defer span.End()
 
@@ -163,7 +163,7 @@ func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger 
 	return nil
 }
 
-func (us userService) GetUserPrimaryContact(ctx context.Context, logger *zap.Logger, userID string, contactType core.ContactType, initiator string) (models.Contact, errors.RichError) {
+func (us userService) GetUserPrimaryContact(ctx context.Context, logger *zap.Logger, userID string, contactType contactconsts.Type, initiator string) (models.Contact, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "GetUserPrimaryContact")
 	defer span.End()
 	contact, err := us.contactRepo.GetPrimaryContactByUserID(ctx, userID, contactType)
@@ -212,7 +212,7 @@ func (us userService) GetUsersConfirmedContacts(ctx context.Context, logger *zap
 	return confirmedContacts, nil
 }
 
-func (us userService) GetUsersContactsOfType(ctx context.Context, logger *zap.Logger, userID string, contactType core.ContactType, initiator string) ([]models.Contact, errors.RichError) {
+func (us userService) GetUsersContactsOfType(ctx context.Context, logger *zap.Logger, userID string, contactType contactconsts.Type, initiator string) ([]models.Contact, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "GetUsersContactsOfType")
 	defer span.End()
 	contacts, err := us.contactRepo.GetContactsByUserIDAndType(ctx, userID, contactType)
@@ -226,7 +226,7 @@ func (us userService) GetUsersContactsOfType(ctx context.Context, logger *zap.Lo
 	return contacts, nil
 }
 
-func (us userService) GetUsersConfirmedContactsOfType(ctx context.Context, logger *zap.Logger, userID string, contactType core.ContactType, initiator string) ([]models.Contact, errors.RichError) {
+func (us userService) GetUsersConfirmedContactsOfType(ctx context.Context, logger *zap.Logger, userID string, contactType contactconsts.Type, initiator string) ([]models.Contact, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "GetUsersConfirmedContactsOfType")
 	defer span.End()
 	contacts, err := us.contactRepo.GetContactsByUserIDAndType(ctx, userID, contactType)
@@ -485,7 +485,7 @@ func (us userService) GetContactByID(ctx context.Context, logger *zap.Logger, co
 	return contact, nil
 }
 
-func (us userService) checkForExistingConfirmedContacts(ctx context.Context, logger *zap.Logger, span *trace.Span, contactType core.ContactType, contactPrincipal, userID string) errors.RichError {
+func (us userService) checkForExistingConfirmedContacts(ctx context.Context, logger *zap.Logger, span *trace.Span, contactType contactconsts.Type, contactPrincipal, userID string) errors.RichError {
 	numExistingConfirmedContacts, err := us.contactRepo.GetExistingConfirmedContactsCountByPrincipalAndType(ctx, contactType, contactPrincipal)
 	if err != nil {
 		logger.Error("contactRepo.GetExistingConfirmedContactsCountByPrincipalAndType call failed", zap.Reflect("error", err))

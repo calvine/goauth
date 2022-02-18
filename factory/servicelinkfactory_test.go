@@ -61,6 +61,45 @@ func TestCreateLink(t *testing.T) {
 	}
 }
 
+func TestCreateStaticAssetLink(t *testing.T) {
+	type testCase struct {
+		name              string
+		linkPath          string
+		expectedFullURL   string
+		expectedErrorCode string
+	}
+	testCases := []testCase{
+		{
+			name:            "GIVEN a lint path with a leading forward slash EXPECT success",
+			linkPath:        "/css/main.css",
+			expectedFullURL: fmt.Sprintf("%s/static/css/main.css", testPublicBaseURL),
+		},
+		{
+			name:            "GIVEN a link path without a leading forward slash EXPECT success",
+			linkPath:        "css/main.css",
+			expectedFullURL: fmt.Sprintf("%s/static/css/main.css", testPublicBaseURL),
+		},
+	}
+	serviceLinkFactory, err := NewServiceLinkFactory(testPublicBaseURL)
+	if err != nil {
+		t.Errorf("\tfailed to create test serviceLinkFactory with error: %s", err.Error())
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			url, err := serviceLinkFactory.CreateStaticAssetLink(tc.linkPath)
+			if err != nil {
+				testutils.HandleTestError(t, err, tc.expectedErrorCode)
+			} else if tc.expectedErrorCode != "" {
+				t.Errorf("\texpected an error to occurr: %s", tc.expectedErrorCode)
+			} else {
+				if url != tc.expectedFullURL {
+					t.Errorf("\tvalue of url was not expected: got - %s expected - %s", url, tc.expectedFullURL)
+				}
+			}
+		})
+	}
+}
+
 func TestCreatePasswordResetLink(t *testing.T) {
 	type testCase struct {
 		name               string

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/apptelemetry"
+	contactconsts "github.com/calvine/goauth/core/constants/contact"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/models/email"
@@ -68,7 +68,7 @@ func (loginService) GetName() string {
 
 // TODO: Add audit logging
 
-func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.Logger, contactType core.ContactType, principal string, password string, initiator string) (models.User, errors.RichError) {
+func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.Logger, contactType contactconsts.Type, principal string, password string, initiator string) (models.User, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, ls.GetName(), "LoginWithPrimaryContact")
 	defer span.End()
 	user, contact, err := ls.userRepo.GetUserAndContactByConfirmedContact(ctx, contactType, principal)
@@ -144,7 +144,7 @@ func (ls loginService) LoginWithPrimaryContact(ctx context.Context, logger *zap.
 }
 
 // TODO: remove string from return and make work like rgistration call. test with stackemailservice
-func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, logger *zap.Logger, principalType core.ContactType, principal string, initiator string) (string, errors.RichError) {
+func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, logger *zap.Logger, principalType contactconsts.Type, principal string, initiator string) (string, errors.RichError) {
 	span := apptelemetry.CreateFunctionSpan(ctx, ls.GetName(), "StartPasswordResetByPrimaryContact")
 	defer span.End()
 	user, contact, err := ls.userRepo.GetUserAndContactByConfirmedContact(ctx, principalType, principal)
@@ -179,7 +179,7 @@ func (ls loginService) StartPasswordResetByPrimaryContact(ctx context.Context, l
 	}
 	span.AddEvent("new password reset token stored in repo")
 	switch contact.Type {
-	case core.Email:
+	case contactconsts.Email:
 		// TODO: create template for this...
 		body := fmt.Sprintf("A Password reset has been initiated. Your password reset token is: %s", token.Value)
 		emailMessage := email.EmailMessage{

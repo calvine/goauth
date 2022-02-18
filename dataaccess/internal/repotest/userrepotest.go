@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/calvine/goauth/core"
+	"github.com/calvine/goauth/core/constants/contact"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	repo "github.com/calvine/goauth/core/repositories"
@@ -103,7 +103,7 @@ func _testGetUserByID(t *testing.T, userRepo repo.UserRepo) {
 }
 
 func _testGetUserByPrimaryContact(t *testing.T, userRepo repo.UserRepo) {
-	contactType, principal := core.Email, initialTestConfirmedPrimaryContact.Principal
+	contactType, principal := contact.Email, initialTestConfirmedPrimaryContact.Principal
 	retreivedUser, err := userRepo.GetUserByPrimaryContact(context.TODO(), contactType, principal)
 	if err != nil {
 		t.Log(err.Error())
@@ -118,7 +118,7 @@ func _testGetUserAndContactByConfrimedContact(t *testing.T, userRepo repo.UserRe
 	type testCase struct {
 		name              string
 		contactPrincipal  string
-		contactType       core.ContactType
+		contactType       contact.Type
 		expectedContactID string
 		expectedUserID    string
 		expectedErrorCode string
@@ -140,7 +140,7 @@ func _testGetUserAndContactByConfrimedContact(t *testing.T, userRepo repo.UserRe
 		{
 			name:              "GIVEN a non existant contact principal and a valid contact type EXPECT error code no user found",
 			contactPrincipal:  "NOT_A_REAL_EMAIL_456yhgtyTUHG@email.org",
-			contactType:       core.Email,
+			contactType:       contact.Email,
 			expectedErrorCode: coreerrors.ErrCodeNoUserFound,
 		},
 	}

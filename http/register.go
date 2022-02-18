@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/apptelemetry"
+	"github.com/calvine/goauth/core/constants/contact"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/utilities/ctxpropagation"
@@ -94,7 +94,7 @@ func (s *server) handleRegisterPost() http.HandlerFunc {
 		var errorMsg string
 		var templateRenderError errors.RichError
 		// TODO: make this a param from the form
-		contactType := core.Email
+		contactType := contact.Email
 		principal := r.FormValue("principal")
 		csrfTokenValue := r.FormValue("csrf_token")
 		_, err := s.tokenService.GetToken(ctx, logger, csrfTokenValue, models.TokenTypeCSRF)
