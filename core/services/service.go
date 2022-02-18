@@ -126,8 +126,8 @@ type JWTSigningMaterialService interface {
 }
 
 type TemplateService interface {
-	GetTextTemplate(name string) (*texttemplate.Template, bool)
-	GetHTMLTemplate(name string) (*htmltemplate.Template, bool)
+	GetTextTemplate(ctx context.Context, logger *zap.Logger, name string) (*texttemplate.Template, bool)
+	GetHTMLTemplate(ctx context.Context, logger *zap.Logger, name string) (*htmltemplate.Template, bool)
 
 	Service
 }
