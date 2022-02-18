@@ -15,6 +15,7 @@ import (
 	"github.com/calvine/goauth/core/utilities"
 	"github.com/calvine/goauth/dataaccess/memory"
 	gamongo "github.com/calvine/goauth/dataaccess/mongo"
+	"github.com/calvine/goauth/factory"
 	gahttp "github.com/calvine/goauth/http"
 	"github.com/calvine/goauth/service"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -44,6 +45,8 @@ const (
 	DEFAULT_HTTP_PORT_STRING        = "0.0.0.0:8080"
 
 	ServiceName = "goauth"
+
+	PublicURL = "http://localhost:8080"
 )
 
 var (
@@ -164,6 +167,14 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	templateService, err := service.NewStaticTemplateService()
+	if err != nil {
+		return err
+	}
+	serviceLinkFactory, err := factory.NewServiceLinkFactory(PublicURL)
+	if err != nil {
+		return err
+	}
 	appService := service.NewAppService(appRepo, auditRepo)
 	loginServiceOptions := service.LoginServiceOptions{
 		AuditLogRepo:           auditRepo,
@@ -175,7 +186,7 @@ func run() error {
 		AccountLockoutDuration: time.Minute * 15,
 	}
 	loginService := service.NewLoginService(loginServiceOptions)
-	userService := service.NewUserService(userRepo, userRepo, tokenService, emailService)
+	userService := service.NewUserService(userRepo, userRepo, tokenService, emailService, templateService, serviceLinkFactory)
 	jsmService := service.NewJWTSigningMaterialService(jsmRepo)
 	cachedJSMService := service.NewCachedJWTSigningMaterialService(jsmService, time.Minute*15)
 	httpStaticFS := http.FS(staticFS)
@@ -191,7 +202,7 @@ func run() error {
 	httpServerOptions := gahttp.HTTPServerOptions{
 		Logger:                     logger,
 		ServiceName:                ServiceName,
-		PublicURL:                  "http://localhost:8080", //FIXME: make this configurable...
+		PublicURL:                  PublicURL, //FIXME: make this configurable...
 		LoginService:               loginService,
 		UserService:                userService,
 		EmailService:               emailService,

@@ -11,6 +11,7 @@ import (
 	repo "github.com/calvine/goauth/core/repositories"
 	"github.com/calvine/goauth/core/services"
 	"github.com/calvine/goauth/dataaccess/memory"
+	"github.com/calvine/goauth/factory"
 	"github.com/calvine/goauth/internal/testutils"
 	"go.uber.org/zap/zaptest"
 )
@@ -206,7 +207,9 @@ func buildUserService(t *testing.T) services.UserService {
 	userServiceText_TokenRepo = memory.NewMemoryTokenRepo()
 	tokenService := NewTokenService(userServiceText_TokenRepo)
 	userServiceTest_EmailService, _ = NewEmailService(StackEmailService, nil)
-	userService := NewUserService(userRepo, userServiceText_ContactRepo, tokenService, userServiceTest_EmailService)
+	templateService, _ := NewStaticTemplateService()
+	serviceLinkFactory, _ := factory.NewServiceLinkFactory("http://localhost:8080/")
+	userService := NewUserService(userRepo, userServiceText_ContactRepo, tokenService, userServiceTest_EmailService, templateService, serviceLinkFactory)
 	setupTestUserServiceData(t, userRepo, userServiceText_ContactRepo)
 	return userService
 }

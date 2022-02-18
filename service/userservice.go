@@ -8,6 +8,7 @@ import (
 	"github.com/calvine/goauth/core/apptelemetry"
 	contactconsts "github.com/calvine/goauth/core/constants/contact"
 	coreerrors "github.com/calvine/goauth/core/errors"
+	"github.com/calvine/goauth/core/factory"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/models/email"
 	repo "github.com/calvine/goauth/core/repositories"
@@ -23,18 +24,22 @@ const (
 )
 
 type userService struct {
-	userRepo     repo.UserRepo
-	contactRepo  repo.ContactRepo
-	tokenService services.TokenService
-	emailService services.EmailService
+	userRepo           repo.UserRepo
+	contactRepo        repo.ContactRepo
+	tokenService       services.TokenService
+	emailService       services.EmailService
+	templateService    services.TemplateService
+	serviceLinkFactory factory.ServiceLinkFactory
 }
 
-func NewUserService(userRepo repo.UserRepo, contactRepo repo.ContactRepo, tokenService services.TokenService, emailService services.EmailService) services.UserService {
+func NewUserService(userRepo repo.UserRepo, contactRepo repo.ContactRepo, tokenService services.TokenService, emailService services.EmailService, templateService services.TemplateService, serviceLinkFactory factory.ServiceLinkFactory) services.UserService {
 	return userService{
-		userRepo:     userRepo,
-		contactRepo:  contactRepo,
-		tokenService: tokenService,
-		emailService: emailService,
+		userRepo:           userRepo,
+		contactRepo:        contactRepo,
+		tokenService:       tokenService,
+		emailService:       emailService,
+		templateService:    templateService,
+		serviceLinkFactory: serviceLinkFactory,
 	}
 }
 
