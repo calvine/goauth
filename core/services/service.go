@@ -7,6 +7,7 @@ import (
 
 	"github.com/calvine/goauth/core"
 	"github.com/calvine/goauth/core/constants/contact"
+	"github.com/calvine/goauth/core/constants/templates"
 	"github.com/calvine/goauth/core/jwt"
 	"github.com/calvine/goauth/core/models"
 	"github.com/calvine/goauth/core/models/email"
@@ -126,8 +127,10 @@ type JWTSigningMaterialService interface {
 }
 
 type TemplateService interface {
-	GetTextTemplate(ctx context.Context, logger *zap.Logger, name string) (*texttemplate.Template, bool)
-	GetHTMLTemplate(ctx context.Context, logger *zap.Logger, name string) (*htmltemplate.Template, bool)
+	GetTextTemplate(ctx context.Context, logger *zap.Logger, templateName templates.TemplateName) (*texttemplate.Template, errors.RichError)
+	GetHTMLTemplate(ctx context.Context, logger *zap.Logger, templateName templates.TemplateName) (*htmltemplate.Template, errors.RichError)
+	ExecuteTextTemplate(ctx context.Context, logger *zap.Logger, templateName templates.TemplateName, templateData interface{}) (string, errors.RichError)
+	ExecuteHTMLTemplate(ctx context.Context, logger *zap.Logger, templateName templates.TemplateName, templateData interface{}) (string, errors.RichError)
 
 	Service
 }

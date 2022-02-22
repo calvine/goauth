@@ -743,6 +743,16 @@
         "metaData": []
     },
     {
+        "code": "TemplateNotFound",
+        "message": "template not found in data store",
+        "tags": [
+            "template"
+        ],
+        "metaData": [
+            { "name": "templateName", "dataType": "string" }
+        ]
+    },
+    {
         "code": "FailedTemplateParseTemplatNotFound",
         "message": "template not found in fs with path provided",
         "tags": [

@@ -7,6 +7,7 @@ import (
 
 	"github.com/calvine/goauth/core/apptelemetry"
 	contactconsts "github.com/calvine/goauth/core/constants/contact"
+	"github.com/calvine/goauth/core/constants/templates"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/factory"
 	"github.com/calvine/goauth/core/models"
@@ -141,20 +142,29 @@ func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger 
 		return err
 	}
 	// send confirmation email
-
-	// TODO: implement template service with cached parsed tempaltes and function for each template...
-	// eventually a repo to pull text from DB or another place, but for now static in code is fine...
-
-	// templateParams := templates.ConfirmContactEmailTemplateParams{
-	// 	ServiceName: serviceName,
-	// 	ConfirmLink: confirmationToken.Value,
-	// }
-	// body, err := template.pa
+	confirmLink, err := us.serviceLinkFactory.CreateConfirmContactLink(confirmationToken.Value)
+	if err != nil {
+		evtString := "failed to create confirm contact link for confirm contact notification"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanError(&span, err, evtString)
+		return err
+	}
+	templateParams := templates.ConfirmContactTextTemplateInput{
+		ServiceName: serviceName,
+		ConfirmLink: confirmLink,
+	}
+	body, err := us.templateService.ExecuteTextTemplate(ctx, logger, templates.ConfirmContactTextEmail, templateParams)
+	if err != nil {
+		evtString := "failed to create body for confirm contact email"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanError(&span, err, evtString)
+		return err
+	}
 	emailMessage := email.EmailMessage{
 		From:    constants.NoReplyEmailAddress,
 		To:      []string{contactPrincipal},
 		Subject: "contact confirmation link",
-		Body:    confirmationToken.Value,
+		Body:    body,
 	}
 	err = us.emailService.SendPlainTextEmail(ctx, logger, emailMessage)
 	if err != nil {
