@@ -7,6 +7,7 @@ import (
 	texttemplate "text/template"
 
 	"github.com/calvine/goauth/core/constants/templates"
+	"github.com/calvine/goauth/core/constants/templates/confirmcontact"
 	coreerrors "github.com/calvine/goauth/core/errors"
 
 	"github.com/calvine/goauth/core/apptelemetry"
@@ -43,8 +44,8 @@ func (sts staticTemplateService) GetTextTemplate(ctx context.Context, logger *za
 		logger.Info("template not found in memory", zap.String("templateName", string(templateName)))
 		var templateString string
 		switch templateName {
-		case templates.ConfirmContactTextEmail:
-			templateString = templates.ConfirmContactTextEmailTemplate
+		case confirmcontact.ConfirmContactTextEmail:
+			templateString = confirmcontact.ConfirmContactTextEmailTemplate
 		default:
 			err := coreerrors.NewTemplateNotFoundError(string(templateName), true)
 			evtString := "template not found"

@@ -41,7 +41,7 @@ type UserService interface {
 	// RegisterUserAndPrimaryContact registers a new user. it has several responsibilities.
 	//	1. ensure no other user has the contact provided as a confirmed contact.
 	//	2. send notification to user with link to confirm contact and set password
-	RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType contact.Type, contactPrincipal, serviceName, initiator string) errors.RichError
+	RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType contact.Type, contactPrincipal, initiator string) errors.RichError
 	// GetUserPrimaryContact gets a users primary contact
 	GetUserPrimaryContact(ctx context.Context, logger *zap.Logger, userID string, contactType contact.Type, initiator string) (models.Contact, errors.RichError)
 	// GetContactByID gets a contact by its id

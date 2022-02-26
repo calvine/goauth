@@ -91,13 +91,8 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 			http.Error(rw, templateErr.Error(), http.StatusInternalServerError)
 			return
 		}
-		csrfToken := r.FormValue("csrf_token")
-		email := r.FormValue("email")
-		rememberMeString := r.FormValue("remember_me")
-		password := r.FormValue("password")
-		callback := r.URL.Query().Get("cb")
 
-		rememberMe, _ := normalization.ReadBoolValue(rememberMeString, true)
+		csrfToken := r.FormValue("csrf_token")
 
 		_, err := s.retreiveCSRFToken(ctx, logger, csrfToken)
 		if err != nil {
@@ -108,6 +103,12 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 			redirectToErrorPage(rw, r, errorMsg, http.StatusInternalServerError)
 			return
 		}
+
+		email := r.FormValue("email")
+		password := r.FormValue("password")
+		rememberMeString := r.FormValue("remember_me")
+		rememberMe, _ := normalization.ReadBoolValue(rememberMeString, true)
+
 		user, err := s.loginService.LoginWithPrimaryContact(ctx, s.logger, contact.Email, email, password, "login post handler")
 		if err != nil {
 			var errorMsg string
@@ -166,6 +167,8 @@ func (s *server) handleLoginPost() http.HandlerFunc {
 			redirectToErrorPage(rw, r, errorMsg, http.StatusInternalServerError)
 			return
 		}
+
+		callback := r.URL.Query().Get("cb")
 		if callback != "" {
 			http.Redirect(rw, r, callback, http.StatusFound)
 		} else {

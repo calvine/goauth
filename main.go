@@ -171,7 +171,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	serviceLinkFactory, err := factory.NewServiceLinkFactory(PublicURL)
+	serviceLinkFactory, err := factory.NewServiceLinkFactory(ServiceName, PublicURL)
 	if err != nil {
 		return err
 	}

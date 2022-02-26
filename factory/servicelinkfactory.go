@@ -10,16 +10,25 @@ import (
 )
 
 type serviceLinkFactory struct {
+	serviceName      string
 	servicePublicURL string
 }
 
-func NewServiceLinkFactory(servicePublicURL string) (corefactory.ServiceLinkFactory, errors.RichError) {
+func NewServiceLinkFactory(serviceName, servicePublicURL string) (corefactory.ServiceLinkFactory, errors.RichError) {
 	if len(servicePublicURL) == 0 {
 		return nil, errors.NewRichError("ServiceLinkFactoryMissingServicePublicURL", "service link factory is missing service public url").WithStack(0)
 	}
+	if len(serviceName) == 0 {
+		return nil, errors.NewRichError("ServiceLinkFactoryMissingServiceName", "service link factory is missing service name").WithStack(0)
+	}
 	return serviceLinkFactory{
+		serviceName:      serviceName,
 		servicePublicURL: servicePublicURL,
 	}, nil
+}
+
+func (slf serviceLinkFactory) GetServiceName() string {
+	return slf.serviceName
 }
 
 func (slf serviceLinkFactory) CreateLink(linkPath string, queryParams map[string]string) (string, errors.RichError) {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/calvine/goauth/core/apptelemetry"
 	contactconsts "github.com/calvine/goauth/core/constants/contact"
-	"github.com/calvine/goauth/core/constants/templates"
+	"github.com/calvine/goauth/core/constants/templates/confirmcontact"
 	coreerrors "github.com/calvine/goauth/core/errors"
 	"github.com/calvine/goauth/core/factory"
 	"github.com/calvine/goauth/core/models"
@@ -82,7 +82,7 @@ func (us userService) GetUserAndContactByConfirmedContact(ctx context.Context, l
 	return user, contact, nil
 }
 
-func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType contactconsts.Type, contactPrincipal, serviceName, initiator string) errors.RichError {
+func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger *zap.Logger, contactType contactconsts.Type, contactPrincipal, initiator string) errors.RichError {
 	span := apptelemetry.CreateFunctionSpan(ctx, us.GetName(), "RegisterUserAndPrimaryContact")
 	defer span.End()
 
@@ -149,11 +149,11 @@ func (us userService) RegisterUserAndPrimaryContact(ctx context.Context, logger 
 		apptelemetry.SetSpanError(&span, err, evtString)
 		return err
 	}
-	templateParams := templates.ConfirmContactTextTemplateInput{
-		ServiceName: serviceName,
+	templateParams := confirmcontact.ConfirmContactTextTemplateInput{
+		ServiceName: us.serviceLinkFactory.GetServiceName(),
 		ConfirmLink: confirmLink,
 	}
-	body, err := us.templateService.ExecuteTextTemplate(ctx, logger, templates.ConfirmContactTextEmail, templateParams)
+	body, err := us.templateService.ExecuteTextTemplate(ctx, logger, confirmcontact.ConfirmContactTextEmail, templateParams)
 	if err != nil {
 		evtString := "failed to create body for confirm contact email"
 		logger.Error(evtString, zap.Reflect("error", err))
@@ -343,12 +343,30 @@ func (us userService) AddContact(ctx context.Context, logger *zap.Logger, userID
 		return err
 	}
 	// send confirmation email
-	// TODO: convert this email into a template...
+	// TODO: convert this email into a template...		// send confirmation email
+	confirmLink, err := us.serviceLinkFactory.CreateConfirmContactLink(confirmationToken.Value)
+	if err != nil {
+		evtString := "failed to create confirm contact link for confirm contact notification"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanError(&span, err, evtString)
+		return err
+	}
+	templateParams := confirmcontact.ConfirmContactTextTemplateInput{
+		ServiceName: us.serviceLinkFactory.GetServiceName(),
+		ConfirmLink: confirmLink,
+	}
+	body, err := us.templateService.ExecuteTextTemplate(ctx, logger, confirmcontact.ConfirmContactTextEmail, templateParams)
+	if err != nil {
+		evtString := "failed to create body for confirm contact email"
+		logger.Error(evtString, zap.Reflect("error", err))
+		apptelemetry.SetSpanError(&span, err, evtString)
+		return err
+	}
 	emailMessage := email.EmailMessage{
 		From:    constants.NoReplyEmailAddress,
 		To:      []string{contact.Principal},
 		Subject: "contact confirmation link",
-		Body:    confirmationToken.Value,
+		Body:    body,
 	}
 	err = us.emailService.SendPlainTextEmail(ctx, logger, emailMessage)
 	if err != nil {

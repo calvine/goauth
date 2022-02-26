@@ -15,6 +15,7 @@ import (
 */
 
 const (
+	testServiceName   = "goauth"
 	testPublicBaseURL = "http://localhost:8080"
 )
 
@@ -41,7 +42,7 @@ func TestCreateLink(t *testing.T) {
 			expectedFullURL: fmt.Sprintf("%s/path/to/resource?v=1234", testPublicBaseURL),
 		},
 	}
-	serviceLinkFactory, err := NewServiceLinkFactory(testPublicBaseURL)
+	serviceLinkFactory, err := NewServiceLinkFactory(testServiceName, testPublicBaseURL)
 	if err != nil {
 		t.Errorf("\tfailed to create test serviceLinkFactory with error: %s", err.Error())
 	}
@@ -80,7 +81,7 @@ func TestCreateStaticAssetLink(t *testing.T) {
 			expectedFullURL: fmt.Sprintf("%s/static/css/main.css", testPublicBaseURL),
 		},
 	}
-	serviceLinkFactory, err := NewServiceLinkFactory(testPublicBaseURL)
+	serviceLinkFactory, err := NewServiceLinkFactory(testServiceName, testPublicBaseURL)
 	if err != nil {
 		t.Errorf("\tfailed to create test serviceLinkFactory with error: %s", err.Error())
 	}
@@ -114,7 +115,7 @@ func TestCreatePasswordResetLink(t *testing.T) {
 			expectedFullURL:    fmt.Sprintf("%s/user/resetpassword/1234", testPublicBaseURL),
 		},
 	}
-	serviceLinkFactory, err := NewServiceLinkFactory(testPublicBaseURL)
+	serviceLinkFactory, err := NewServiceLinkFactory(testServiceName, testPublicBaseURL)
 	if err != nil {
 		t.Errorf("\tfailed to create test serviceLinkFactory with error: %s", err.Error())
 	}
@@ -148,7 +149,7 @@ func TestCreateConfirmContactLink(t *testing.T) {
 			expectedFullURL:     fmt.Sprintf("%s/user/confirmcontact/1234", testPublicBaseURL),
 		},
 	}
-	serviceLinkFactory, err := NewServiceLinkFactory(testPublicBaseURL)
+	serviceLinkFactory, err := NewServiceLinkFactory(testServiceName, testPublicBaseURL)
 	if err != nil {
 		t.Errorf("\tfailed to create test serviceLinkFactory with error: %s", err.Error())
 	}
@@ -180,7 +181,7 @@ func TestCreateLoginLink(t *testing.T) {
 			expectedFullURL: fmt.Sprintf("%s/auth/login", testPublicBaseURL),
 		},
 	}
-	serviceLinkFactory, err := NewServiceLinkFactory(testPublicBaseURL)
+	serviceLinkFactory, err := NewServiceLinkFactory(testServiceName, testPublicBaseURL)
 	if err != nil {
 		t.Errorf("\tfailed to create test serviceLinkFactory with error: %s", err.Error())
 	}
@@ -214,7 +215,7 @@ func TestCreateMagicLoginLink(t *testing.T) {
 			expectedFullURL: fmt.Sprintf("%s/auth/magiclogin?m=1234", testPublicBaseURL),
 		},
 	}
-	serviceLinkFactory, err := NewServiceLinkFactory(testPublicBaseURL)
+	serviceLinkFactory, err := NewServiceLinkFactory(testServiceName, testPublicBaseURL)
 	if err != nil {
 		t.Errorf("\tfailed to create test serviceLinkFactory with error: %s", err.Error())
 	}
@@ -246,7 +247,7 @@ func TestCreateUserRegisterLink(t *testing.T) {
 			expectedFullURL: fmt.Sprintf("%s/user/register", testPublicBaseURL),
 		},
 	}
-	serviceLinkFactory, err := NewServiceLinkFactory(testPublicBaseURL)
+	serviceLinkFactory, err := NewServiceLinkFactory(testServiceName, testPublicBaseURL)
 	if err != nil {
 		t.Errorf("\tfailed to create test serviceLinkFactory with error: %s", err.Error())
 	}

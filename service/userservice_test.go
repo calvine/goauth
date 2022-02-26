@@ -208,7 +208,7 @@ func buildUserService(t *testing.T) services.UserService {
 	tokenService := NewTokenService(userServiceText_TokenRepo)
 	userServiceTest_EmailService, _ = NewEmailService(StackEmailService, nil)
 	templateService, _ := NewStaticTemplateService()
-	serviceLinkFactory, _ := factory.NewServiceLinkFactory("http://localhost:8080/")
+	serviceLinkFactory, _ := factory.NewServiceLinkFactory("goauth", "http://localhost:8080/")
 	userService := NewUserService(userRepo, userServiceText_ContactRepo, tokenService, userServiceTest_EmailService, templateService, serviceLinkFactory)
 	setupTestUserServiceData(t, userRepo, userServiceText_ContactRepo)
 	return userService
@@ -354,7 +354,7 @@ func _testRegisterUserAndPrimaryContact(t *testing.T, userService services.UserS
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := userService.RegisterUserAndPrimaryContact(context.TODO(), logger, tc.contactType, tc.contactPrincipal, "service_name", userServiceTest_CreatedBy)
+			err := userService.RegisterUserAndPrimaryContact(context.TODO(), logger, tc.contactType, tc.contactPrincipal, userServiceTest_CreatedBy)
 			if err != nil {
 				testutils.HandleTestError(t, err, tc.expectedErrorCode)
 			} else if tc.expectedErrorCode != "" {
